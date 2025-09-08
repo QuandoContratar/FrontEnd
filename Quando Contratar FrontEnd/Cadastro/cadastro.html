@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Cadastro - Quando Contratar</title>
+<link rel="icon" href="../img/relogio_icone_quando_previdencia.png" type="image/png">
+
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+
+  <link rel="stylesheet" href="cadastro.css">
+</head>
+<body>
+  <div class="container">
+    <div class="left">
+      <div class="logo">
+        <img src="../img/logo_quando_previdencia.png" alt="Logo Quando Previdência">
+      </div>
+
+      <div class="cadastro-box">
+  <h2>Cadastro</h2>
+  <p>Já possui conta?<br> pode <a href="#">fazer login aqui!</a></p>
+
+  <!-- Nome -->
+  <div class="input-group">
+    <i class="fa-solid fa-user" aria-hidden="true"></i>
+    <input type="text" id="name" placeholder="Nome completo" autocomplete="name">
+  </div>
+
+  <!-- Email -->
+  <div class="input-group">
+    <i class="fa-solid fa-envelope" aria-hidden="true"></i>
+    <input type="email" id="email" placeholder="Email" autocomplete="username">
+  </div>
+
+  <!-- Senha -->
+  <div class="input-group">
+    <i class="fa-solid fa-lock"></i>
+    <input type="password" id="password" placeholder="Senha">
+    <i class="fa-solid fa-eye toggle-password" id="togglePassword"></i>
+  </div>
+
+  <!-- Confirmar Senha -->
+  <div class="input-group">
+    <i class="fa-solid fa-lock"></i>
+    <input type="password" id="confirm-password" placeholder="Confirmar Senha">
+    <i class="fa-solid fa-eye toggle-password" id="toggleConfirmPassword"></i>
+  </div>
+
+  <button class="btn">Cadastrar</button>
+</div>
+
+    </div>
+
+    <div class="right">
+      <div class="text-box">
+        <h3>Quando previdência agora também é <br><span>Quando Contratar.</span></h3>
+        <img src="../img/pana.png" alt="Ilustração" class="illustration">
+      </div>
+    </div>
+  </div>
+
+  <script>
+
+  // Senha
+const togglePassword = document.querySelector("#togglePassword");
+const password = document.querySelector("#password");
+
+togglePassword.addEventListener("click", () => {
+  const type = password.getAttribute("type") === "password" ? "text" : "password";
+  password.setAttribute("type", type);
+  togglePassword.classList.toggle("fa-eye");
+  togglePassword.classList.toggle("fa-eye-slash");
+});
+
+// Confirmar Senha
+const toggleConfirmPassword = document.querySelector("#toggleConfirmPassword");
+const confirmPassword = document.querySelector("#confirm-password");
+
+toggleConfirmPassword.addEventListener("click", () => {
+  const type = confirmPassword.getAttribute("type") === "password" ? "text" : "password";
+  confirmPassword.setAttribute("type", type);
+  toggleConfirmPassword.classList.toggle("fa-eye");
+  toggleConfirmPassword.classList.toggle("fa-eye-slash");
+});
+
+
+
+  </script>
+</body>
+</html>
