@@ -1,0 +1,190 @@
+:root {
+    --roxo-principal: #7c3aed;
+    --roxo-escuro: #5b21b6;
+    --roxo-claro: #ede9fe;
+    --roxo-hover: #a78bfa;
+    --branco: #fff;
+    --cinza-bg: #f4f6fa;
+    --cinza-texto: #444;
+    --cinza-titulo: #2d2d2d;
+}
+html {
+    box-sizing: border-box;
+    font-size: 16px;
+}
+*, *:before, *:after {
+    box-sizing: inherit;
+}
+body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Inter', 'Poppins', Arial, sans-serif;
+    background: var(--cinza-bg);
+    color: var(--cinza-titulo);
+    min-height: 100vh;
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+}
+
+header {
+    background: linear-gradient(90deg, var(--roxo-principal) 0%, var(--roxo-escuro) 100%);
+    color: var(--branco);
+    padding: 20px 0;
+    text-align: center;
+    font-size: 1.2rem;
+    font-weight: 600;
+    letter-spacing: 1px;
+    box-shadow: 0 2px 8px rgba(124,58,237,0.08);
+}
+
+.container {
+    max-width: 1200px;
+    margin: 32px auto 0 auto;
+    padding: 0 16px;
+}
+
+h1 {
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 8px;
+    color: var(--roxo-principal);
+    text-shadow: 0 2px 8px rgba(124,58,237,0.06);
+}
+
+h2 {
+    font-size: 1.1rem;
+    font-weight: 400;
+    margin-bottom: 28px;
+    color: var(--cinza-texto);
+}
+
+.cards {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 24px;
+    justify-content: center;
+}
+
+.card {
+    background: var(--branco);
+    border-radius: 18px;
+    box-shadow: 0 4px 16px rgba(124,58,237,0.07);
+    padding: 28px 18px 22px 18px;
+    width: 290px;
+    min-height: 300px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    transition: box-shadow 0.2s, transform 0.2s, border 0.2s;
+    cursor: pointer;
+    border: 2px solid transparent;
+    position: relative;
+}
+
+.card.active, .card:hover {
+    box-shadow: 0 8px 32px rgba(124,58,237,0.18);
+    border: 2px solid var(--roxo-principal);
+    transform: translateY(-2px) scale(1.025);
+    z-index: 2;
+    background: linear-gradient(120deg, var(--roxo-claro) 0%, var(--branco) 100%);
+}
+
+.card .icon-wrapper {
+    width: 64px;
+    height: 64px;
+    background: linear-gradient(135deg, var(--roxo-principal) 60%, var(--roxo-hover) 100%);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 14px;
+    box-shadow: 0 2px 8px rgba(124,58,237,0.10);
+}
+.card svg {
+    width: 36px;
+    height: 36px;
+    display: block;
+}
+.icon-roxo {
+    fill: #fff;
+    stroke: #fff;
+    /* Sombra para destacar no roxo */
+    filter: drop-shadow(0 0 2px var(--roxo-principal));
+}
+
+.card h3 {
+    font-size: 1.08rem;
+    font-weight: 600;
+    color: var(--roxo-escuro);
+    margin: 0 0 8px 0;
+    text-align: center;
+}
+
+.card p {
+    font-size: 0.98rem;
+    color: var(--cinza-texto);
+    margin-bottom: 18px;
+    text-align: center;
+    flex: 1;
+}
+
+.card button {
+    background: var(--roxo-principal);
+    color: var(--branco);
+    border: none;
+    border-radius: 8px;
+    padding: 8px 22px;
+    font-size: 0.98rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.18s, box-shadow 0.18s;
+    box-shadow: 0 2px 8px rgba(124,58,237,0.10);
+}
+
+.card button:hover {
+    background: var(--roxo-escuro);
+    box-shadow: 0 4px 16px rgba(124,58,237,0.18);
+}
+
+@media (max-width: 1000px) {
+    .cards {
+        gap: 16px;
+    }
+    .card {
+        width: 44vw;
+        min-width: 220px;
+        max-width: 340px;
+    }
+}
+
+@media (max-width: 700px) {
+    .container {
+        padding: 0 2vw;
+    }
+    .cards {
+        flex-direction: column;
+        align-items: center;
+        gap: 12px;
+    }
+    .card {
+        width: 98vw;
+        max-width: 99vw;
+        min-width: 0;
+        min-height: 0;
+        padding: 18px 6px 14px 6px;
+    }
+    h1 {
+        font-size: 1.3rem;
+    }
+    h2 {
+        font-size: 1rem;
+    }
+    .card .icon-wrapper {
+        width: 48px;
+        height: 48px;
+    }
+    .card svg {
+        width: 26px;
+        height: 26px;
+    }
+}
