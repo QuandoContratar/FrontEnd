@@ -430,7 +430,7 @@
                     <!-- Back Link -->
                     <a href="vagas.html" class="back-link">
                         <i class="fas fa-arrow-left mr-1"></i>
-                        Voltar
+                        VOLTAR
                     </a>
 
                     <!-- Page Heading -->
@@ -514,6 +514,10 @@
                                             <i class="fas fa-paper-plane mr-2"></i>
                                             Enviar Currículos
                                         </button>
+                                        <button class="btn btn-delete" id="deleteAllBtn" disabled style="margin-left: 10px;">
+                                            <i class="fas fa-trash mr-2"></i>
+                                            Excluir Todos
+                                        </button>
                                     </div>
                                 </div>
                             </div>
@@ -546,6 +550,48 @@
     <a class="scroll-to-top rounded" href="#page-top">
         <i class="fas fa-angle-up"></i>
     </a>
+
+    <!-- Success Modal -->
+    <div class="modal fade" id="successModal" tabindex="-1" role="dialog" aria-labelledby="successModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content" style="border: none; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.3);">
+                <div class="modal-body text-center p-4">
+                    <button type="button" class="close position-absolute" style="top: 15px; right: 20px; font-size: 24px; color: #000;" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                    <div class="mb-4">
+                        <div style="width: 80px; height: 80px; background: #10b981; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 20px;">
+                            <i class="fas fa-check" style="font-size: 40px; color: white;"></i>
+                        </div>
+                    </div>
+                    <h4 class="mb-3" style="color: #1f2937; font-weight: 600;">Currículos Enviados com Sucesso!</h4>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div class="modal fade" id="deleteModal" tabindex="-1" role="dialog" aria-labelledby="deleteModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content" style="border: none; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.3);">
+                <div class="modal-body text-center p-4">
+                    <button type="button" class="close position-absolute" style="top: 15px; right: 20px; font-size: 24px; color: #000;" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                    <div class="mb-4">
+                        <div style="width: 80px; height: 80px; background: #ef4444; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 20px;">
+                            <i class="fas fa-trash" style="font-size: 40px; color: white;"></i>
+                        </div>
+                    </div>
+                    <h4 class="mb-4" style="color: #1f2937; font-weight: 600;" id="deleteModalText">Deseja excluir os envios?</h4>
+                    <div class="d-flex justify-content-center gap-3">
+                        <button type="button" class="btn btn-primary px-4 py-2" style="background: #7c3aed; border: none; border-radius: 8px; font-weight: 500;" data-dismiss="modal">Não</button>
+                        <button type="button" class="btn btn-danger px-4 py-2" style="background: #ef4444; border: none; border-radius: 8px; font-weight: 500;" id="confirmDelete">Sim</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- Logout Modal-->
     <div class="modal fade" id="logoutModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
@@ -669,8 +715,10 @@
             function updateSendButton() {
                 if (uploadedFiles.length > 0) {
                     $('#sendBtn').prop('disabled', false);
+                    $('#deleteAllBtn').prop('disabled', false);
                 } else {
                     $('#sendBtn').prop('disabled', true);
+                    $('#deleteAllBtn').prop('disabled', true);
                 }
             }
 
@@ -686,11 +734,12 @@
                         if (progress >= 100) {
                             clearInterval(interval);
                             setTimeout(() => {
-                                alert('Currículos enviados com sucesso!');
                                 $('#progressBar').hide();
                                 uploadedFiles = [];
                                 $('#fileList').empty();
                                 updateSendButton();
+                                // Show success modal
+                                $('#successModal').modal('show');
                             }, 500);
                         }
                     }, 200);
@@ -707,15 +756,44 @@
             };
 
             window.deleteFile = function(fileName) {
-                if (confirm('Tem certeza que deseja excluir este arquivo?')) {
-                    uploadedFiles = uploadedFiles.filter(file => file.name !== fileName);
-                    $(`.file-item[data-file="${fileName}"]`).remove();
-                    updateSendButton();
-                }
+                // Store the file name to delete
+                window.fileToDelete = fileName;
+                window.deleteAll = false;
+                // Update modal text
+                $('#deleteModalText').text('Deseja excluir este arquivo?');
+                // Show delete confirmation modal
+                $('#deleteModal').modal('show');
             };
+
+            // Confirm delete action
+            $('#confirmDelete').on('click', function() {
+                if (window.fileToDelete) {
+                    uploadedFiles = uploadedFiles.filter(file => file.name !== window.fileToDelete);
+                    $(`.file-item[data-file="${window.fileToDelete}"]`).remove();
+                    updateSendButton();
+                    window.fileToDelete = null;
+                } else if (window.deleteAll) {
+                    // Delete all files
+                    uploadedFiles = [];
+                    $('#fileList').empty();
+                    updateSendButton();
+                    window.deleteAll = false;
+                }
+                $('#deleteModal').modal('hide');
+            });
+
+            // Delete all files
+            $('#deleteAllBtn').on('click', function() {
+                window.deleteAll = true;
+                window.fileToDelete = null;
+                // Update modal text
+                $('#deleteModalText').text('Deseja excluir os envios?');
+                $('#deleteModal').modal('show');
+            });
         });
     </script>
 
 </body>
 
 </html>
+
