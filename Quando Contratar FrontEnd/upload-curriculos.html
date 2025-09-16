@@ -1,0 +1,721 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="description" content="Upload de Currículos - Quando Previdência">
+    <meta name="author" content="">
+
+    <title>Upload de Currículos - Quando Previdência</title>
+
+    <!-- Custom fonts for this template-->
+    <link href="vendor/fontawesome-free/css/all.min.css" rel="stylesheet" type="text/css">
+    <link href="https://fonts.googleapis.com/css?family=Nito:200,200i,300,300i,400,400i,600,600i,700,700i,800,800i,900,900i" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="icon" href="img/relogio_icone_quando_previdencia.png" type="image/png">
+
+    <!-- Custom styles for this template-->
+    <link href="css/sb-admin-2.min.css" rel="stylesheet">
+    
+    <!-- Custom styles for this page -->
+    <style>
+        :root {
+            --roxo-principal: #7c3aed;
+            --roxo-escuro: #5b21b6;
+            --roxo-claro: #ede9fe;
+            --roxo-hover: #a78bfa;
+        }
+        
+        .sidebar-brand-text {
+            font-family: 'Poppins', sans-serif;
+            font-weight: 600;
+        }
+        
+        .bg-gradient-primary {
+            background: linear-gradient(135deg, var(--roxo-principal) 0%, var(--roxo-escuro) 100%) !important;
+        }
+        
+        .btn-primary {
+            background-color: var(--roxo-principal);
+            border-color: var(--roxo-principal);
+        }
+        
+        .btn-primary:hover {
+            background-color: var(--roxo-escuro);
+            border-color: var(--roxo-escuro);
+        }
+        
+        .text-primary {
+            color: var(--roxo-principal) !important;
+        }
+        
+        .page-title {
+            color: var(--roxo-escuro);
+            font-weight: 600;
+        }
+
+        .upload-area {
+            border: 3px dashed #d1d3e2;
+            border-radius: 12px;
+            padding: 3rem 2rem;
+            text-align: center;
+            background: #f8f9fc;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            min-height: 300px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .upload-area:hover {
+            border-color: var(--roxo-principal);
+            background: var(--roxo-claro);
+        }
+
+        .upload-area.dragover {
+            border-color: var(--roxo-principal);
+            background: var(--roxo-claro);
+            transform: scale(1.02);
+        }
+
+        .upload-icon {
+            font-size: 4rem;
+            color: var(--roxo-principal);
+            margin-bottom: 1rem;
+        }
+
+        .upload-text {
+            font-size: 1.2rem;
+            color: var(--roxo-escuro);
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .upload-subtext {
+            color: #6c757d;
+            font-size: 0.9rem;
+            margin-bottom: 1rem;
+        }
+
+        .upload-formats {
+            color: #6c757d;
+            font-size: 0.8rem;
+            background: white;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            border: 1px solid #e3e6f0;
+        }
+
+        .file-list {
+            margin-top: 2rem;
+        }
+
+        .file-item {
+            background: white;
+            border: 1px solid #e3e6f0;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .file-info {
+            display: flex;
+            align-items: center;
+        }
+
+        .file-icon {
+            width: 40px;
+            height: 40px;
+            background: var(--roxo-claro);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--roxo-principal);
+            margin-right: 1rem;
+        }
+
+        .file-details h6 {
+            margin: 0;
+            color: var(--roxo-escuro);
+            font-weight: 600;
+        }
+
+        .file-details small {
+            color: #6c757d;
+        }
+
+        .file-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .btn-download {
+            background: #17a2b8;
+            border-color: #17a2b8;
+            color: white;
+            padding: 0.375rem 0.75rem;
+            border-radius: 6px;
+            font-size: 0.875rem;
+        }
+
+        .btn-download:hover {
+            background: #138496;
+            border-color: #117a8b;
+            color: white;
+        }
+
+        .btn-edit {
+            background: #28a745;
+            border-color: #28a745;
+            color: white;
+            padding: 0.375rem 0.75rem;
+            border-radius: 6px;
+            font-size: 0.875rem;
+        }
+
+        .btn-edit:hover {
+            background: #218838;
+            border-color: #1e7e34;
+            color: white;
+        }
+
+        .btn-delete {
+            background: #dc3545;
+            border-color: #dc3545;
+            color: white;
+            padding: 0.375rem 0.75rem;
+            border-radius: 6px;
+            font-size: 0.875rem;
+        }
+
+        .btn-delete:hover {
+            background: #c82333;
+            border-color: #bd2130;
+            color: white;
+        }
+
+        .btn-send {
+            background: var(--roxo-principal);
+            border-color: var(--roxo-principal);
+            color: white;
+            padding: 0.75rem 2rem;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            margin-top: 1rem;
+        }
+
+        .btn-send:hover {
+            background: var(--roxo-escuro);
+            border-color: var(--roxo-escuro);
+            color: white;
+        }
+
+        .back-link {
+            color: var(--roxo-principal);
+            text-decoration: none;
+            font-weight: 500;
+            margin-bottom: 1rem;
+            display: inline-block;
+        }
+
+        .back-link:hover {
+            color: var(--roxo-escuro);
+            text-decoration: none;
+        }
+
+        .progress-bar {
+            background: var(--roxo-principal);
+        }
+
+        .upload-stats {
+            background: var(--roxo-claro);
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--roxo-principal);
+        }
+
+        .stat-label {
+            color: #6c757d;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+
+<body id="page-top">
+
+    <!-- Page Wrapper -->
+    <div id="wrapper">
+
+        <!-- Sidebar -->
+        <ul class="navbar-nav bg-gradient-primary sidebar sidebar-dark accordion" id="accordionSidebar">
+
+            <!-- Sidebar - Brand -->
+            <a class="sidebar-brand d-flex align-items-center justify-content-center" href="home.html">
+                <div class="sidebar-brand-icon rotate-n-15">
+                    <i class="fas fa-clock"></i>
+                </div>
+                <div class="sidebar-brand-text mx-3">Quando Previdência</div>
+            </a>
+
+            <!-- Divider -->
+            <hr class="sidebar-divider my-0">
+
+            <!-- Nav Item - Dashboard -->
+            <li class="nav-item">
+                <a class="nav-link" href="home.html">
+                    <i class="fas fa-fw fa-tachometer-alt"></i>
+                    <span>Dashboard</span></a>
+            </li>
+
+            <!-- Divider -->
+            <hr class="sidebar-divider">
+
+            <!-- Heading -->
+            <div class="sidebar-heading">
+                Cadastros
+            </div>
+
+            <!-- Nav Item - Administradores -->
+            <li class="nav-item">
+                <a class="nav-link" href="adm.html">
+                    <i class="fas fa-fw fa-user-shield"></i>
+                    <span>Administradores</span></a>
+            </li>
+
+            <!-- Nav Item - Gerentes -->
+            <li class="nav-item">
+                <a class="nav-link" href="gerente.html">
+                    <i class="fas fa-fw fa-user-tie"></i>
+                    <span>Gerentes</span></a>
+            </li>
+
+            <!-- Nav Item - RH -->
+            <li class="nav-item">
+                <a class="nav-link" href="rh.html">
+                    <i class="fas fa-fw fa-users"></i>
+                    <span>RH</span></a>
+            </li>
+
+            <!-- Divider -->
+            <hr class="sidebar-divider">
+
+            <!-- Heading -->
+            <div class="sidebar-heading">
+                Recrutamento
+            </div>
+
+            <!-- Nav Item - Vagas -->
+            <li class="nav-item">
+                <a class="nav-link" href="vagas.html">
+                    <i class="fas fa-fw fa-briefcase"></i>
+                    <span>Vagas</span></a>
+            </li>
+
+            <!-- Nav Item - Candidatos -->
+            <li class="nav-item">
+                <a class="nav-link" href="candidatos.html">
+                    <i class="fas fa-fw fa-user-plus"></i>
+                    <span>Candidatos</span></a>
+            </li>
+
+            <!-- Nav Item - Upload Currículos -->
+            <li class="nav-item active">
+                <a class="nav-link" href="upload-curriculos.html">
+                    <i class="fas fa-fw fa-file-upload"></i>
+                    <span>Upload Currículos</span></a>
+            </li>
+
+            <!-- Divider -->
+            <hr class="sidebar-divider">
+
+            <!-- Heading -->
+            <div class="sidebar-heading">
+                Relatórios
+            </div>
+
+            <!-- Nav Item - Charts -->
+            <li class="nav-item">
+                <a class="nav-link" href="charts.html">
+                    <i class="fas fa-fw fa-chart-area"></i>
+                    <span>Gráficos</span></a>
+            </li>
+
+            <!-- Nav Item - Tables -->
+            <li class="nav-item">
+                <a class="nav-link" href="tables.html">
+                    <i class="fas fa-fw fa-table"></i>
+                    <span>Tabelas</span></a>
+            </li>
+
+            <!-- Divider -->
+            <hr class="sidebar-divider d-none d-md-block">
+
+            <!-- Sidebar Toggler (Sidebar) -->
+            <div class="text-center d-none d-md-inline">
+                <button class="rounded-circle border-0" id="sidebarToggle"></button>
+            </div>
+
+        </ul>
+        <!-- End of Sidebar -->
+
+        <!-- Content Wrapper -->
+        <div id="content-wrapper" class="d-flex flex-column">
+
+            <!-- Main Content -->
+            <div id="content">
+
+                <!-- Topbar -->
+                <nav class="navbar navbar-expand navbar-light bg-white topbar mb-4 static-top shadow">
+
+                    <!-- Sidebar Toggle (Topbar) -->
+                    <button id="sidebarToggleTop" class="btn btn-link d-md-none rounded-circle mr-3">
+                        <i class="fa fa-bars"></i>
+                    </button>
+
+                    <!-- Topbar Navbar -->
+                    <ul class="navbar-nav ml-auto">
+
+                        <!-- Nav Item - User Information -->
+                        <li class="nav-item dropdown no-arrow">
+                            <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                <span class="mr-2 d-none d-lg-inline text-gray-600 small">Henrique Szapiro</span>
+                                <img class="img-profile rounded-circle" src="img/undraw_profile.svg">
+                            </a>
+                            <!-- Dropdown - User Information -->
+                            <div class="dropdown-menu dropdown-menu-right shadow animated--grow-in" aria-labelledby="userDropdown">
+                                <a class="dropdown-item" href="#">
+                                    <i class="fas fa-user fa-sm fa-fw mr-2 text-gray-400"></i>
+                                    Perfil
+                                </a>
+                                <a class="dropdown-item" href="#">
+                                    <i class="fas fa-cogs fa-sm fa-fw mr-2 text-gray-400"></i>
+                                    Configurações
+                                </a>
+                                <div class="dropdown-divider"></div>
+                                <a class="dropdown-item" href="#" data-toggle="modal" data-target="#logoutModal">
+                                    <i class="fas fa-sign-out-alt fa-sm fa-fw mr-2 text-gray-400"></i>
+                                    Sair
+                                </a>
+                            </div>
+                        </li>
+
+                    </ul>
+
+                </nav>
+                <!-- End of Topbar -->
+
+                <!-- Begin Page Content -->
+                <div class="container-fluid">
+
+                    <!-- Back Link -->
+                    <a href="vagas.html" class="back-link">
+                        <i class="fas fa-arrow-left mr-1"></i>
+                        Voltar
+                    </a>
+
+                    <!-- Page Heading -->
+                    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+                        <div>
+                            <h1 class="h3 mb-0 text-gray-800 page-title">Insira aqui os currículos para análise</h1>
+                        </div>
+                    </div>
+
+                    <!-- Stats Row -->
+                    <div class="row mb-4">
+                        <div class="col-xl-3 col-md-6 mb-4">
+                            <div class="upload-stats">
+                                <div class="stat-item">
+                                    <div class="stat-number">5</div>
+                                    <div class="stat-label">Arquivos Enviados</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-xl-3 col-md-6 mb-4">
+                            <div class="upload-stats">
+                                <div class="stat-item">
+                                    <div class="stat-number">3</div>
+                                    <div class="stat-label">Em Análise</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-xl-3 col-md-6 mb-4">
+                            <div class="upload-stats">
+                                <div class="stat-item">
+                                    <div class="stat-number">2</div>
+                                    <div class="stat-label">Aprovados</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-xl-3 col-md-6 mb-4">
+                            <div class="upload-stats">
+                                <div class="stat-item">
+                                    <div class="stat-number">15.2</div>
+                                    <div class="stat-label">MB Total</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Content Row -->
+                    <div class="row">
+                        <div class="col-xl-12 col-lg-12">
+                            <div class="card shadow mb-4">
+                                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                                    <h6 class="m-0 font-weight-bold text-primary">
+                                        <i class="fas fa-file-upload fa-fw"></i>
+                                        Upload de Currículos
+                                    </h6>
+                                </div>
+                                <div class="card-body">
+                                    <!-- Upload Area -->
+                                    <div class="upload-area" id="uploadArea">
+                                        <div class="upload-icon">
+                                            <i class="fas fa-cloud-upload-alt"></i>
+                                        </div>
+                                        <div class="upload-text">Drag & Drop to upload</div>
+                                        <div class="upload-subtext">ou clique para selecionar arquivos</div>
+                                        <div class="upload-formats">Formatos aceitos: PDF, DOC, DOCX</div>
+                                        <input type="file" id="fileInput" multiple accept=".pdf,.doc,.docx" style="display: none;">
+                                    </div>
+
+                                    <!-- Progress Bar (hidden by default) -->
+                                    <div class="progress mb-3" id="progressBar" style="display: none;">
+                                        <div class="progress-bar" role="progressbar" style="width: 0%" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+                                    </div>
+
+                                    <!-- File List -->
+                                    <div class="file-list" id="fileList">
+                                        <!-- File items will be added here dynamically -->
+                                    </div>
+
+                                    <!-- Action Buttons -->
+                                    <div class="text-center">
+                                        <button class="btn btn-send" id="sendBtn" disabled>
+                                            <i class="fas fa-paper-plane mr-2"></i>
+                                            Enviar Currículos
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+                <!-- /.container-fluid -->
+
+            </div>
+            <!-- End of Main Content -->
+
+            <!-- Footer -->
+            <footer class="sticky-footer bg-white">
+                <div class="container my-auto">
+                    <div class="copyright text-center my-auto">
+                        <span>Copyright &copy; Quando Previdência 2024</span>
+                    </div>
+                </div>
+            </footer>
+            <!-- End of Footer -->
+
+        </div>
+        <!-- End of Content Wrapper -->
+
+    </div>
+    <!-- End of Page Wrapper -->
+
+    <!-- Scroll to Top Button-->
+    <a class="scroll-to-top rounded" href="#page-top">
+        <i class="fas fa-angle-up"></i>
+    </a>
+
+    <!-- Logout Modal-->
+    <div class="modal fade" id="logoutModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="exampleModalLabel">Pronto para sair?</h5>
+                    <button class="close" type="button" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">×</span>
+                    </button>
+                </div>
+                <div class="modal-body">Selecione "Sair" abaixo se você estiver pronto para encerrar sua sessão atual.</div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" type="button" data-dismiss="modal">Cancelar</button>
+                    <a class="btn btn-primary" href="login.html">Sair</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap core JavaScript-->
+    <script src="vendor/jquery/jquery.min.js"></script>
+    <script src="vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Core plugin JavaScript-->
+    <script src="vendor/jquery-easing/jquery.easing.min.js"></script>
+
+    <!-- Custom scripts for all pages-->
+    <script src="js/sb-admin-2.min.js"></script>
+
+    <!-- Page level custom scripts -->
+    <script>
+        $(document).ready(function() {
+            let uploadedFiles = [];
+
+            // Upload area click
+            $('#uploadArea').on('click', function() {
+                $('#fileInput').click();
+            });
+
+            // File input change
+            $('#fileInput').on('change', function(e) {
+                handleFiles(e.target.files);
+            });
+
+            // Drag and drop functionality
+            $('#uploadArea').on('dragover', function(e) {
+                e.preventDefault();
+                $(this).addClass('dragover');
+            });
+
+            $('#uploadArea').on('dragleave', function(e) {
+                e.preventDefault();
+                $(this).removeClass('dragover');
+            });
+
+            $('#uploadArea').on('drop', function(e) {
+                e.preventDefault();
+                $(this).removeClass('dragover');
+                handleFiles(e.originalEvent.dataTransfer.files);
+            });
+
+            // Handle file uploads
+            function handleFiles(files) {
+                Array.from(files).forEach(file => {
+                    if (isValidFile(file)) {
+                        uploadedFiles.push(file);
+                        addFileToList(file);
+                    } else {
+                        alert('Formato de arquivo não suportado: ' + file.name);
+                    }
+                });
+                updateSendButton();
+            }
+
+            // Validate file type
+            function isValidFile(file) {
+                const validTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+                return validTypes.includes(file.type);
+            }
+
+            // Add file to list
+            function addFileToList(file) {
+                const fileItem = $(`
+                    <div class="file-item" data-file="${file.name}">
+                        <div class="file-info">
+                            <div class="file-icon">
+                                <i class="fas fa-file-pdf"></i>
+                            </div>
+                            <div class="file-details">
+                                <h6>${file.name}</h6>
+                                <small>${formatFileSize(file.size)}</small>
+                            </div>
+                        </div>
+                        <div class="file-actions">
+                            <button class="btn btn-download btn-sm" onclick="downloadFile('${file.name}')">
+                                <i class="fas fa-download"></i>
+                            </button>
+                            <button class="btn btn-edit btn-sm" onclick="editFile('${file.name}')">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="btn btn-delete btn-sm" onclick="deleteFile('${file.name}')">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                `);
+                $('#fileList').append(fileItem);
+            }
+
+            // Format file size
+            function formatFileSize(bytes) {
+                if (bytes === 0) return '0 Bytes';
+                const k = 1024;
+                const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+                const i = Math.floor(Math.log(bytes) / Math.log(k));
+                return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+            }
+
+            // Update send button
+            function updateSendButton() {
+                if (uploadedFiles.length > 0) {
+                    $('#sendBtn').prop('disabled', false);
+                } else {
+                    $('#sendBtn').prop('disabled', true);
+                }
+            }
+
+            // Send files
+            $('#sendBtn').on('click', function() {
+                if (uploadedFiles.length > 0) {
+                    // Simulate upload progress
+                    $('#progressBar').show();
+                    let progress = 0;
+                    const interval = setInterval(() => {
+                        progress += 10;
+                        $('.progress-bar').css('width', progress + '%').attr('aria-valuenow', progress);
+                        if (progress >= 100) {
+                            clearInterval(interval);
+                            setTimeout(() => {
+                                alert('Currículos enviados com sucesso!');
+                                $('#progressBar').hide();
+                                uploadedFiles = [];
+                                $('#fileList').empty();
+                                updateSendButton();
+                            }, 500);
+                        }
+                    }, 200);
+                }
+            });
+
+            // Global functions for file actions
+            window.downloadFile = function(fileName) {
+                alert('Download: ' + fileName);
+            };
+
+            window.editFile = function(fileName) {
+                alert('Editar: ' + fileName);
+            };
+
+            window.deleteFile = function(fileName) {
+                if (confirm('Tem certeza que deseja excluir este arquivo?')) {
+                    uploadedFiles = uploadedFiles.filter(file => file.name !== fileName);
+                    $(`.file-item[data-file="${fileName}"]`).remove();
+                    updateSendButton();
+                }
+            };
+        });
+    </script>
+
+</body>
+
+</html>
