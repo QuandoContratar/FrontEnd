@@ -1,25 +1,324 @@
-<!-- Start of Selection -->
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-BR">
+
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Dashboard - Quando Previdência</title>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="../css/home.css">
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="description" content="Dashboard - Quando Previdência">
+    <meta name="author" content="">
+
+    <title>Dashboard - Quando Previdência</title>
+
+    <!-- Custom fonts for this template-->
+    <link href="vendor/fontawesome-free/css/all.min.css" rel="stylesheet" type="text/css">
+    <link href="https://fonts.googleapis.com/css?family=Nunito:200,200i,300,300i,400,400i,600,600i,700,700i,800,800i,900,900i" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="icon" href="img/relogio_icone_quando_previdencia.png" type="image/png">
+
+    <!-- Custom styles for this template-->
+    <link href="css/sb-admin-2.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="css/home.css">
+    
+    <!-- Custom styles for this page -->
+    <style>
+        :root {
+            --roxo-principal: #7c3aed;
+            --roxo-escuro: #5b21b6;
+            --roxo-claro: #ede9fe;
+            --roxo-hover: #a78bfa;
+        }
+        
+        .sidebar-brand-text {
+            font-family: 'Poppins', sans-serif;
+            font-weight: 600;
+        }
+        
+        .bg-gradient-primary {
+            background: linear-gradient(135deg, var(--roxo-principal) 0%, var(--roxo-escuro) 100%) !important;
+        }
+        
+        .btn-primary {
+            background-color: var(--roxo-principal);
+            border-color: var(--roxo-principal);
+        }
+        
+        .btn-primary:hover {
+            background-color: var(--roxo-escuro);
+            border-color: var(--roxo-escuro);
+        }
+        
+        .text-primary {
+            color: var(--roxo-principal) !important;
+        }
+        
+        .border-left-primary {
+            border-left: 0.25rem solid var(--roxo-principal) !important;
+        }
+        
+        .card-header {
+            background-color: var(--roxo-claro);
+            border-bottom: 1px solid var(--roxo-principal);
+        }
+        
+        .form-control:focus {
+            border-color: var(--roxo-principal);
+            box-shadow: 0 0 0 0.2rem rgba(124, 58, 237, 0.25);
+        }
+        
+        .table th {
+            background-color: var(--roxo-claro);
+            color: var(--roxo-escuro);
+            font-weight: 600;
+        }
+        
+        .search-container {
+            max-width: 400px;
+        }
+        
+        .page-title {
+            color: var(--roxo-escuro);
+            font-weight: 600;
+        }
+
+        /* Estilos específicos para os cards do dashboard */
+        .dashboard-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+
+        .dashboard-card {
+            background: white;
+            border-radius: 12px;
+            padding: 2rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+            cursor: pointer;
+            border: 2px solid transparent;
+        }
+
+        .dashboard-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+            border-color: var(--roxo-principal);
+        }
+
+        .dashboard-card.active {
+            border-color: var(--roxo-principal);
+            background: linear-gradient(135deg, var(--roxo-claro) 0%, white 100%);
+        }
+
+        .dashboard-card h3 {
+            color: var(--roxo-escuro);
+            font-weight: 600;
+            margin: 1rem 0;
+        }
+
+        .dashboard-card p {
+            color: #666;
+            margin-bottom: 1.5rem;
+            line-height: 1.6;
+        }
+
+        .dashboard-card button {
+            background: var(--roxo-principal);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .dashboard-card button:hover {
+            background: var(--roxo-escuro);
+            transform: translateY(-2px);
+        }
+
+        .icon-wrapper {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, var(--roxo-principal) 0%, var(--roxo-escuro) 100%);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 1rem;
+        }
+
+        .icon-roxo {
+            width: 32px;
+            height: 32px;
+            fill: white;
+        }
+    </style>
 </head>
-<body>
+<body id="page-top">
 
-<header>
-    Henrique Szapiro | RH
-</header>
+    <!-- Page Wrapper -->
+    <div id="wrapper">
 
-<div class="container">
-    <h1>Bem-vindo, Henrique Szapiro</h1>
-    <h2>O que vamos ver hoje?</h2>
+        <!-- Sidebar -->
+        <ul class="navbar-nav bg-gradient-primary sidebar sidebar-dark accordion" id="accordionSidebar">
 
-    <div class="cards">
-        <div class="card active">
+            <!-- Sidebar - Brand -->
+            <a class="sidebar-brand d-flex align-items-center justify-content-center" href="home.html">
+                <div class="sidebar-brand-icon rotate-n-15">
+                    <i class="fas fa-clock"></i>
+                </div>
+                <div class="sidebar-brand-text mx-3">Quando Previdência</div>
+            </a>
+
+            <!-- Divider -->
+            <hr class="sidebar-divider my-0">
+
+            <!-- Nav Item - Dashboard -->
+            <li class="nav-item active">
+                <a class="nav-link" href="home.html">
+                    <i class="fas fa-fw fa-tachometer-alt"></i>
+                    <span>Dashboard</span></a>
+            </li>
+
+            <!-- Divider -->
+            <hr class="sidebar-divider">
+
+            <!-- Heading -->
+            <div class="sidebar-heading">
+                Cadastros
+            </div>
+
+            <!-- Nav Item - Administradores -->
+            <li class="nav-item">
+                <a class="nav-link" href="adm.html">
+                    <i class="fas fa-fw fa-user-shield"></i>
+                    <span>Administradores</span></a>
+            </li>
+
+            <!-- Nav Item - Gerentes -->
+            <li class="nav-item">
+                <a class="nav-link" href="gerente.html">
+                    <i class="fas fa-fw fa-user-tie"></i>
+                    <span>Gerentes</span></a>
+            </li>
+
+            <!-- Nav Item - RH -->
+            <li class="nav-item">
+                <a class="nav-link" href="rh.html">
+                    <i class="fas fa-fw fa-users"></i>
+                    <span>RH</span></a>
+            </li>
+
+            <!-- Divider -->
+            <hr class="sidebar-divider">
+
+            <!-- Heading -->
+            <div class="sidebar-heading">
+                Relatórios
+            </div>
+
+            <!-- Nav Item - Charts -->
+            <li class="nav-item">
+                <a class="nav-link" href="charts.html">
+                    <i class="fas fa-fw fa-chart-area"></i>
+                    <span>Gráficos</span></a>
+            </li>
+
+            <!-- Nav Item - Tables -->
+            <li class="nav-item">
+                <a class="nav-link" href="tables.html">
+                    <i class="fas fa-fw fa-table"></i>
+                    <span>Tabelas</span></a>
+            </li>
+
+            <!-- Divider -->
+            <hr class="sidebar-divider d-none d-md-block">
+
+            <!-- Sidebar Toggler (Sidebar) -->
+            <div class="text-center d-none d-md-inline">
+                <button class="rounded-circle border-0" id="sidebarToggle"></button>
+            </div>
+
+        </ul>
+        <!-- End of Sidebar -->
+
+        <!-- Content Wrapper -->
+        <div id="content-wrapper" class="d-flex flex-column">
+
+            <!-- Main Content -->
+            <div id="content">
+
+                <!-- Topbar -->
+                <nav class="navbar navbar-expand navbar-light bg-white topbar mb-4 static-top shadow">
+
+                    <!-- Sidebar Toggle (Topbar) -->
+                    <button id="sidebarToggleTop" class="btn btn-link d-md-none rounded-circle mr-3">
+                        <i class="fa fa-bars"></i>
+                    </button>
+
+                    <!-- Topbar Search -->
+                    <form class="d-none d-sm-inline-block form-inline mr-auto ml-md-3 my-2 my-md-0 mw-100 navbar-search">
+                        <div class="input-group">
+                            <input type="text" class="form-control bg-light border-0 small" placeholder="Pesquisar no sistema..." aria-label="Search" aria-describedby="basic-addon2">
+                            <div class="input-group-append">
+                                <button class="btn btn-primary" type="button">
+                                    <i class="fas fa-search fa-sm"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+
+                    <!-- Topbar Navbar -->
+                    <ul class="navbar-nav ml-auto">
+
+                        <!-- Nav Item - User Information -->
+                        <li class="nav-item dropdown no-arrow">
+                            <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                <span class="mr-2 d-none d-lg-inline text-gray-600 small">Henrique Szapiro</span>
+                                <img class="img-profile rounded-circle" src="img/undraw_profile.svg">
+                            </a>
+                            <!-- Dropdown - User Information -->
+                            <div class="dropdown-menu dropdown-menu-right shadow animated--grow-in" aria-labelledby="userDropdown">
+                                <a class="dropdown-item" href="#">
+                                    <i class="fas fa-user fa-sm fa-fw mr-2 text-gray-400"></i>
+                                    Perfil
+                                </a>
+                                <a class="dropdown-item" href="#">
+                                    <i class="fas fa-cogs fa-sm fa-fw mr-2 text-gray-400"></i>
+                                    Configurações
+                                </a>
+                                <div class="dropdown-divider"></div>
+                                <a class="dropdown-item" href="#" data-toggle="modal" data-target="#logoutModal">
+                                    <i class="fas fa-sign-out-alt fa-sm fa-fw mr-2 text-gray-400"></i>
+                                    Sair
+                                </a>
+                            </div>
+                        </li>
+
+                    </ul>
+
+                </nav>
+                <!-- End of Topbar -->
+
+                <!-- Begin Page Content -->
+                <div class="container-fluid">
+
+                    <!-- Page Heading -->
+                    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+                        <div>
+                            <h1 class="h3 mb-0 text-gray-800 page-title">Bem-vindo, Henrique Szapiro</h1>
+                            <p class="mb-0 text-gray-600">O que vamos ver hoje?</p>
+                        </div>
+                    </div>
+
+                    <!-- Content Row -->
+                    <div class="row">
+                        <div class="col-xl-12 col-lg-12">
+                            <div class="dashboard-cards">
+                                <div class="dashboard-card active">
             <div class="icon-wrapper">
                 <!-- Ícone: Abertura de Vagas (Currículo) -->
                 <svg class="icon-roxo" viewBox="0 0 48 48">
@@ -33,7 +332,7 @@
             <p>Realize a abertura de novas vagas, configure detalhes e gerencie o fluxo de recrutamento.</p>
             <button>Clique Aqui</button>
         </div>
-        <div class="card">
+                                <div class="dashboard-card">
             <div class="icon-wrapper">
                 <!-- Ícone: Kanban -->
                 <svg class="icon-roxo" viewBox="0 0 48 48">
@@ -46,7 +345,7 @@
             <p>Visualize e organize o progresso de cada candidato em seu fluxo de recrutamento.</p>
             <button>Visualizar</button>
         </div>
-        <div class="card">
+                                <div class="dashboard-card">
             <div class="icon-wrapper">
                 <!-- Ícone: Maleta (Briefcase) -->
                 <svg class="icon-roxo" viewBox="0 0 48 48">
@@ -59,7 +358,7 @@
             <p>Acompanhe as vagas abertas e o status de cada posição de forma visual.</p>
             <button>Visualizar</button>
         </div>
-        <div class="card">
+                                <div class="dashboard-card">
             <div class="icon-wrapper">
                 <!-- Ícone: Grupo de Usuários -->
                 <svg class="icon-roxo" viewBox="0 0 48 48">
@@ -73,7 +372,7 @@
             <p>Veja todos os candidatos cadastrados, suas informações e progresso nos processos.</p>
             <button>Visualizar</button>
         </div>
-        <div class="card">
+                                <div class="dashboard-card">
             <div class="icon-wrapper">
                 <!-- Ícone: Pasta Aberta -->
                 <svg class="icon-roxo" viewBox="0 0 48 48">
@@ -85,7 +384,7 @@
             <p>Confira todas as vagas abertas, encerradas e em andamento.</p>
             <button>Visualizar</button>
         </div>
-        <div class="card">
+                                <div class="dashboard-card">
             <div class="icon-wrapper">
                 <!-- Ícone: Gráfico (Dashboard) -->
                 <svg class="icon-roxo" viewBox="0 0 48 48">
@@ -98,19 +397,77 @@
             <p>Acompanhe métricas, relatórios e indicadores de performance do RH.</p>
             <button>Acessar</button>
         </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+                <!-- /.container-fluid -->
+
+            </div>
+            <!-- End of Main Content -->
+
+            <!-- Footer -->
+            <footer class="sticky-footer bg-white">
+                <div class="container my-auto">
+                    <div class="copyright text-center my-auto">
+                        <span>Copyright &copy; Quando Previdência 2024</span>
+                    </div>
+                </div>
+            </footer>
+            <!-- End of Footer -->
+
+        </div>
+        <!-- End of Content Wrapper -->
+
     </div>
-</div>
+    <!-- End of Page Wrapper -->
 
-<script>
-    const cards = document.querySelectorAll('.card');
+    <!-- Scroll to Top Button-->
+    <a class="scroll-to-top rounded" href="#page-top">
+        <i class="fas fa-angle-up"></i>
+    </a>
 
-    cards.forEach(card => {
-        card.addEventListener('click', () => {
-            cards.forEach(c => c.classList.remove('active'));
-            card.classList.add('active');
+    <!-- Logout Modal-->
+    <div class="modal fade" id="logoutModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="exampleModalLabel">Pronto para sair?</h5>
+                    <button class="close" type="button" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">×</span>
+                    </button>
+                </div>
+                <div class="modal-body">Selecione "Sair" abaixo se você estiver pronto para encerrar sua sessão atual.</div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" type="button" data-dismiss="modal">Cancelar</button>
+                    <a class="btn btn-primary" href="login.html">Sair</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap core JavaScript-->
+    <script src="vendor/jquery/jquery.min.js"></script>
+    <script src="vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Core plugin JavaScript-->
+    <script src="vendor/jquery-easing/jquery.easing.min.js"></script>
+
+    <!-- Custom scripts for all pages-->
+    <script src="js/sb-admin-2.min.js"></script>
+
+    <!-- Page level custom scripts -->
+    <script>
+        $(document).ready(function() {
+            // Funcionalidade dos cards
+            $('.dashboard-card').on('click', function() {
+                $('.dashboard-card').removeClass('active');
+                $(this).addClass('active');
+            });
         });
-    });
-</script>
+    </script>
 
 </body>
-</html
+
+</html>

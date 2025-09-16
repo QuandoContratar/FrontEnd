@@ -1,137 +1,592 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Cadastro Gerentes</title>
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="./css/gerente.css">
-  <link rel="icon" href="../img/relogio_icone_quando_previdencia.png" type="image/png">
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="description" content="Sistema de Cadastro de Gerentes - Quando Previdência">
+    <meta name="author" content="">
+
+    <title>Cadastro de Gerentes - Quando Previdência</title>
+
+    <!-- Custom fonts for this template-->
+    <link href="vendor/fontawesome-free/css/all.min.css" rel="stylesheet" type="text/css">
+    <link href="https://fonts.googleapis.com/css?family=Nunito:200,200i,300,300i,400,400i,600,600i,700,700i,800,800i,900,900i" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="icon" href="img/relogio_icone_quando_previdencia.png" type="image/png">
+
+    <!-- Custom styles for this template-->
+    <link href="css/sb-admin-2.min.css" rel="stylesheet">
+    
+    <!-- Custom styles for this page -->
+    <style>
+        :root {
+            --roxo-principal: #7c3aed;
+            --roxo-escuro: #5b21b6;
+            --roxo-claro: #ede9fe;
+            --roxo-hover: #a78bfa;
+        }
+        
+        .sidebar-brand-text {
+            font-family: 'Poppins', sans-serif;
+            font-weight: 600;
+        }
+        
+        .bg-gradient-primary {
+            background: linear-gradient(135deg, var(--roxo-principal) 0%, var(--roxo-escuro) 100%) !important;
+        }
+        
+        .btn-primary {
+            background-color: var(--roxo-principal);
+            border-color: var(--roxo-principal);
+        }
+        
+        .btn-primary:hover {
+            background-color: var(--roxo-escuro);
+            border-color: var(--roxo-escuro);
+        }
+        
+        .text-primary {
+            color: var(--roxo-principal) !important;
+        }
+        
+        .border-left-primary {
+            border-left: 0.25rem solid var(--roxo-principal) !important;
+        }
+        
+        .card-header {
+            background-color: var(--roxo-claro);
+            border-bottom: 1px solid var(--roxo-principal);
+        }
+        
+        .form-control:focus {
+            border-color: var(--roxo-principal);
+            box-shadow: 0 0 0 0.2rem rgba(124, 58, 237, 0.25);
+        }
+        
+        .table th {
+            background-color: var(--roxo-claro);
+            color: var(--roxo-escuro);
+            font-weight: 600;
+        }
+        
+        .search-container {
+            max-width: 400px;
+        }
+        
+        .page-title {
+            color: var(--roxo-escuro);
+            font-weight: 600;
+        }
+    </style>
 </head>
-<body>
-<div class="container">
+<body id="page-top">
 
-  <div class="sidebar">
-    <div class="logo">MENU CADASTROS</div>
-    <a href="#">Administradores</a>
-    <a href="#"class="active">Gestores</a>
-    <a href="#">RH</a>
-  </div>
+    <!-- Page Wrapper -->
+    <div id="wrapper">
 
-  <div class="main">
-    <h2>ADICIONE UM NOVO GERENTE</h2>
-    <div class="form-row">
-      <input type="text" id="name" placeholder="Ex: Nome Z">
-      <input type="email" id="email" placeholder="Ex: Email Y">
-      <input type="text" id="area" placeholder="Ex: Área X">
-      <button class="btn-save" id="addAdminBtn">SALVAR</button>
+        <!-- Sidebar -->
+        <ul class="navbar-nav bg-gradient-primary sidebar sidebar-dark accordion" id="accordionSidebar">
+
+            <!-- Sidebar - Brand -->
+            <a class="sidebar-brand d-flex align-items-center justify-content-center" href="home.html">
+                <div class="sidebar-brand-icon rotate-n-15">
+                    <i class="fas fa-clock"></i>
+                </div>
+                <div class="sidebar-brand-text mx-3">Quando Previdência</div>
+            </a>
+
+            <!-- Divider -->
+            <hr class="sidebar-divider my-0">
+
+            <!-- Nav Item - Dashboard -->
+            <li class="nav-item">
+                <a class="nav-link" href="home.html">
+                    <i class="fas fa-fw fa-tachometer-alt"></i>
+                    <span>Dashboard</span></a>
+            </li>
+
+            <!-- Divider -->
+            <hr class="sidebar-divider">
+
+            <!-- Heading -->
+            <div class="sidebar-heading">
+                Cadastros
+            </div>
+
+            <!-- Nav Item - Administradores -->
+            <li class="nav-item">
+                <a class="nav-link" href="adm.html">
+                    <i class="fas fa-fw fa-user-shield"></i>
+                    <span>Administradores</span></a>
+            </li>
+
+            <!-- Nav Item - Gerentes -->
+            <li class="nav-item active">
+                <a class="nav-link" href="gerente.html">
+                    <i class="fas fa-fw fa-user-tie"></i>
+                    <span>Gerentes</span></a>
+            </li>
+
+            <!-- Nav Item - RH -->
+            <li class="nav-item">
+                <a class="nav-link" href="rh.html">
+                    <i class="fas fa-fw fa-users"></i>
+                    <span>RH</span></a>
+            </li>
+
+            <!-- Divider -->
+            <hr class="sidebar-divider">
+
+            <!-- Heading -->
+            <div class="sidebar-heading">
+                Relatórios
+            </div>
+
+            <!-- Nav Item - Charts -->
+            <li class="nav-item">
+                <a class="nav-link" href="charts.html">
+                    <i class="fas fa-fw fa-chart-area"></i>
+                    <span>Gráficos</span></a>
+            </li>
+
+            <!-- Nav Item - Tables -->
+            <li class="nav-item">
+                <a class="nav-link" href="tables.html">
+                    <i class="fas fa-fw fa-table"></i>
+                    <span>Tabelas</span></a>
+            </li>
+
+            <!-- Divider -->
+            <hr class="sidebar-divider d-none d-md-block">
+
+            <!-- Sidebar Toggler (Sidebar) -->
+            <div class="text-center d-none d-md-inline">
+                <button class="rounded-circle border-0" id="sidebarToggle"></button>
+            </div>
+
+        </ul>
+        <!-- End of Sidebar -->
+
+        <!-- Content Wrapper -->
+        <div id="content-wrapper" class="d-flex flex-column">
+
+            <!-- Main Content -->
+            <div id="content">
+
+                <!-- Topbar -->
+                <nav class="navbar navbar-expand navbar-light bg-white topbar mb-4 static-top shadow">
+
+                    <!-- Sidebar Toggle (Topbar) -->
+                    <button id="sidebarToggleTop" class="btn btn-link d-md-none rounded-circle mr-3">
+                        <i class="fa fa-bars"></i>
+                    </button>
+
+                    <!-- Topbar Search -->
+                    <form class="d-none d-sm-inline-block form-inline mr-auto ml-md-3 my-2 my-md-0 mw-100 navbar-search">
+                        <div class="input-group">
+                            <input type="text" class="form-control bg-light border-0 small" placeholder="Pesquisar gerentes..." aria-label="Search" aria-describedby="basic-addon2">
+                            <div class="input-group-append">
+                                <button class="btn btn-primary" type="button">
+                                    <i class="fas fa-search fa-sm"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+
+                    <!-- Topbar Navbar -->
+                    <ul class="navbar-nav ml-auto">
+
+                        <!-- Nav Item - Search Dropdown (Visible Only XS) -->
+                        <li class="nav-item dropdown no-arrow d-sm-none">
+                            <a class="nav-link dropdown-toggle" href="#" id="searchDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                <i class="fas fa-search fa-fw"></i>
+                            </a>
+                            <!-- Dropdown - Messages -->
+                            <div class="dropdown-menu dropdown-menu-right p-3 shadow animated--grow-in" aria-labelledby="searchDropdown">
+                                <form class="form-inline mr-auto w-100 navbar-search">
+                                    <div class="input-group">
+                                        <input type="text" class="form-control bg-light border-0 small" placeholder="Pesquisar gerentes..." aria-label="Search" aria-describedby="basic-addon2">
+                                        <div class="input-group-append">
+                                            <button class="btn btn-primary" type="button">
+                                                <i class="fas fa-search fa-sm"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
+                        </li>
+
+                        <!-- Nav Item - Alerts -->
+                        <li class="nav-item dropdown no-arrow mx-1">
+                            <a class="nav-link dropdown-toggle" href="#" id="alertsDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                <i class="fas fa-bell fa-fw"></i>
+                                <!-- Counter - Alerts -->
+                                <span class="badge badge-danger badge-counter">3+</span>
+                            </a>
+                            <!-- Dropdown - Alerts -->
+                            <div class="dropdown-list dropdown-menu dropdown-menu-right shadow animated--grow-in" aria-labelledby="alertsDropdown">
+                                <h6 class="dropdown-header">
+                                    Central de Alertas
+                                </h6>
+                                <a class="dropdown-item d-flex align-items-center" href="#">
+                                    <div class="mr-3">
+                                        <div class="icon-circle bg-primary">
+                                            <i class="fas fa-file-alt text-white"></i>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <div class="small text-gray-500">12 de Dezembro, 2024</div>
+                                        <span class="font-weight-bold">Novo gerente cadastrado!</span>
+                                    </div>
+                                </a>
+                                <a class="dropdown-item d-flex align-items-center" href="#">
+                                    <div class="mr-3">
+                                        <div class="icon-circle bg-success">
+                                            <i class="fas fa-donate text-white"></i>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <div class="small text-gray-500">12 de Dezembro, 2024</div>
+                                        Sistema atualizado com sucesso!
+                                    </div>
+                                </a>
+                                <a class="dropdown-item text-center small text-gray-500" href="#">Mostrar Todos os Alertas</a>
+                            </div>
+                        </li>
+
+                        <!-- Nav Item - Messages -->
+                        <li class="nav-item dropdown no-arrow mx-1">
+                            <a class="nav-link dropdown-toggle" href="#" id="messagesDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                <i class="fas fa-envelope fa-fw"></i>
+                                <!-- Counter - Messages -->
+                                <span class="badge badge-danger badge-counter">7</span>
+                            </a>
+                            <!-- Dropdown - Messages -->
+                            <div class="dropdown-list dropdown-menu dropdown-menu-right shadow animated--grow-in" aria-labelledby="messagesDropdown">
+                                <h6 class="dropdown-header">
+                                    Centro de Mensagens
+                                </h6>
+                                <a class="dropdown-item d-flex align-items-center" href="#">
+                                    <div class="dropdown-list-image mr-3">
+                                        <img class="rounded-circle" src="img/undraw_profile_1.svg" alt="...">
+                                        <div class="status-indicator bg-success"></div>
+                                    </div>
+                                    <div>
+                                        <div class="text-truncate">Olá! Temos uma nova vaga disponível para gerente de projetos.</div>
+                                        <div class="small text-gray-500">João Silva · 58m</div>
+                                    </div>
+                                </a>
+                                <a class="dropdown-item text-center small text-gray-500" href="#">Ler Mais Mensagens</a>
+                            </div>
+                        </li>
+
+                        <div class="topbar-divider d-none d-sm-block"></div>
+
+                        <!-- Nav Item - User Information -->
+                        <li class="nav-item dropdown no-arrow">
+                            <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                <span class="mr-2 d-none d-lg-inline text-gray-600 small">Henrique Szapiro</span>
+                                <img class="img-profile rounded-circle" src="img/undraw_profile.svg">
+                            </a>
+                            <!-- Dropdown - User Information -->
+                            <div class="dropdown-menu dropdown-menu-right shadow animated--grow-in" aria-labelledby="userDropdown">
+                                <a class="dropdown-item" href="#">
+                                    <i class="fas fa-user fa-sm fa-fw mr-2 text-gray-400"></i>
+                                    Perfil
+                                </a>
+                                <a class="dropdown-item" href="#">
+                                    <i class="fas fa-cogs fa-sm fa-fw mr-2 text-gray-400"></i>
+                                    Configurações
+                                </a>
+                                <a class="dropdown-item" href="#">
+                                    <i class="fas fa-list fa-sm fa-fw mr-2 text-gray-400"></i>
+                                    Log de Atividades
+                                </a>
+                                <div class="dropdown-divider"></div>
+                                <a class="dropdown-item" href="#" data-toggle="modal" data-target="#logoutModal">
+                                    <i class="fas fa-sign-out-alt fa-sm fa-fw mr-2 text-gray-400"></i>
+                                    Sair
+                                </a>
+                            </div>
+                        </li>
+
+                    </ul>
+
+                </nav>
+                <!-- End of Topbar -->
+
+                <!-- Begin Page Content -->
+                <div class="container-fluid">
+
+                    <!-- Page Heading -->
+                    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+                        <h1 class="h3 mb-0 text-gray-800 page-title">Cadastro de Gerentes</h1>
+                    </div>
+
+                    <!-- Content Row -->
+                    <div class="row">
+
+                        <!-- Card de Cadastro -->
+                        <div class="col-xl-12 col-lg-12">
+                            <div class="card shadow mb-4">
+                                <!-- Card Header - Dropdown -->
+                                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                                    <h6 class="m-0 font-weight-bold text-primary">
+                                        <i class="fas fa-user-plus fa-fw"></i>
+                                        Adicionar Novo Gerente
+                                    </h6>
+                                </div>
+                                <!-- Card Body -->
+                                <div class="card-body">
+                                    <form id="gerenteForm">
+                                        <div class="row">
+                                            <div class="col-md-4 mb-3">
+                                                <label for="name" class="form-label">Nome Completo</label>
+                                                <input type="text" id="name" class="form-control" placeholder="Ex: João Silva" required>
+                                            </div>
+                                            <div class="col-md-4 mb-3">
+                                                <label for="email" class="form-label">E-mail</label>
+                                                <input type="email" id="email" class="form-control" placeholder="Ex: joao.silva@empresa.com" required>
+                                            </div>
+                                            <div class="col-md-3 mb-3">
+                                                <label for="area" class="form-label">Área de Atuação</label>
+                                                <input type="text" id="area" class="form-control" placeholder="Ex: Projetos" required>
+                                            </div>
+                                            <div class="col-md-1 mb-3 d-flex align-items-end">
+                                                <button type="submit" class="btn btn-primary w-100" id="addGerenteBtn">
+                                                    <i class="fas fa-save"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Card da Tabela -->
+                        <div class="col-xl-12 col-lg-12">
+                            <div class="card shadow mb-4">
+                                <!-- Card Header - Dropdown -->
+                                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                                    <h6 class="m-0 font-weight-bold text-primary">
+                                        <i class="fas fa-users fa-fw"></i>
+                                        Gerentes Cadastrados
+                                    </h6>
+                                    <div class="search-container">
+                                        <div class="input-group">
+                                            <input type="text" id="searchInput" class="form-control bg-light border-0 small" placeholder="Pesquisar gerentes...">
+                                            <div class="input-group-append">
+                                                <button class="btn btn-primary" type="button">
+                                                    <i class="fas fa-search fa-sm"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <!-- Card Body -->
+                                <div class="card-body">
+                                    <div class="table-responsive">
+                                        <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
+                                            <thead>
+                                                <tr>
+                                                    <th>Nome</th>
+                                                    <th>E-mail</th>
+                                                    <th>Área</th>
+                                                    <th>Data de Cadastro</th>
+                                                    <th>Ações</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="gerenteTableBody">
+                                                <tr>
+                                                    <td>Adauto Martins</td>
+                                                    <td>adauto.martins@f3capital.com</td>
+                                                    <td>CEO - Administrador Geral</td>
+                                                    <td>01/12/2024</td>
+                                                    <td>
+                                                        <button class="btn btn-danger btn-sm deleteBtn" title="Excluir">
+                                                            <i class="fas fa-trash"></i>
+                                                        </button>
+                                                        <button class="btn btn-info btn-sm ml-1" title="Editar">
+                                                            <i class="fas fa-edit"></i>
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+
+                </div>
+                <!-- /.container-fluid -->
+
+            </div>
+            <!-- End of Main Content -->
+
+            <!-- Footer -->
+            <footer class="sticky-footer bg-white">
+                <div class="container my-auto">
+                    <div class="copyright text-center my-auto">
+                        <span>Copyright &copy; Quando Previdência 2024</span>
+                    </div>
+                </div>
+            </footer>
+            <!-- End of Footer -->
+
+        </div>
+        <!-- End of Content Wrapper -->
+
+    </div>
+    <!-- End of Page Wrapper -->
+
+    <!-- Scroll to Top Button-->
+    <a class="scroll-to-top rounded" href="#page-top">
+        <i class="fas fa-angle-up"></i>
+    </a>
+
+    <!-- Logout Modal-->
+    <div class="modal fade" id="logoutModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="exampleModalLabel">Pronto para sair?</h5>
+                    <button class="close" type="button" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">×</span>
+                    </button>
+                </div>
+                <div class="modal-body">Selecione "Sair" abaixo se você estiver pronto para encerrar sua sessão atual.</div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" type="button" data-dismiss="modal">Cancelar</button>
+                    <a class="btn btn-primary" href="login.html">Sair</a>
+                </div>
+            </div>
+        </div>
     </div>
 
-  <hr class="divider">
-<div class="search-bar">
-  <input type="text" id="searchInput" placeholder="Pesquisar...">
-  <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" stroke="#666" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
-    <circle cx="11" cy="11" r="8"></circle>
-    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-  </svg>
-</div>
+    <!-- Bootstrap core JavaScript-->
+    <script src="vendor/jquery/jquery.min.js"></script>
+    <script src="vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
 
+    <!-- Core plugin JavaScript-->
+    <script src="vendor/jquery-easing/jquery.easing.min.js"></script>
 
-    <div class="table-section">
-      <h2>GERENTES CADASTRADOS</h2>
-      <table>
-        <thead>
-          <tr>
-            <th>NOME</th>
-            <th>EMAIL</th>
-            <th>ÁREA</th>
-            <th>AÇÃO</th>
-          </tr>
-        </thead>
-        <tbody id="gerenteTableBody">
-          <tr>
-            <td>Adauto Martins</td>
-            <td>adauto.martins@f3capital.com</td>
-            <td>CEO - Administrador Geral</td>
-            <td><button class="deleteBtn">&times;</button></td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
+    <!-- Custom scripts for all pages-->
+    <script src="js/sb-admin-2.min.js"></script>
 
-  </div>
-</div>
+    <!-- Page level plugins -->
+    <script src="vendor/datatables/jquery.dataTables.min.js"></script>
+    <script src="vendor/datatables/dataTables.bootstrap4.min.js"></script>
 
-<script>
-  const addBtn = document.getElementById('addGerenteBtn');
-  const nameInput = document.getElementById('name');
-  const emailInput = document.getElementById('email');
-  const areaInput = document.getElementById('area');
-  const tableBody = document.getElementById('gerenteTableBody');
+    <!-- Page level custom scripts -->
+    <script>
+        $(document).ready(function() {
+            // Inicializar DataTable
+            $('#dataTable').DataTable({
+                "language": {
+                    "url": "//cdn.datatables.net/plug-ins/1.10.24/i18n/Portuguese-Brasil.json"
+                },
+                "pageLength": 10,
+                "order": [[ 0, "asc" ]]
+            });
 
-  // Função para criar nova linha
-  function addGerente() {
-    const name = nameInput.value.trim();
-    const email = emailInput.value.trim();
-    const area = areaInput.value.trim();
+            // Função para adicionar gerente
+            $('#gerenteForm').on('submit', function(e) {
+                e.preventDefault();
+                
+                const name = $('#name').val().trim();
+                const email = $('#email').val().trim();
+                const area = $('#area').val().trim();
 
-    if (!name || !email || !area) {
-      alert('Preencha todos os campos!');
-      return;
-    }
+                if (!name || !email || !area) {
+                    alert('Preencha todos os campos!');
+                    return;
+                }
 
-    const tr = document.createElement('tr');
+                // Adicionar nova linha na tabela
+                const table = $('#dataTable').DataTable();
+                const today = new Date().toLocaleDateString('pt-BR');
+                
+                table.row.add([
+                    name,
+                    email,
+                    area,
+                    today,
+                    `<button class="btn btn-danger btn-sm deleteBtn" title="Excluir">
+                        <i class="fas fa-trash"></i>
+                     </button>
+                     <button class="btn btn-info btn-sm ml-1" title="Editar">
+                        <i class="fas fa-edit"></i>
+                     </button>`
+                ]).draw();
 
-    tr.innerHTML = `
-      <td>${name}</td>
-      <td>${email}</td>
-      <td>${area}</td>
-      <td><button class="deleteBtn">&times;</button></td>
-    `;
+                // Limpar formulário
+                $('#gerenteForm')[0].reset();
 
-    tableBody.appendChild(tr);
+                // Mostrar notificação de sucesso
+                showNotification('Gerente adicionado com sucesso!', 'success');
+            });
 
-    // Limpar inputs
-    nameInput.value = '';
-    emailInput.value = '';
-    areaInput.value = '';
+            // Função para deletar gerente
+            $(document).on('click', '.deleteBtn', function() {
+                if (confirm('Tem certeza que deseja excluir este gerente?')) {
+                    const table = $('#dataTable').DataTable();
+                    const row = $(this).closest('tr');
+                    table.row(row).remove().draw();
+                    showNotification('Gerente excluído com sucesso!', 'info');
+                }
+            });
 
-    // Adicionar funcionalidade ao botão de deletar
-    tr.querySelector('.deleteBtn').addEventListener('click', () => {
-      tr.remove();
-    });
-  }
+            // Função para editar gerente
+            $(document).on('click', '.btn-info', function() {
+                const row = $(this).closest('tr');
+                const cells = row.find('td');
+                
+                // Preencher formulário com dados da linha
+                $('#name').val(cells.eq(0).text());
+                $('#email').val(cells.eq(1).text());
+                $('#area').val(cells.eq(2).text());
+                
+                // Remover linha da tabela (será readicionada quando salvar)
+                const table = $('#dataTable').DataTable();
+                table.row(row).remove().draw();
+                
+                showNotification('Dados carregados para edição!', 'info');
+            });
 
-  // Evento do botão salvar
-  addBtn.addEventListener('click', addGerente);
+            // Função de busca
+            $('#searchInput').on('keyup', function() {
+                const table = $('#dataTable').DataTable();
+                table.search(this.value).draw();
+            });
 
-  // Tornar os botões existentes funcionais
-  document.querySelectorAll('.deleteBtn').forEach(btn => {
-    btn.addEventListener('click', (e) => {
-      e.target.closest('tr').remove();
-    });
-
-    const searchInput = document.getElementById('searchInput');
-
-searchInput.addEventListener('keyup', () => {
-  const filter = searchInput.value.toLowerCase();
-  const rows = tableBody.getElementsByTagName('tr');
-
-  Array.from(rows).forEach(row => {
-    const name = row.cells[0].textContent.toLowerCase();
-    const email = row.cells[1].textContent.toLowerCase();
-    const area = row.cells[2].textContent.toLowerCase();
-
-    if (name.includes(filter) || email.includes(filter) || area.includes(filter)) {
-      row.style.display = '';
-    } else {
-      row.style.display = 'none';
-    }
-  });
-});
-
-  });
-</script>
+            // Função para mostrar notificações
+            function showNotification(message, type) {
+                const alertClass = type === 'success' ? 'alert-success' : 'alert-info';
+                const notification = $(`
+                    <div class="alert ${alertClass} alert-dismissible fade show position-fixed" 
+                         style="top: 20px; right: 20px; z-index: 9999; min-width: 300px;">
+                        ${message}
+                        <button type="button" class="close" data-dismiss="alert">
+                            <span>&times;</span>
+                        </button>
+                    </div>
+                `);
+                
+                $('body').append(notification);
+                
+                // Remover notificação após 3 segundos
+                setTimeout(() => {
+                    notification.alert('close');
+                }, 3000);
+            }
+        });
+    </script>
 
 </body>
+
 </html>
