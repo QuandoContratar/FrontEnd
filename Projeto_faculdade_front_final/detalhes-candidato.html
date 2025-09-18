@@ -1,0 +1,838 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="description" content="Detalhes do Candidato - Quando Previdência">
+    <meta name="author" content="">
+
+    <title>Detalhes do Candidato - Quando Previdência</title>
+
+    <!-- Custom fonts for this template-->
+    <link href="vendor/fontawesome-free/css/all.min.css" rel="stylesheet" type="text/css">
+    <link href="https://fonts.googleapis.com/css?family=Nunito:200,200i,300,300i,400,400i,600,600i,700,700i,800,800i,900,900i" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="icon" href="./img/relogio_icone_quando_previdencia.png" type="image/png">
+
+    <!-- Custom styles for this template-->
+    <link href="css/sb-admin-2.min.css" rel="stylesheet">
+    
+    <!-- Chart.js -->
+    <script src="vendor/chart.js/Chart.min.js"></script>
+    
+    <!-- Custom styles for this page -->
+    <style>
+        :root {
+            --roxo-principal: #7c3aed;
+            --roxo-escuro: #5b21b6;
+            --roxo-claro: #ede9fe;
+            --roxo-hover: #a78bfa;
+            --fundo-roxo: #f8f5ff;
+            --azul-escuro: #1f2937;
+        }
+        
+        body {
+            background-color: var(--fundo-roxo);
+        }
+        
+        .sidebar-brand-text {
+            font-family: 'Poppins', sans-serif;
+            font-weight: 600;
+        }
+        
+        .bg-gradient-primary {
+            background: linear-gradient(135deg, var(--roxo-principal) 0%, var(--roxo-escuro) 100%) !important;
+        }
+        
+        .btn-primary {
+            background-color: var(--roxo-principal);
+            border-color: var(--roxo-principal);
+        }
+        
+        .btn-primary:hover {
+            background-color: var(--roxo-escuro);
+            border-color: var(--roxo-escuro);
+        }
+        
+        .text-primary {
+            color: var(--roxo-principal) !important;
+        }
+        
+        .border-left-primary {
+            border-left: 0.25rem solid var(--roxo-principal) !important;
+        }
+        
+        .card-header {
+            background-color: var(--roxo-claro);
+            border-bottom: 1px solid var(--roxo-principal);
+        }
+        
+        .form-control:focus {
+            border-color: var(--roxo-principal);
+            box-shadow: 0 0 0 0.2rem rgba(124, 58, 237, 0.25);
+        }
+        
+        .table th {
+            background-color: var(--roxo-claro);
+            color: var(--roxo-escuro);
+            font-weight: 600;
+        }
+        
+        .page-title {
+            color: var(--roxo-escuro);
+            font-weight: 600;
+        }
+        
+        .main-content {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+        }
+        
+        .page-header {
+            background: linear-gradient(135deg, var(--roxo-principal) 0%, var(--roxo-escuro) 100%);
+            color: white;
+            padding: 20px 30px;
+            border-radius: 8px 8px 0 0;
+            margin-bottom: 0;
+        }
+        
+        .candidate-profile {
+            background: white;
+            border-radius: 8px;
+            padding: 30px;
+            margin-bottom: 20px;
+            box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+        }
+        
+        .candidate-photo {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 4px solid var(--roxo-claro);
+            margin-bottom: 20px;
+        }
+        
+        .candidate-info h4 {
+            color: var(--azul-escuro);
+            font-weight: 600;
+            margin-bottom: 15px;
+        }
+        
+        .candidate-info p {
+            color: #6b7280;
+            margin-bottom: 8px;
+            font-size: 16px;
+        }
+        
+        .candidate-info strong {
+            color: var(--azul-escuro);
+        }
+        
+        .expandable-section {
+            background: #f9fafb;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            overflow: hidden;
+        }
+        
+        .expandable-header {
+            background: #f3f4f6;
+            padding: 15px 20px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: background-color 0.3s ease;
+        }
+        
+        .expandable-header:hover {
+            background: #e5e7eb;
+        }
+        
+        .expandable-header h6 {
+            margin: 0;
+            color: var(--azul-escuro);
+            font-weight: 600;
+        }
+        
+        .expandable-content {
+            padding: 20px;
+            display: none;
+            background: white;
+        }
+        
+        .expandable-content.show {
+            display: block;
+        }
+        
+        .chevron-icon {
+            transition: transform 0.3s ease;
+        }
+        
+        .chevron-icon.rotated {
+            transform: rotate(180deg);
+        }
+        
+        .progress-section {
+            background: white;
+            border-radius: 8px;
+            padding: 30px;
+            box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+        }
+        
+        .progress-chart {
+            width: 150px;
+            height: 150px;
+            margin: 0 auto 20px;
+        }
+        
+        .progress-title {
+            color: var(--azul-escuro);
+            font-weight: 600;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .action-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        .btn-download {
+            background-color: var(--azul-escuro);
+            border-color: var(--azul-escuro);
+            color: white;
+            padding: 12px 20px;
+            border-radius: 6px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-download:hover {
+            background-color: #374151;
+            border-color: #374151;
+            color: white;
+        }
+        
+        .btn-exclude {
+            background-color: white;
+            border: 2px solid var(--azul-escuro);
+            color: var(--azul-escuro);
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-exclude:hover {
+            background-color: var(--azul-escuro);
+            color: white;
+        }
+        
+        .back-button {
+            background-color: white;
+            border: 2px solid var(--azul-escuro);
+            color: var(--azul-escuro);
+            padding: 8px 20px;
+            border-radius: 6px;
+            font-weight: 500;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+        
+        .back-button:hover {
+            background-color: var(--azul-escuro);
+            color: white;
+            text-decoration: none;
+        }
+        
+        .section-title {
+            color: var(--azul-escuro);
+            font-weight: 600;
+            margin-bottom: 20px;
+            font-size: 18px;
+        }
+        
+        .education-item, .experience-item, .skill-item {
+            background: #f8f9fa;
+            border-left: 4px solid var(--roxo-principal);
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 0 6px 6px 0;
+        }
+        
+        .education-item h6, .experience-item h6 {
+            color: var(--azul-escuro);
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+        
+        .education-item p, .experience-item p {
+            color: #6b7280;
+            margin-bottom: 3px;
+            font-size: 14px;
+        }
+        
+        .skill-tag {
+            display: inline-block;
+            background: var(--roxo-claro);
+            color: var(--roxo-escuro);
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 14px;
+            margin: 3px;
+            font-weight: 500;
+        }
+    </style>
+</head>
+<body id="page-top">
+
+    <!-- Page Wrapper -->
+    <div id="wrapper">
+
+        <!-- Sidebar -->
+        <ul class="navbar-nav bg-gradient-primary sidebar sidebar-dark accordion" id="accordionSidebar">
+
+            <!-- Sidebar - Brand -->
+            <a class="sidebar-brand d-flex align-items-center justify-content-center" href="home.html">
+                <div class="sidebar-brand-icon rotate-n-15">
+                    <i class="fas fa-clock"></i>
+                </div>
+                <div class="sidebar-brand-text mx-3">Quando Previdência</div>
+            </a>
+
+            <!-- Divider -->
+            <hr class="sidebar-divider my-0">
+
+            <!-- Nav Item - Dashboard -->
+            <li class="nav-item">
+                <a class="nav-link" href="home.html">
+                    <i class="fas fa-fw fa-tachometer-alt"></i>
+                    <span>Dashboard</span></a>
+            </li>
+
+            <!-- Divider -->
+            <hr class="sidebar-divider">
+
+            <!-- Heading -->
+            <div class="sidebar-heading">
+                Cadastros
+            </div>
+
+            <!-- Nav Item - Administradores -->
+            <li class="nav-item">
+                <a class="nav-link" href="adm.html">
+                    <i class="fas fa-user-shield"></i>
+                    <span>Administradores</span></a>
+            </li>
+
+            <!-- Nav Item - Gerentes -->
+            <li class="nav-item">
+                <a class="nav-link" href="gerente.html">
+                    <i class="fas fa-fw fa-user-tie"></i>
+                    <span>Gerentes</span></a>
+            </li>
+
+            <!-- Nav Item - RH -->
+            <li class="nav-item">
+                <a class="nav-link" href="rh.html">
+                    <i class="fas fa-fw fa-users"></i>
+                    <span>RH</span></a>
+            </li>
+
+            <!-- Divider -->
+            <hr class="sidebar-divider">
+
+            <!-- Heading -->
+            <div class="sidebar-heading">
+                Recrutamento
+            </div>
+
+            <!-- Nav Item - Vagas -->
+            <li class="nav-item">
+                <a class="nav-link" href="vagas.html">
+                    <i class="fas fa-fw fa-briefcase"></i>
+                    <span>Vagas</span></a>
+            </li>
+
+            <!-- Nav Item - Candidatos -->
+            <li class="nav-item active">
+                <a class="nav-link" href="candidatos.html">
+                    <i class="fas fa-fw fa-user-plus"></i>
+                    <span>Candidatos</span></a>
+            </li>
+
+            <!-- Nav Item - Upload Currículos -->
+            <li class="nav-item">
+                <a class="nav-link" href="upload-curriculos.html">
+                    <i class="fas fa-fw fa-file-upload"></i>
+                    <span>Upload Currículos</span></a>
+            </li>
+
+            <!-- Divider -->
+            <hr class="sidebar-divider">
+
+            <!-- Heading -->
+            <div class="sidebar-heading">
+                Relatórios
+            </div>
+
+            <!-- Nav Item - Charts -->
+            <li class="nav-item">
+                <a class="nav-link" href="charts.html">
+                    <i class="fas fa-fw fa-chart-area"></i>
+                    <span>Gráficos</span></a>
+            </li>
+
+            <!-- Nav Item - Tables -->
+            <li class="nav-item">
+                <a class="nav-link" href="tables.html">
+                    <i class="fas fa-fw fa-table"></i>
+                    <span>Tabelas</span></a>
+            </li>
+
+            <!-- Divider -->
+            <hr class="sidebar-divider d-none d-md-block">
+
+            <!-- Sidebar Toggler (Sidebar) -->
+            <div class="text-center d-none d-md-inline">
+                <button class="rounded-circle border-0" id="sidebarToggle"></button>
+            </div>
+
+        </ul>
+        <!-- End of Sidebar -->
+
+        <!-- Content Wrapper -->
+        <div id="content-wrapper" class="d-flex flex-column">
+
+            <!-- Main Content -->
+            <div id="content">
+
+                <!-- Topbar -->
+                <nav class="navbar navbar-expand navbar-light bg-white topbar mb-4 static-top shadow">
+
+                    <!-- Sidebar Toggle (Topbar) -->
+                    <button id="sidebarToggleTop" class="btn btn-link d-md-none rounded-circle mr-3">
+                        <i class="fa fa-bars"></i>
+                    </button>
+
+                    <!-- Topbar Search -->
+                    <form class="d-none d-sm-inline-block form-inline mr-auto ml-md-3 my-2 my-md-0 mw-100 navbar-search">
+                        <div class="input-group">
+                            <input type="text" class="form-control bg-light border-0 small" placeholder="Pesquisar..." aria-label="Search" aria-describedby="basic-addon2">
+                            <div class="input-group-append">
+                                <button class="btn btn-primary" type="button">
+                                    <i class="fas fa-search fa-sm"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+
+                    <!-- Topbar Navbar -->
+                    <ul class="navbar-nav ml-auto">
+
+                        <!-- Nav Item - Search Dropdown (Visible Only XS) -->
+                        <li class="nav-item dropdown no-arrow d-sm-none">
+                            <a class="nav-link dropdown-toggle" href="#" id="searchDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                <i class="fas fa-search fa-fw"></i>
+                            </a>
+                            <!-- Dropdown - Messages -->
+                            <div class="dropdown-menu dropdown-menu-right p-3 shadow animated--grow-in" aria-labelledby="searchDropdown">
+                                <form class="form-inline mr-auto w-100 navbar-search">
+                                    <div class="input-group">
+                                        <input type="text" class="form-control bg-light border-0 small" placeholder="Pesquisar..." aria-label="Search" aria-describedby="basic-addon2">
+                                        <div class="input-group-append">
+                                            <button class="btn btn-primary" type="button">
+                                                <i class="fas fa-search fa-sm"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
+                        </li>
+
+                        <!-- Nav Item - Alerts -->
+                        <li class="nav-item dropdown no-arrow mx-1">
+                            <a class="nav-link dropdown-toggle" href="#" id="alertsDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                <i class="fas fa-bell fa-fw"></i>
+                                <!-- Counter - Alerts -->
+                                <span class="badge badge-danger badge-counter">3+</span>
+                            </a>
+                            <!-- Dropdown - Alerts -->
+                            <div class="dropdown-list dropdown-menu dropdown-menu-right shadow animated--grow-in" aria-labelledby="alertsDropdown">
+                                <h6 class="dropdown-header">
+                                    Central de Alertas
+                                </h6>
+                                <a class="dropdown-item d-flex align-items-center" href="#">
+                                    <div class="mr-3">
+                                        <div class="icon-circle bg-primary">
+                                            <i class="fas fa-file-alt text-white"></i>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <div class="small text-gray-500">12 de Dezembro, 2024</div>
+                                        <span class="font-weight-bold">Novos candidatos cadastrados!</span>
+                                    </div>
+                                </a>
+                                <a class="dropdown-item d-flex align-items-center" href="#">
+                                    <div class="mr-3">
+                                        <div class="icon-circle bg-success">
+                                            <i class="fas fa-donate text-white"></i>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <div class="small text-gray-500">12 de Dezembro, 2024</div>
+                                        Sistema atualizado com sucesso!
+                                    </div>
+                                </a>
+                                <a class="dropdown-item text-center small text-gray-500" href="#">Mostrar Todos os Alertas</a>
+                            </div>
+                        </li>
+
+                        <!-- Nav Item - Messages -->
+                        <li class="nav-item dropdown no-arrow mx-1">
+                            <a class="nav-link dropdown-toggle" href="#" id="messagesDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                <i class="fas fa-envelope fa-fw"></i>
+                                <!-- Counter - Messages -->
+                                <span class="badge badge-danger badge-counter">7</span>
+                            </a>
+                            <!-- Dropdown - Messages -->
+                            <div class="dropdown-list dropdown-menu dropdown-menu-right shadow animated--grow-in" aria-labelledby="messagesDropdown">
+                                <h6 class="dropdown-header">
+                                    Centro de Mensagens
+                                </h6>
+                                <a class="dropdown-item d-flex align-items-center" href="#">
+                                    <div class="dropdown-list-image mr-3">
+                                        <img class="rounded-circle" src="./img/undraw_profile_1.svg" alt="...">
+                                        <div class="status-indicator bg-success"></div>
+                                    </div>
+                                    <div>
+                                        <div class="text-truncate">Olá! Temos novos candidatos para análise.</div>
+                                        <div class="small text-gray-500">João Silva · 58m</div>
+                                    </div>
+                                </a>
+                                <a class="dropdown-item text-center small text-gray-500" href="#">Ler Mais Mensagens</a>
+                            </div>
+                        </li>
+
+                        <div class="topbar-divider d-none d-sm-block"></div>
+
+                        <!-- Nav Item - User Information -->
+                        <li class="nav-item dropdown no-arrow">
+                            <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                <span class="mr-2 d-none d-lg-inline text-gray-600 small">Henrique Szapiro</span>
+                                <img class="img-profile rounded-circle" src="./img/undraw_profile.svg">
+                            </a>
+                            <!-- Dropdown - User Information -->
+                            <div class="dropdown-menu dropdown-menu-right shadow animated--grow-in" aria-labelledby="userDropdown">
+                                <a class="dropdown-item" href="#">
+                                    <i class="fas fa-user fa-sm fa-fw mr-2 text-gray-400"></i>
+                                    Perfil
+                                </a>
+                                <a class="dropdown-item" href="#">
+                                    <i class="fas fa-cogs fa-sm fa-fw mr-2 text-gray-400"></i>
+                                    Configurações
+                                </a>
+                                <a class="dropdown-item" href="#">
+                                    <i class="fas fa-list fa-sm fa-fw mr-2 text-gray-400"></i>
+                                    Log de Atividades
+                                </a>
+                                <div class="dropdown-divider"></div>
+                                <a class="dropdown-item" href="#" data-toggle="modal" data-target="#logoutModal">
+                                    <i class="fas fa-sign-out-alt fa-sm fa-fw mr-2 text-gray-400"></i>
+                                    Sair
+                                </a>
+                            </div>
+                        </li>
+
+                    </ul>
+
+                </nav>
+                <!-- End of Topbar -->
+
+                <!-- Begin Page Content -->
+                <div class="container-fluid">
+
+                    <!-- Page Heading -->
+                    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+                        <h1 class="h3 mb-0 text-gray-800 page-title">Tela inicial</h1>
+                    </div>
+
+                    <!-- Main Content Card -->
+                    <div class="main-content">
+                        <!-- Header Section -->
+                        <div class="page-header">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h2 class="h4 mb-0 text-white">Quando previdência</h2>
+                                </div>
+                                <div class="d-flex align-items-center">
+                                    <span class="text-white mr-2">Henrique Szapiro</span>
+                                    <span class="text-white mr-2">|</span>
+                                    <span class="text-white mr-2">RH</span>
+                                    <div class="candidate-avatar">
+                                        <i class="fas fa-user"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Content Section -->
+                        <div class="p-4">
+                            <!-- Title and Back Button -->
+                            <div class="d-flex justify-content-between align-items-center mb-4">
+                                <h3 class="h5 mb-0 text-gray-800 font-weight-bold">DETALHES DOS CANDIDATOS</h3>
+                                <a href="candidatos.html" class="back-button">
+                                    <i class="fas fa-arrow-left mr-2"></i>VOLTAR
+                                </a>
+                            </div>
+
+                            <div class="row">
+                                <!-- Left Column - Candidate Details -->
+                                <div class="col-lg-8">
+                                    <!-- General Information -->
+                                    <div class="candidate-profile">
+                                        <h4 class="section-title">Informações Gerais</h4>
+                                        <div class="row">
+                                            <div class="col-md-3 text-center">
+                                                <img src="https://images.unsplash.com/photo-1494790108755-2616b612b786?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=687&q=80" 
+                                                     alt="Regina Oliveira" class="candidate-photo">
+                                            </div>
+                                            <div class="col-md-9">
+                                                <div class="candidate-info">
+                                                    <p><strong>Nome:</strong> Regina Oliveira</p>
+                                                    <p><strong>Telefone:</strong> (11) 99546-0976</p>
+                                                    <p><strong>Email:</strong> regina.oliveira@gmail.com</p>
+                                                    <p><strong>Estado:</strong> São Paulo</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Expandable Sections -->
+                                    <!-- Education -->
+                                    <div class="expandable-section">
+                                        <div class="expandable-header" onclick="toggleSection('education')">
+                                            <h6>Escolaridade:</h6>
+                                            <i class="fas fa-chevron-down chevron-icon" id="education-chevron"></i>
+                                        </div>
+                                        <div class="expandable-content" id="education-content">
+                                            <div class="education-item">
+                                                <h6>Bacharelado em Ciência da Computação</h6>
+                                                <p><strong>Instituição:</strong> Universidade de São Paulo (USP)</p>
+                                                <p><strong>Período:</strong> 2018 - 2022</p>
+                                                <p><strong>Status:</strong> Concluído</p>
+                                            </div>
+                                            <div class="education-item">
+                                                <h6>Pós-graduação em Data Science</h6>
+                                                <p><strong>Instituição:</strong> Instituto de Tecnologia de São Paulo</p>
+                                                <p><strong>Período:</strong> 2023 - 2024</p>
+                                                <p><strong>Status:</strong> Em andamento</p>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Experience -->
+                                    <div class="expandable-section">
+                                        <div class="expandable-header" onclick="toggleSection('experience')">
+                                            <h6>Experiência:</h6>
+                                            <i class="fas fa-chevron-down chevron-icon" id="experience-chevron"></i>
+                                        </div>
+                                        <div class="expandable-content" id="experience-content">
+                                            <div class="experience-item">
+                                                <h6>Analista de Dados Júnior</h6>
+                                                <p><strong>Empresa:</strong> TechCorp Solutions</p>
+                                                <p><strong>Período:</strong> Janeiro 2023 - Presente</p>
+                                                <p><strong>Descrição:</strong> Análise de dados, criação de dashboards e relatórios gerenciais.</p>
+                                            </div>
+                                            <div class="experience-item">
+                                                <h6>Estagiário em Desenvolvimento</h6>
+                                                <p><strong>Empresa:</strong> StartupXYZ</p>
+                                                <p><strong>Período:</strong> Junho 2021 - Dezembro 2022</p>
+                                                <p><strong>Descrição:</strong> Desenvolvimento de aplicações web e mobile.</p>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Skills -->
+                                    <div class="expandable-section">
+                                        <div class="expandable-header" onclick="toggleSection('skills')">
+                                            <h6>Competências:</h6>
+                                            <i class="fas fa-chevron-down chevron-icon" id="skills-chevron"></i>
+                                        </div>
+                                        <div class="expandable-content" id="skills-content">
+                                            <div class="skill-tag">Python</div>
+                                            <div class="skill-tag">SQL</div>
+                                            <div class="skill-tag">Power BI</div>
+                                            <div class="skill-tag">Tableau</div>
+                                            <div class="skill-tag">Excel Avançado</div>
+                                            <div class="skill-tag">Machine Learning</div>
+                                            <div class="skill-tag">JavaScript</div>
+                                            <div class="skill-tag">React</div>
+                                            <div class="skill-tag">Git</div>
+                                            <div class="skill-tag">Agile</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Right Column - Selection Process -->
+                                <div class="col-lg-4">
+                                    <div class="progress-section">
+                                        <h4 class="progress-title">Evolução do processo seletivo</h4>
+                                        <div class="progress-chart">
+                                            <canvas id="progressChart"></canvas>
+                                        </div>
+                                        <div class="action-buttons">
+                                            <button class="btn btn-download" onclick="downloadResume()">
+                                                <i class="fas fa-download mr-2"></i>
+                                                Realizar download do currículo
+                                            </button>
+                                            <button class="btn btn-exclude" onclick="excludeCandidate()">
+                                                <i class="fas fa-trash mr-2"></i>
+                                                Excluir candidato
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+                <!-- /.container-fluid -->
+
+            </div>
+            <!-- End of Main Content -->
+
+            <!-- Footer -->
+            <footer class="sticky-footer bg-white">
+                <div class="container my-auto">
+                    <div class="copyright text-center my-auto">
+                        <span>Copyright &copy; Quando Previdência 2024</span>
+                    </div>
+                </div>
+            </footer>
+            <!-- End of Footer -->
+
+        </div>
+        <!-- End of Content Wrapper -->
+
+    </div>
+    <!-- End of Page Wrapper -->
+
+    <!-- Scroll to Top Button-->
+    <a class="scroll-to-top rounded" href="#page-top">
+        <i class="fas fa-angle-up"></i>
+    </a>
+
+    <!-- Logout Modal-->
+    <div class="modal fade" id="logoutModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="exampleModalLabel">Pronto para sair?</h5>
+                    <button class="close" type="button" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">×</span>
+                    </button>
+                </div>
+                <div class="modal-body">Selecione "Sair" abaixo se você estiver pronto para encerrar sua sessão atual.</div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" type="button" data-dismiss="modal">Cancelar</button>
+                    <a class="btn btn-primary" href="login.html">Sair</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap core JavaScript-->
+    <script src="vendor/jquery/jquery.min.js"></script>
+    <script src="vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Core plugin JavaScript-->
+    <script src="vendor/jquery-easing/jquery.easing.min.js"></script>
+
+    <!-- Custom scripts for all pages-->
+    <script src="js/sb-admin-2.min.js"></script>
+
+    <!-- Page level custom scripts -->
+    <script>
+        $(document).ready(function() {
+            // Initialize progress chart
+            initProgressChart();
+        });
+
+        // Toggle expandable sections
+        function toggleSection(sectionName) {
+            const content = document.getElementById(sectionName + '-content');
+            const chevron = document.getElementById(sectionName + '-chevron');
+            
+            if (content.classList.contains('show')) {
+                content.classList.remove('show');
+                chevron.classList.remove('rotated');
+            } else {
+                content.classList.add('show');
+                chevron.classList.add('rotated');
+            }
+        }
+
+        // Initialize progress chart
+        function initProgressChart() {
+            const ctx = document.getElementById('progressChart').getContext('2d');
+            const progressChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    datasets: [{
+                        data: [65, 35],
+                        backgroundColor: [
+                            '#1f2937',
+                            '#e5e7eb'
+                        ],
+                        borderWidth: 0,
+                        cutout: '70%'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    }
+                }
+            });
+
+            // Add percentage text in center
+            const canvas = document.getElementById('progressChart');
+            const ctx2 = canvas.getContext('2d');
+            ctx2.font = 'bold 24px Arial';
+            ctx2.fillStyle = '#1f2937';
+            ctx2.textAlign = 'center';
+            ctx2.textBaseline = 'middle';
+            ctx2.fillText('65%', canvas.width / 2, canvas.height / 2);
+        }
+
+        // Download resume function
+        function downloadResume() {
+            alert('Download do currículo iniciado!\n\nEsta funcionalidade será implementada em breve.');
+        }
+
+        // Exclude candidate function
+        function excludeCandidate() {
+            if (confirm('Tem certeza que deseja excluir este candidato do processo seletivo?')) {
+                alert('Candidato excluído com sucesso!');
+                // Redirect back to candidates list
+                window.location.href = 'candidatos.html';
+            }
+        }
+    </script>
+
+</body>
+
+</html>

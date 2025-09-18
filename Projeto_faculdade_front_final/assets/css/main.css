@@ -1,0 +1,226 @@
+/* ========================================
+   QUANDO PREVIDÊNCIA - CSS PRINCIPAL
+   ======================================== */
+
+/* Variáveis CSS */
+:root {
+    --roxo-principal: #7c3aed;
+    --roxo-escuro: #5b21b6;
+    --roxo-claro: #ede9fe;
+    --roxo-hover: #a78bfa;
+    --fundo-roxo: #f8f5ff;
+    --azul-escuro: #1f2937;
+    --cinza-claro: #f8f9fc;
+    --cinza-medio: #858796;
+    --cinza-escuro: #5a5c69;
+    --branco: #ffffff;
+    --sucesso: #10b981;
+    --erro: #ef4444;
+    --aviso: #f59e0b;
+    --info: #3b82f6;
+}
+
+/* Reset e Base */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Poppins', 'Nunito', sans-serif;
+    line-height: 1.6;
+    color: var(--cinza-escuro);
+    background-color: var(--fundo-roxo);
+}
+
+/* Tipografia */
+h1, h2, h3, h4, h5, h6 {
+    font-family: 'Poppins', sans-serif;
+    font-weight: 600;
+    color: var(--azul-escuro);
+}
+
+/* Botões */
+.btn-primary {
+    background-color: var(--roxo-principal);
+    border-color: var(--roxo-principal);
+    color: var(--branco);
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.btn-primary:hover {
+    background-color: var(--roxo-escuro);
+    border-color: var(--roxo-escuro);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(124, 58, 237, 0.3);
+}
+
+.btn-secondary {
+    background-color: var(--cinza-claro);
+    border-color: var(--cinza-medio);
+    color: var(--cinza-escuro);
+}
+
+.btn-success {
+    background-color: var(--sucesso);
+    border-color: var(--sucesso);
+}
+
+.btn-danger {
+    background-color: var(--erro);
+    border-color: var(--erro);
+}
+
+/* Cards */
+.card {
+    border: none;
+    border-radius: 8px;
+    box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+    transition: all 0.3s ease;
+}
+
+.card:hover {
+    box-shadow: 0 0.25rem 2rem 0 rgba(58, 59, 69, 0.25);
+    transform: translateY(-2px);
+}
+
+.card-header {
+    background-color: var(--roxo-claro);
+    border-bottom: 1px solid var(--roxo-principal);
+    border-radius: 8px 8px 0 0 !important;
+}
+
+/* Formulários */
+.form-control {
+    border: 1px solid #e3e6f0;
+    border-radius: 6px;
+    padding: 0.75rem 1rem;
+    transition: all 0.3s ease;
+}
+
+.form-control:focus {
+    border-color: var(--roxo-principal);
+    box-shadow: 0 0 0 0.2rem rgba(124, 58, 237, 0.25);
+}
+
+/* Sidebar */
+.sidebar-brand-text {
+    font-family: 'Poppins', sans-serif;
+    font-weight: 600;
+}
+
+.bg-gradient-primary {
+    background: linear-gradient(135deg, var(--roxo-principal) 0%, var(--roxo-escuro) 100%) !important;
+}
+
+/* Tabelas */
+.table th {
+    background-color: var(--roxo-claro);
+    color: var(--roxo-escuro);
+    font-weight: 600;
+    border: none;
+}
+
+.table td {
+    border-color: #e3e6f0;
+}
+
+/* Utilitários */
+.text-primary {
+    color: var(--roxo-principal) !important;
+}
+
+.border-left-primary {
+    border-left: 0.25rem solid var(--roxo-principal) !important;
+}
+
+/* Animações */
+@keyframes slideIn {
+    from { 
+        transform: translateX(100%); 
+        opacity: 0; 
+    }
+    to { 
+        transform: translateX(0); 
+        opacity: 1; 
+    }
+}
+
+@keyframes fadeIn {
+    from { 
+        opacity: 0; 
+        transform: translateY(20px);
+    }
+    to { 
+        opacity: 1; 
+        transform: translateY(0);
+    }
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+
+/* Responsividade */
+@media (max-width: 768px) {
+    .card {
+        margin-bottom: 1rem;
+    }
+    
+    .btn {
+        width: 100%;
+        margin-bottom: 0.5rem;
+    }
+}
+
+/* Estados de loading */
+.loading {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    border-top-color: white;
+    animation: spin 1s ease-in-out infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Mensagens de feedback */
+.message {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    padding: 15px 20px;
+    border-radius: 6px;
+    color: white;
+    font-weight: 500;
+    z-index: 1000;
+    animation: slideIn 0.3s ease;
+    max-width: 400px;
+    word-wrap: break-word;
+}
+
+.message.success {
+    background-color: var(--sucesso);
+}
+
+.message.error {
+    background-color: var(--erro);
+}
+
+.message.warning {
+    background-color: var(--aviso);
+}
+
+.message.info {
+    background-color: var(--info);
+}
+
+
