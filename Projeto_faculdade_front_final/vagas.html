@@ -12,13 +12,16 @@
 
     <!-- Custom fonts for this template-->
     <link href="vendor/fontawesome-free/css/all.min.css" rel="stylesheet" type="text/css">
-    <link href="https://fonts.googleapis.com/css?family=Nunito:200,200i,300,300i,400,400i,600,600i,700,700i,800,800i,900,900i" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css?family=Nunito:200,200i,300,300i,400,400i,600,600i,700,700i,800,800i,900,900i"
+        rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
     <link rel="icon" href="img/relogio_icone_quando_previdencia.png" type="image/png">
 
     <!-- Custom styles for this template-->
     <link href="css/sb-admin-2.min.css" rel="stylesheet">
-    
+
     <!-- Custom styles for this page -->
     <style>
         :root {
@@ -27,30 +30,30 @@
             --roxo-claro: #ede9fe;
             --roxo-hover: #a78bfa;
         }
-        
+
         .sidebar-brand-text {
             font-family: 'Poppins', sans-serif;
             font-weight: 600;
         }
-        
+
         .bg-gradient-primary {
             background: linear-gradient(135deg, var(--roxo-principal) 0%, var(--roxo-escuro) 100%) !important;
         }
-        
+
         .btn-primary {
             background-color: var(--roxo-principal);
             border-color: var(--roxo-principal);
         }
-        
+
         .btn-primary:hover {
             background-color: var(--roxo-escuro);
             border-color: var(--roxo-escuro);
         }
-        
+
         .text-primary {
             color: var(--roxo-principal) !important;
         }
-        
+
         .page-title {
             color: var(--roxo-escuro);
             font-weight: 600;
@@ -62,12 +65,12 @@
             padding: 1.5rem;
             margin-bottom: 1rem;
             background: white;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
             transition: all 0.3s ease;
         }
 
         .vaga-card:hover {
-            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
             transform: translateY(-2px);
         }
 
@@ -293,9 +296,11 @@
                     </button>
 
                     <!-- Topbar Search -->
-                    <form class="d-none d-sm-inline-block form-inline mr-auto ml-md-3 my-2 my-md-0 mw-100 navbar-search">
+                    <form
+                        class="d-none d-sm-inline-block form-inline mr-auto ml-md-3 my-2 my-md-0 mw-100 navbar-search">
                         <div class="input-group search-container">
-                            <input type="text" class="form-control bg-light border-0 small" placeholder="Pesquisar vagas..." aria-label="Search" aria-describedby="basic-addon2">
+                            <input type="text" class="form-control bg-light border-0 small"
+                                placeholder="Pesquisar vagas..." aria-label="Search" aria-describedby="basic-addon2">
                             <div class="input-group-append">
                                 <button class="btn btn-primary" type="button">
                                     <i class="fas fa-search fa-sm"></i>
@@ -309,12 +314,14 @@
 
                         <!-- Nav Item - User Information -->
                         <li class="nav-item dropdown no-arrow">
-                            <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button"
+                                data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                                 <span class="mr-2 d-none d-lg-inline text-gray-600 small">Henrique Szapiro</span>
                                 <img class="img-profile rounded-circle" src="img/undraw_profile.svg">
                             </a>
                             <!-- Dropdown - User Information -->
-                            <div class="dropdown-menu dropdown-menu-right shadow animated--grow-in" aria-labelledby="userDropdown">
+                            <div class="dropdown-menu dropdown-menu-right shadow animated--grow-in"
+                                aria-labelledby="userDropdown">
                                 <a class="dropdown-item" href="#">
                                     <i class="fas fa-user fa-sm fa-fw mr-2 text-gray-400"></i>
                                     Perfil
@@ -352,7 +359,7 @@
                         <div class="col-xl-3 col-md-6 mb-4">
                             <div class="vaga-stats">
                                 <div class="stat-item">
-                                    <div class="stat-number">12</div>
+                                    <div class="stat-number" id="kpi-vagas-abertas">0</div>
                                     <div class="stat-label">Vagas Abertas</div>
                                 </div>
                             </div>
@@ -387,7 +394,8 @@
                     <div class="row">
                         <div class="col-xl-12 col-lg-12">
                             <div class="card shadow mb-4">
-                                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                                <div
+                                    class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
                                     <h6 class="m-0 font-weight-bold text-primary">
                                         <i class="fas fa-briefcase fa-fw"></i>
                                         Vagas Disponíveis
@@ -405,7 +413,8 @@
                                             <div class="col-md-6">
                                                 <div class="vaga-title">Desenvolvedor Jr Python</div>
                                                 <div class="vaga-manager">Gestor(a): Lucio Almeida</div>
-                                                <div class="vaga-details">Área: Dados | Modelo: Híbrido | Salário: R$ 4.500 - R$ 6.000</div>
+                                                <div class="vaga-details">Área: Dados | Modelo: Híbrido | Salário: R$
+                                                    4.500 - R$ 6.000</div>
                                             </div>
                                             <div class="col-md-5 text-right">
                                                 <button class="btn btn-enviar">
@@ -431,7 +440,8 @@
                                             <div class="col-md-6">
                                                 <div class="vaga-title">Desenvolvedor Full Stack</div>
                                                 <div class="vaga-manager">Gestor(a): Maria Silva</div>
-                                                <div class="vaga-details">Área: Tecnologia | Modelo: Remoto | Salário: R$ 6.000 - R$ 8.000</div>
+                                                <div class="vaga-details">Área: Tecnologia | Modelo: Remoto | Salário:
+                                                    R$ 6.000 - R$ 8.000</div>
                                             </div>
                                             <div class="col-md-5 text-right">
                                                 <button class="btn btn-enviar">
@@ -457,7 +467,8 @@
                                             <div class="col-md-6">
                                                 <div class="vaga-title">Analista de Dados</div>
                                                 <div class="vaga-manager">Gestor(a): João Santos</div>
-                                                <div class="vaga-details">Área: Analytics | Modelo: Presencial | Salário: R$ 5.500 - R$ 7.500</div>
+                                                <div class="vaga-details">Área: Analytics | Modelo: Presencial |
+                                                    Salário: R$ 5.500 - R$ 7.500</div>
                                             </div>
                                             <div class="col-md-5 text-right">
                                                 <button class="btn btn-enviar">
@@ -483,7 +494,8 @@
                                             <div class="col-md-6">
                                                 <div class="vaga-title">Desenvolvedor Mobile</div>
                                                 <div class="vaga-manager">Gestor(a): Ana Costa</div>
-                                                <div class="vaga-details">Área: Mobile | Modelo: Híbrido | Salário: R$ 7.000 - R$ 9.000</div>
+                                                <div class="vaga-details">Área: Mobile | Modelo: Híbrido | Salário: R$
+                                                    7.000 - R$ 9.000</div>
                                             </div>
                                             <div class="col-md-5 text-right">
                                                 <button class="btn btn-enviar">
@@ -509,7 +521,8 @@
                                             <div class="col-md-6">
                                                 <div class="vaga-title">Especialista em Segurança</div>
                                                 <div class="vaga-manager">Gestor(a): Carlos Lima</div>
-                                                <div class="vaga-details">Área: Segurança | Modelo: Remoto | Salário: R$ 8.000 - R$ 12.000</div>
+                                                <div class="vaga-details">Área: Segurança | Modelo: Remoto | Salário: R$
+                                                    8.000 - R$ 12.000</div>
                                             </div>
                                             <div class="col-md-5 text-right">
                                                 <button class="btn btn-enviar">
@@ -577,7 +590,8 @@
     </a>
 
     <!-- Logout Modal-->
-    <div class="modal fade" id="logoutModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal fade" id="logoutModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel"
+        aria-hidden="true">
         <div class="modal-dialog" role="document">
             <div class="modal-content">
                 <div class="modal-header">
@@ -586,7 +600,8 @@
                         <span aria-hidden="true">×</span>
                     </button>
                 </div>
-                <div class="modal-body">Selecione "Sair" abaixo se você estiver pronto para encerrar sua sessão atual.</div>
+                <div class="modal-body">Selecione "Sair" abaixo se você estiver pronto para encerrar sua sessão atual.
+                </div>
                 <div class="modal-footer">
                     <button class="btn btn-secondary" type="button" data-dismiss="modal">Cancelar</button>
                     <a class="btn btn-primary" href="login.html">Sair</a>
@@ -605,23 +620,68 @@
     <!-- Custom scripts for all pages-->
     <script src="js/sb-admin-2.min.js"></script>
 
-    <!-- Page level custom scripts -->
-    <script>
-        $(document).ready(function() {
-            // Funcionalidade dos botões
-            $('.btn-enviar').on('click', function() {
-                alert('Redirecionando para página de upload de currículos...');
+    <script type="module">
+        import { VacanciesClient } from './client/client.js';
+        $(document).ready(async function () {
+            const vacanciesClient = new VacanciesClient();
+            const vagasContainer = $('.card-body');
+
+
+            // Função para atualizar KPI e renderizar vagas
+            async function atualizarVagas() {
+                try {
+                    const vagas = await vacanciesClient.findAll();
+                    // Atualiza KPI
+                    $("#kpi-vagas-abertas").text(vagas.length);
+                    // Renderiza cards
+                    vagasContainer.empty();
+                    if (!vagas.length) {
+                        vagasContainer.append('<p class="text-center">Nenhuma vaga encontrada.</p>');
+                        return;
+                    }
+                    vagas.forEach(vaga => {
+                        vagasContainer.append(`
+                            <div class="vaga-card">
+                                <div class="row align-items-center">
+                                    <div class="col-md-1">
+                                        <div class="vaga-icon">
+                                            <i class="fas fa-briefcase"></i>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="vaga-title">${vaga.position || ''}</div>
+                                        <div class="vaga-manager">Gestor(a): ${vaga.manager.name || '-'}</div>
+                                        <div class="vaga-details">Área: ${vaga.area || '-'} | Modelo: ${vaga.workModel || '-'} | Salário: ${vaga.salary || '-'}</div>
+                                    </div>
+                                    <div class="col-md-5 text-right">
+                                        <button class="btn btn-enviar">Enviar Currículo</button>
+                                        <button class="btn btn-ver-mais">Ver Mais</button>
+                                    </div>
+                                </div>
+                            </div>
+                        `);
+                    });
+                } catch (err) {
+                    $("#kpi-vagas-abertas").text('0');
+                    vagasContainer.empty().append('<p class="text-center text-danger">Erro ao carregar vagas.</p>');
+                }
+            }
+
+            await atualizarVagas();
+
+            // Funcionalidade dos botões (delegação)
+            vagasContainer.on('click', '.btn-enviar', function () {
                 window.location.href = 'upload-curriculos.html';
             });
 
-            $('.btn-ver-mais').on('click', function() {
+            vagasContainer.on('click', '.btn-ver-mais', function () {
                 alert('Abrindo detalhes da vaga...');
             });
 
             // Funcionalidade de busca
-            $('.navbar-search input').on('keyup', function() {
+            $('.navbar-search input').on('keyup', function () {
                 const searchTerm = $(this).val().toLowerCase();
-                $('.vaga-card').each(function() {
+                $('.vaga-card').each(function () {
                     const vagaText = $(this).text().toLowerCase();
                     if (vagaText.includes(searchTerm)) {
                         $(this).show();
@@ -636,4 +696,4 @@
 </body>
 
 </html>
-
+<!-- Vagas dinâmicas -->

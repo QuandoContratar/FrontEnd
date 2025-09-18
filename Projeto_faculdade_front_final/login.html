@@ -1,23 +1,25 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Login - Quando Contratar</title>
-<link rel="icon" href="../img/relogio_icone_quando_previdencia.png" type="image/png">
+  <link rel="icon" href="./img/relogio_icone_quando_previdencia.png" type="image/png">
   <!-- Poppins -->
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
   <!-- Font Awesome (CDN) -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
 
-  <link rel="stylesheet" href="../css/login.css">
+  <link rel="stylesheet" href="./css/login.css">
 </head>
+
 <body>
   <div class="container">
     <div class="left">
       <div class="logo">
-        <img src="../img/logo_quando_previdencia.png" alt="Logo Quando Previdência">
+        <img src="./img/logo_quando_previdencia.png" alt="Logo Quando Previdência">
       </div>
 
       <div class="login-box">
@@ -31,13 +33,11 @@
         </div>
 
         <!-- Senha -->
-   <div class="input-group">
-  <i class="fa-solid fa-lock"></i>
-  <input type="password" id="password" placeholder="Senha">
-  <i class="fa-solid fa-eye toggle-password" id="togglePassword"></i>
-</div>
-
-
+        <div class="input-group">
+          <i class="fa-solid fa-lock"></i>
+          <input type="password" id="password" placeholder="Senha">
+          <i class="fa-solid fa-eye toggle-password" id="togglePassword"></i>
+        </div>
 
         <div class="options">
           <label><input type="checkbox"> Lembre de mim</label>
@@ -51,27 +51,42 @@
     <div class="right">
       <div class="text-box">
         <h3>Quando previdência agora também é <br><span>Quando Contratar.</span></h3>
-        <img src="../img//pana.png" alt="Ilustração" class="illustration">
+        <img src="./img//pana.png" alt="Ilustração" class="illustration">
       </div>
     </div>
   </div>
 
-  <script>
+  <script type="module">
+    import { UsersClient } from './client/client.js';
 
-  const togglePassword = document.querySelector("#togglePassword");
-  const password = document.querySelector("#password");
+    const togglePassword = document.querySelector("#togglePassword");
+    const password = document.querySelector("#password");
+    const loginBtn = document.querySelector(".btn");
+    const emailInput = document.querySelector("#email");
 
-  togglePassword.addEventListener("click", () => {
-    const type = password.getAttribute("type") === "password" ? "text" : "password";
-    password.setAttribute("type", type);
+    togglePassword.addEventListener("click", () => {
+      const type = password.getAttribute("type") === "password" ? "text" : "password";
+      password.setAttribute("type", type);
+      togglePassword.classList.toggle("fa-eye");
+      togglePassword.classList.toggle("fa-eye-slash");
+    });
 
-    // troca o ícone
-    togglePassword.classList.toggle("fa-eye");
-    togglePassword.classList.toggle("fa-eye-slash");
-  });
+    const usersClient = new UsersClient();
 
-
-
+    loginBtn.addEventListener("click", async (e) => {
+      e.preventDefault();
+      const credentials = {
+        email: emailInput.value,
+        password: password.value
+      };
+      try {
+        await usersClient.login(credentials);
+        window.location.href = 'home.html';
+      } catch (err) {
+        alert('Login failed!');
+      }
+    });
   </script>
 </body>
+
 </html>
