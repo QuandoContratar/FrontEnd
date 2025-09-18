@@ -57,37 +57,10 @@
     </div>
   </div>
 
-  <script type="module">
-    import { UsersClient } from './client/client.js';
-
-    const togglePassword = document.querySelector("#togglePassword");
-    const password = document.querySelector("#password");
-    const loginBtn = document.querySelector(".btn");
-    const emailInput = document.querySelector("#email");
-
-    togglePassword.addEventListener("click", () => {
-      const type = password.getAttribute("type") === "password" ? "text" : "password";
-      password.setAttribute("type", type);
-      togglePassword.classList.toggle("fa-eye");
-      togglePassword.classList.toggle("fa-eye-slash");
-    });
-
-    const usersClient = new UsersClient();
-
-    loginBtn.addEventListener("click", async (e) => {
-      e.preventDefault();
-      const credentials = {
-        email: emailInput.value,
-        password: password.value
-      };
-      try {
-        await usersClient.login(credentials);
-        window.location.href = 'home.html';
-      } catch (err) {
-        alert('Login failed!');
-      }
-    });
-  </script>
+  <!-- Scripts organizados -->
+  <script src="./assets/js/components/utils.js"></script>
+  <script src="./assets/js/components/auth.js"></script>
+  <script src="./assets/js/pages/login.js"></script>
 </body>
 
 </html>
