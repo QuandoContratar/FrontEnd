@@ -1,0 +1,211 @@
+/* ========================================
+   PÁGINA HOME - DASHBOARD
+   ======================================== */
+
+/* Estilos específicos para os cards do dashboard */
+.dashboard-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 2rem;
+    margin-top: 2rem;
+}
+
+.dashboard-card {
+    background: white;
+    border-radius: 12px;
+    padding: 2rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    cursor: pointer;
+    border: 2px solid transparent;
+    text-decoration: none;
+    color: inherit;
+}
+
+.dashboard-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+    border-color: var(--roxo-principal);
+    text-decoration: none;
+    color: inherit;
+}
+
+.dashboard-card.active {
+    border-color: var(--roxo-principal);
+    background: linear-gradient(135deg, var(--roxo-claro) 0%, white 100%);
+}
+
+.dashboard-card h3 {
+    color: var(--roxo-escuro);
+    font-weight: 600;
+    margin: 1rem 0;
+    font-size: 1.25rem;
+}
+
+.dashboard-card p {
+    color: #666;
+    margin-bottom: 1.5rem;
+    line-height: 1.6;
+    font-size: 0.95rem;
+}
+
+.dashboard-card button {
+    background: var(--roxo-principal);
+    color: white;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    font-weight: 500;
+    cursor: pointer;
+    font-size: 0.9rem;
+    width: 100%;
+}
+
+.dashboard-card button:hover {
+    background: var(--roxo-escuro);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(124, 58, 237, 0.3);
+}
+
+.icon-wrapper {
+    width: 60px;
+    height: 60px;
+    background: linear-gradient(135deg, var(--roxo-principal) 0%, var(--roxo-escuro) 100%);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1rem;
+}
+
+.icon-roxo {
+    width: 32px;
+    height: 32px;
+}
+
+.icon-roxo rect,
+.icon-roxo circle,
+.icon-roxo path {
+    fill: white;
+    stroke: white;
+}
+
+/* Efeitos de hover simplificados */
+.dashboard-card:hover .icon-wrapper {
+    box-shadow: 0 4px 12px rgba(124, 58, 237, 0.3);
+}
+
+.dashboard-card:hover h3 {
+    color: var(--roxo-principal);
+}
+
+/* Cards sem animação de entrada */
+.dashboard-card {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* Responsividade */
+@media (max-width: 768px) {
+    .dashboard-cards {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+        margin-top: 1rem;
+    }
+    
+    .dashboard-card {
+        padding: 1.5rem;
+    }
+    
+    .dashboard-card h3 {
+        font-size: 1.1rem;
+    }
+    
+    .dashboard-card p {
+        font-size: 0.9rem;
+    }
+    
+    .icon-wrapper {
+        width: 50px;
+        height: 50px;
+    }
+    
+    .icon-roxo {
+        width: 28px;
+        height: 28px;
+    }
+}
+
+@media (max-width: 576px) {
+    .dashboard-card {
+        padding: 1rem;
+    }
+    
+    .dashboard-card button {
+        padding: 0.6rem 1rem;
+        font-size: 0.85rem;
+    }
+}
+
+/* Estilos para o título da página */
+.page-title {
+    color: var(--roxo-escuro);
+    font-weight: 600;
+    font-size: 1.75rem;
+}
+
+/* Estilos para o subtítulo */
+.text-gray-600 {
+    color: #6c757d !important;
+    font-size: 1rem;
+}
+
+/* Melhorias na sidebar */
+.sidebar-brand-text {
+    font-family: 'Poppins', sans-serif;
+    font-weight: 600;
+}
+
+/* Estilos para o topbar */
+.topbar .navbar-search .form-control {
+    border-radius: 20px;
+    border: 1px solid #e3e6f0;
+    padding: 0.5rem 1rem;
+}
+
+.topbar .navbar-search .btn {
+    border-radius: 20px;
+    margin-left: 0.5rem;
+}
+
+/* Estilos para o dropdown do usuário */
+.dropdown-menu {
+    border: none;
+    box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+    border-radius: 8px;
+}
+
+.dropdown-item {
+    padding: 0.75rem 1.5rem;
+}
+
+.dropdown-item:hover {
+    background-color: var(--roxo-claro);
+    color: var(--roxo-principal);
+}
+
+/* Estilos para o modal de logout */
+.modal-content {
+    border: none;
+    border-radius: 12px;
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+}
+
+.modal-header {
+    border-bottom: 1px solid #e3e6f0;
+    border-radius: 12px 12px 0 0;
+}
+
+.modal-footer {
+    border-top: 1px solid #e3e6f0;
+    border-radius: 0 0 12px 12px;
+}

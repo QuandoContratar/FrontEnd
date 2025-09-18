@@ -295,7 +295,7 @@ class LoginPage {
         if (this.elements.loginBtn) {
             if (loading) {
                 this.elements.loginBtn.disabled = true;
-                this.elements.loginBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Entrando...';
+                this.elements.loginBtn.innerHTML = 'Entrando...';
                 this.elements.loginBtn.classList.add('loading');
             } else {
                 this.elements.loginBtn.disabled = false;
