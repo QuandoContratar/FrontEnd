@@ -1,0 +1,251 @@
+/* ========================================
+   MATCH DE CANDIDATOS
+   ======================================== */
+
+/* Search bar styling */
+.search-bar {
+    position: relative;
+    display: flex;
+    align-items: center;
+    background: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    padding: 10px 15px;
+    min-width: 300px;
+}
+
+.search-bar i {
+    color: #6c757d;
+    margin-right: 10px;
+}
+
+.search-bar input {
+    border: none;
+    outline: none;
+    background: transparent;
+    flex: 1;
+    font-size: 14px;
+}
+
+.search-bar input::placeholder {
+    color: #6c757d;
+}
+
+/* Filters Section */
+.filters-section {
+    margin-bottom: 30px;
+}
+
+.filter-buttons {
+    display: flex;
+    gap: 15px;
+    flex-wrap: wrap;
+}
+
+.filter-btn {
+    background: white;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    padding: 10px 20px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    color: #6c757d;
+}
+
+.filter-btn:hover {
+    background: #f8f9fa;
+    border-color: #7c3aed;
+}
+
+.filter-btn.active {
+    background: #7c3aed;
+    color: white;
+    border-color: #7c3aed;
+}
+
+.filter-btn i {
+    font-size: 12px;
+    transition: transform 0.3s ease;
+}
+
+.filter-btn.active i {
+    transform: rotate(90deg);
+}
+
+/* Candidates List */
+.candidates-list {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.candidate-item {
+    background: white;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.candidate-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+}
+
+.candidate-avatar {
+    width: 60px;
+    height: 60px;
+    background: linear-gradient(135deg, #7c3aed 0%, #5b21b6 100%);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 24px;
+    flex-shrink: 0;
+}
+
+.candidate-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.candidate-info h3 {
+    font-size: 18px;
+    font-weight: 600;
+    color: #2c3e50;
+    margin-bottom: 5px;
+}
+
+.candidate-info p {
+    color: #6c757d;
+    font-size: 14px;
+    margin-bottom: 8px;
+}
+
+.view-more {
+    color: #7c3aed;
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.view-more:hover {
+    text-decoration: underline;
+}
+
+.candidate-details {
+    flex: 1;
+    min-width: 0;
+}
+
+.candidate-details p {
+    color: #6c757d;
+    font-size: 14px;
+    margin-bottom: 5px;
+}
+
+.candidate-details strong {
+    color: #2c3e50;
+}
+
+.candidate-actions {
+    display: flex;
+    gap: 10px;
+    flex-shrink: 0;
+}
+
+.btn-action {
+    width: 40px;
+    height: 40px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    font-size: 16px;
+}
+
+.btn-approve {
+    background: #10b981;
+    color: white;
+}
+
+.btn-approve:hover {
+    background: #059669;
+    transform: scale(1.1);
+}
+
+.btn-reject {
+    background: #ef4444;
+    color: white;
+}
+
+.btn-reject:hover {
+    background: #dc2626;
+    transform: scale(1.1);
+}
+
+.match-level {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+}
+
+.match-badge {
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.match-highlight {
+    background: #fbbf24;
+    color: #92400e;
+}
+
+.match-high {
+    background: #10b981;
+    color: white;
+}
+
+.match-medium {
+    background: #3b82f6;
+    color: white;
+}
+
+.match-low {
+    background: #6b7280;
+    color: white;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .candidate-item {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .candidate-actions {
+        justify-content: center;
+    }
+    
+    .filter-buttons {
+        justify-content: center;
+    }
+    
+    .search-bar {
+        min-width: 200px;
+    }
+}

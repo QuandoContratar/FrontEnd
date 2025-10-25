@@ -5,22 +5,21 @@
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <meta name="description" content="Dashboard - Quando Previdência">
+    <meta name="description" content="Kanban de Recrutamento - Quando Previdência">
     <meta name="author" content="">
 
-<title>Dashboard - Quando Previdência</title>
+    <title>Kanban de Recrutamento - Quando Previdência</title>
 
     <!-- Custom fonts for this template-->
     <link href="vendor/fontawesome-free/css/all.min.css" rel="stylesheet" type="text/css">
     <link href="https://fonts.googleapis.com/css?family=Nunito:200,200i,300,300i,400,400i,600,600i,700,700i,800,800i,900,900i" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="icon" href="./img/relogio_icone_quando_previdencia.png" type="image/png">
 
     <!-- Custom styles for this template-->
     <link href="css/sb-admin-2.min.css" rel="stylesheet">
     <link href="./assets/css/main.css" rel="stylesheet">
-    <link href="./assets/css/pages/home.css" rel="stylesheet">
+    <link href="./assets/css/pages/kanban-recrutamento.css" rel="stylesheet">
 </head>
 <body id="page-top">
 
@@ -42,7 +41,7 @@
             <hr class="sidebar-divider my-0">
 
             <!-- Nav Item - Dashboard -->
-            <li class="nav-item active">
+            <li class="nav-item">
                 <a class="nav-link" href="home.html">
                     <i class="fas fa-fw fa-tachometer-alt"></i>
                     <span>Dashboard</span></a>
@@ -160,18 +159,6 @@
                         <i class="fa fa-bars"></i>
                     </button>
 
-                    <!-- Topbar Search -->
-                    <!-- <form class="d-none d-sm-inline-block form-inline mr-auto ml-md-3 my-2 my-md-0 mw-100 navbar-search">
-                        <div class="input-group">
-                            <input type="text" class="form-control bg-light border-0 small" placeholder="Pesquisar no sistema..." aria-label="Search" aria-describedby="basic-addon2">
-                            <div class="input-group-append">
-                                <button class="btn btn-primary" type="button">
-                                    <i class="fas fa-search fa-sm"></i>
-                                </button>
-                            </div>
-                        </div>
-                    </form> -->
-
                     <!-- Topbar Navbar -->
                     <ul class="navbar-nav ml-auto">
 
@@ -210,125 +197,145 @@
                     <!-- Page Heading -->
                     <div class="d-sm-flex align-items-center justify-content-between mb-4">
                         <div>
-                            <h1 class="h3 mb-0 text-gray-800 page-title">Bem-vindo, Henrique Szapiro</h1>
-                            <p class="mb-0 text-gray-600">O que vamos ver hoje?</p>
+                            <h1 class="h3 mb-0 text-gray-800">KANBAN DE RECRUTAMENTO</h1>
+                            <p class="mb-0 text-gray-600">Organize o processo de recrutamento</p>
+                        </div>
+                        <div class="search-bar">
+                            <i class="fas fa-search"></i>
+                            <input type="text" placeholder="Buscar candidatos...">
                         </div>
                     </div>
 
-                    <!-- Content Row -->
-                    <div class="row">
-                        <div class="col-xl-12 col-lg-12">
-                            <div class="dashboard-cards">
-                                <div class="dashboard-card active" onclick="window.location.href='abertura-vaga.html'">
-            <div class="icon-wrapper">
-                <!-- Ícone: Abertura de Vagas (Currículo) -->
-                <svg class="icon-roxo" viewBox="0 0 48 48">
-                    <rect x="8" y="8" width="32" height="32" rx="6" fill="#fff" fill-opacity="0.15"/>
-                    <rect x="14" y="14" width="20" height="20" rx="3" stroke="#fff" stroke-width="2" fill="none"/>
-                    <circle cx="24" cy="22" r="3" fill="#fff"/>
-                    <path d="M18 30c0-3 6-3 6-3s6 0 6 3" stroke="#fff" stroke-width="2" fill="none"/>
-                </svg>
-            </div>
-            <h3>Abertura de Vagas</h3>
-            <p>Realize a abertura de novas vagas, configure detalhes e gerencie o fluxo de recrutamento.</p>
-            <button onclick="event.stopPropagation(); window.location.href='abertura-vaga.html'">Clique Aqui</button>
-        </div>
-                                <div class="dashboard-card" onclick="window.location.href='kanban-abertura-vaga.html'">
-            <div class="icon-wrapper">
-                <!-- Ícone: Kanban -->
-                <svg class="icon-roxo" viewBox="0 0 48 48">
-                    <rect x="10" y="10" width="8" height="28" rx="2"/>
-                    <rect x="20" y="10" width="8" height="18" rx="2"/>
-                    <rect x="30" y="10" width="8" height="24" rx="2"/>
-                </svg>
-            </div>
-            <h3>Kanban Abertura de Vagas</h3>
-            <p>Acompanhe o status das vagas em diferentes fases: Caixa de Entrada, Vagas Abertas e Aprovadas.</p>
-            <button onclick="event.stopPropagation(); window.location.href='kanban-abertura-vaga.html'">Visualizar</button>
-        </div>
-                                <div class="dashboard-card" onclick="window.location.href='minhas-solicitacoes.html'">
-            <div class="icon-wrapper">
-                <!-- Ícone: Lista -->
-                <svg class="icon-roxo" viewBox="0 0 48 48">
-                    <rect x="8" y="8" width="32" height="32" rx="4" fill="#fff" fill-opacity="0.15"/>
-                    <rect x="12" y="16" width="24" height="2" rx="1" fill="#fff"/>
-                    <rect x="12" y="22" width="20" height="2" rx="1" fill="#fff"/>
-                    <rect x="12" y="28" width="16" height="2" rx="1" fill="#fff"/>
-                </svg>
-            </div>
-            <h3>Minhas Solicitações</h3>
-            <p>Gerencie suas solicitações de abertura de vagas, edite e envie para aprovação.</p>
-            <button onclick="event.stopPropagation(); window.location.href='minhas-solicitacoes.html'">Gerenciar</button>
-        </div>
-                                <div class="dashboard-card" onclick="window.location.href='match-candidatos.html'">
-            <div class="icon-wrapper">
-                <!-- Ícone: Match -->
-                <svg class="icon-roxo" viewBox="0 0 48 48">
-                    <circle cx="16" cy="20" r="6" fill="#fff" fill-opacity="0.15"/>
-                    <circle cx="32" cy="20" r="6" fill="#fff" fill-opacity="0.15"/>
-                    <path d="M10 32c0-4 6-6 6-6s6 2 6 6" stroke="#fff" stroke-width="2" fill="none"/>
-                    <path d="M26 32c0-4 6-6 6-6s6 2 6 6" stroke="#fff" stroke-width="2" fill="none"/>
-                    <path d="M20 16l8 8m0-8l-8 8" stroke="#fff" stroke-width="2" fill="none"/>
-                </svg>
-            </div>
-            <h3>Match de Candidatos</h3>
-            <p>Selecione candidatos para a próxima fase com sistema de match inteligente.</p>
-            <button onclick="event.stopPropagation(); window.location.href='match-candidatos.html'">Selecionar</button>
-        </div>
-                                <div class="dashboard-card" onclick="window.location.href='kanban-recrutamento.html'">
-            <div class="icon-wrapper">
-                <!-- Ícone: Kanban Recrutamento -->
-                <svg class="icon-roxo" viewBox="0 0 48 48">
-                    <rect x="8" y="8" width="8" height="32" rx="2"/>
-                    <rect x="20" y="8" width="8" height="24" rx="2"/>
-                    <rect x="32" y="8" width="8" height="28" rx="2"/>
-                </svg>
-            </div>
-            <h3>Kanban de Recrutamento</h3>
-            <p>Organize o processo de recrutamento: Triagem, Entrevista RH e Entrevista Gestor.</p>
-            <button onclick="event.stopPropagation(); window.location.href='kanban-recrutamento.html'">Gerenciar</button>
-        </div>
-                                <div class="dashboard-card" onclick="window.location.href='candidatos.html'">
-            <div class="icon-wrapper">
-                <!-- Ícone: Grupo de Usuários -->
-                <svg class="icon-roxo" viewBox="0 0 48 48">
-                    <circle cx="16" cy="20" r="5"/>
-                    <circle cx="32" cy="20" r="5"/>
-                    <path d="M8 36c0-4 8-6 8-6s8 2 8 6" stroke="#fff" stroke-width="2" fill="none"/>
-                    <path d="M24 36c0-4 8-6 8-6s8 2 8 6" stroke="#fff" stroke-width="2" fill="none"/>
-                </svg>
-            </div>
-            <h3>Visualizar Candidatos</h3>
-            <p>Veja todos os candidatos cadastrados, suas informações e progresso nos processos.</p>
-            <button onclick="event.stopPropagation(); window.location.href='candidatos.html'">Visualizar</button>
-        </div>
-                                <div class="dashboard-card" onclick="window.location.href='upload-curriculos.html'">
-            <div class="icon-wrapper">
-                <!-- Ícone: Upload -->
-                <svg class="icon-roxo" viewBox="0 0 48 48">
-                    <path d="M24 8v24m-8-8l8 8 8-8" stroke="#fff" stroke-width="2" fill="none"/>
-                    <rect x="8" y="36" width="32" height="4" rx="2" fill="#fff" fill-opacity="0.15"/>
-                </svg>
-            </div>
-            <h3>Upload Currículos</h3>
-            <p>Faça upload de currículos em lote e organize a base de candidatos.</p>
-            <button onclick="event.stopPropagation(); window.location.href='upload-curriculos.html'">Upload</button>
-        </div>
-                                <div class="dashboard-card" onclick="window.location.href='charts.html'">
-            <div class="icon-wrapper">
-                <!-- Ícone: Gráfico (Dashboard) -->
-                <svg class="icon-roxo" viewBox="0 0 48 48">
-                    <rect x="10" y="30" width="6" height="8" rx="2"/>
-                    <rect x="20" y="22" width="6" height="16" rx="2"/>
-                    <rect x="30" y="14" width="6" height="24" rx="2"/>
-                </svg>
-            </div>
-            <h3>Dashboard</h3>
-            <p>Acompanhe métricas, relatórios e indicadores de performance do RH.</p>
-            <button onclick="event.stopPropagation(); window.location.href='charts.html'">Acessar</button>
-        </div>
-    </div>
-</div>
+                    <!-- Kanban Board -->
+                    <div class="kanban-board">
+                        <!-- Coluna 1: Triagem -->
+                        <div class="kanban-column">
+                            <div class="column-header">
+                                <h3>Triagem</h3>
+                                <span class="count">3</span>
+                            </div>
+                            <div class="column-content">
+                                <!-- Card 1 -->
+                                <div class="kanban-card">
+                                    <div class="card-header">
+                                        <h4>João Silva</h4>
+                                        <span class="priority high">Alta</span>
+                                    </div>
+                                    <div class="card-content">
+                                        <p><strong>Vaga:</strong> Desenvolvedor Python</p>
+                                        <p><strong>Área:</strong> Tecnologia</p>
+                                        <p><strong>Status:</strong> Aguardando triagem</p>
+                                    </div>
+                                    <div class="card-actions">
+                                        <button class="btn-action btn-primary">Avançar</button>
+                                        <button class="btn-action btn-secondary">Detalhes</button>
+                                    </div>
+                                </div>
+
+                                <!-- Card 2 -->
+                                <div class="kanban-card">
+                                    <div class="card-header">
+                                        <h4>Maria Santos</h4>
+                                        <span class="priority medium">Média</span>
+                                    </div>
+                                    <div class="card-content">
+                                        <p><strong>Vaga:</strong> Analista de Dados</p>
+                                        <p><strong>Área:</strong> Dados</p>
+                                        <p><strong>Status:</strong> Em análise</p>
+                                    </div>
+                                    <div class="card-actions">
+                                        <button class="btn-action btn-primary">Avançar</button>
+                                        <button class="btn-action btn-secondary">Detalhes</button>
+                                    </div>
+                                </div>
+
+                                <!-- Card 3 -->
+                                <div class="kanban-card">
+                                    <div class="card-header">
+                                        <h4>Pedro Costa</h4>
+                                        <span class="priority low">Baixa</span>
+                                    </div>
+                                    <div class="card-content">
+                                        <p><strong>Vaga:</strong> Designer UX/UI</p>
+                                        <p><strong>Área:</strong> Design</p>
+                                        <p><strong>Status:</strong> Novo</p>
+                                    </div>
+                                    <div class="card-actions">
+                                        <button class="btn-action btn-primary">Avançar</button>
+                                        <button class="btn-action btn-secondary">Detalhes</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Coluna 2: Entrevista RH -->
+                        <div class="kanban-column">
+                            <div class="column-header">
+                                <h3>Entrevista RH</h3>
+                                <span class="count">2</span>
+                            </div>
+                            <div class="column-content">
+                                <!-- Card 1 -->
+                                <div class="kanban-card">
+                                    <div class="card-header">
+                                        <h4>Ana Oliveira</h4>
+                                        <span class="priority high">Alta</span>
+                                    </div>
+                                    <div class="card-content">
+                                        <p><strong>Vaga:</strong> Gerente de Projetos</p>
+                                        <p><strong>Área:</strong> Gestão</p>
+                                        <p><strong>Status:</strong> Agendada</p>
+                                    </div>
+                                    <div class="card-actions">
+                                        <button class="btn-action btn-primary">Avançar</button>
+                                        <button class="btn-action btn-secondary">Detalhes</button>
+                                    </div>
+                                </div>
+
+                                <!-- Card 2 -->
+                                <div class="kanban-card">
+                                    <div class="card-header">
+                                        <h4>Carlos Lima</h4>
+                                        <span class="priority medium">Média</span>
+                                    </div>
+                                    <div class="card-content">
+                                        <p><strong>Vaga:</strong> Desenvolvedor Full-Stack</p>
+                                        <p><strong>Área:</strong> Tecnologia</p>
+                                        <p><strong>Status:</strong> Em andamento</p>
+                                    </div>
+                                    <div class="card-actions">
+                                        <button class="btn-action btn-primary">Avançar</button>
+                                        <button class="btn-action btn-secondary">Detalhes</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Coluna 3: Entrevista Gestor -->
+                        <div class="kanban-column">
+                            <div class="column-header">
+                                <h3>Entrevista Gestor</h3>
+                                <span class="count">1</span>
+                            </div>
+                            <div class="column-content">
+                                <!-- Card 1 -->
+                                <div class="kanban-card">
+                                    <div class="card-header">
+                                        <h4>Lucas Ferreira</h4>
+                                        <span class="priority high">Alta</span>
+                                    </div>
+                                    <div class="card-content">
+                                        <p><strong>Vaga:</strong> Arquiteto de Software</p>
+                                        <p><strong>Área:</strong> Tecnologia</p>
+                                        <p><strong>Status:</strong> Finalizada</p>
+                                    </div>
+                                    <div class="card-actions">
+                                        <button class="btn-action btn-success">Aprovar</button>
+                                        <button class="btn-action btn-danger">Reprovar</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
                 </div>
@@ -389,12 +396,7 @@
 
     <!-- Page level custom scripts -->
     <script src="./assets/js/components/utils.js"></script>
-    <script>
-        $(document).ready(function() {
-            // Cards sem efeitos de hover automáticos
-            // Os links funcionam diretamente via onclick no HTML
-        });
-    </script>
+    <script src="./assets/js/pages/kanban-recrutamento.js"></script>
 
 </body>
 

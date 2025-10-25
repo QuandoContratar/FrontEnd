@@ -78,10 +78,6 @@
     transition: transform 0.3s ease;
 }
 
-.chevron-icon.rotated {
-    transform: rotate(180deg);
-}
-
 .progress-section {
     background: var(--branco);
     border-radius: 8px;
