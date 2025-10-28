@@ -70,3 +70,54 @@ export class UsersClient extends ApiClient {
         return response.json();
     }
 }
+
+export class CandidateClient extends ApiClient {
+    constructor() {
+        super('candidates');
+    }
+
+    async downloadResume(id) {
+        const response = await fetch(`${this.url}/${id}/resume`);
+        if (!response.ok) throw new Error('Failed to download resume');
+        return response.arrayBuffer(); // PDF binário
+    }
+
+    async uploadMultipleResumes(files) {
+        const formData = new FormData();
+        files.forEach(file => formData.append('files', file));
+        const response = await fetch(`${this.url}/upload-multiple-resumes`, {
+            method: 'POST',
+            body: formData
+        });
+        if (!response.ok) throw new Error('Failed to upload resumes');
+        return response.json();
+    }
+
+    async listCandidates() {
+        const response = await fetch(`${this.url}/candidatesList`);
+        if (!response.ok) throw new Error('Failed to list candidates');
+        return response.json();
+    }
+
+    async getCandidateDetails(id) {
+        const response = await fetch(`${this.url}/${id}/details`);
+        if (!response.ok) throw new Error('Failed to get candidate details');
+        return response.json();
+    }
+
+    async getCandidateExperience(id) {
+        const response = await fetch(`${this.url}/${id}/experience`);
+        if (!response.ok) throw new Error('Failed to get candidate experience');
+        return response.text();
+    }
+
+    async updateExperience(id, experience) {
+        const response = await fetch(`${this.url}/${id}/experience`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ experience })
+        });
+        if (!response.ok) throw new Error('Failed to update experience');
+        return response.json();
+    }
+}

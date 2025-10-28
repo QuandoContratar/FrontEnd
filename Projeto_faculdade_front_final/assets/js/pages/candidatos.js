@@ -3,14 +3,31 @@
    ======================================== */
 
 class CandidatosPage {
+    async fillUserHeader() {
+        try {
+            const { UsersClient } = await import('../../../client/client.js');
+            const client = new UsersClient();
+            // Supondo que o usuário logado tem id armazenado em localStorage
+            const userId = localStorage.getItem('userId');
+            if (!userId) return;
+            const user = await client.findById(userId);
+            // Preencher nome e área
+            const nameSpan = document.querySelector('.text-white.mr-2.user-name');
+            const areaSpan = document.querySelector('.text-white.mr-2.user-area');
+            if (nameSpan) nameSpan.textContent = user.name;
+            if (areaSpan) areaSpan.textContent = user.area;
+        } catch (e) {
+            // fallback: não altera se erro
+        }
+    }
     constructor() {
         this.candidates = [];
-        this.init();
+        this.setupEventListeners();
     }
 
-    init() {
-        this.setupEventListeners();
-        this.loadCandidates();
+    async init() {
+        await this.fillUserHeader();
+        await this.loadCandidates();
     }
 
     setupEventListeners() {
@@ -35,84 +52,36 @@ class CandidatosPage {
         });
     }
 
-    loadCandidates() {
-        // Dados de exemplo dos candidatos
-        this.candidates = [
-            {
-                id: 1,
-                name: 'John Doe',
-                age: 20,
-                location: 'São Paulo',
-                position: 'Desenvolvedor Jr Python',
-                area: 'Dados',
-                date: '2024-12-15'
-            },
-            {
-                id: 2,
-                name: 'Maria Silva',
-                age: 25,
-                location: 'Rio de Janeiro',
-                position: 'Analista de Dados',
-                area: 'Dados',
-                date: '2024-12-14'
-            },
-            {
-                id: 3,
-                name: 'Carlos Santos',
-                age: 30,
-                location: 'Belo Horizonte',
-                position: 'Desenvolvedor Full Stack',
-                area: 'Tecnologia',
-                date: '2024-12-13'
-            },
-            {
-                id: 4,
-                name: 'Ana Costa',
-                age: 28,
-                location: 'Porto Alegre',
-                position: 'Gerente de Projetos',
-                area: 'Gestão',
-                date: '2024-12-12'
-            },
-            {
-                id: 5,
-                name: 'Pedro Oliveira',
-                age: 22,
-                location: 'Brasília',
-                position: 'Estagiário de Marketing',
-                area: 'Marketing',
-                date: '2024-12-11'
-            },
-            {
-                id: 6,
-                name: 'Fernanda Lima',
-                age: 26,
-                location: 'Salvador',
-                position: 'Designer UX/UI',
-                area: 'Design',
-                date: '2024-12-10'
-            },
-            {
-                id: 7,
-                name: 'Roberto Alves',
-                age: 35,
-                location: 'Fortaleza',
-                position: 'Analista Financeiro',
-                area: 'Financeiro',
-                date: '2024-12-09'
-            },
-            {
-                id: 8,
-                name: 'Juliana Rocha',
-                age: 24,
-                location: 'Recife',
-                position: 'Assistente Administrativo',
-                area: 'Administrativo',
-                date: '2024-12-08'
-            }
-        ];
-
+    async loadCandidates() {
+        try {
+            const { CandidateClient } = await import('../../../client/client.js');
+            const client = new CandidateClient();
+            const apiCandidates = await client.findAll();
+            // Mapear dados da API para o formato esperado
+            this.candidates = apiCandidates.map(c => ({
+                id: c.idCandidate,
+                name: c.name,
+                age: c.birth ? this.calculateAge(c.birth) : '',
+                location: c.state || '',
+                position: c.education || '',
+                area: c.skills || '',
+                date: c.createdAt || '' // Ajuste se houver campo de data
+            }));
+        } catch (e) {
+            this.candidates = [];
+        }
         this.renderCandidates();
+    }
+
+    calculateAge(birth) {
+        const birthDate = new Date(birth);
+        const today = new Date();
+        let age = today.getFullYear() - birthDate.getFullYear();
+        const m = today.getMonth() - birthDate.getMonth();
+        if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+            age--;
+        }
+        return age;
     }
 
     renderCandidates() {
@@ -194,7 +163,11 @@ class CandidatosPage {
     }
 
     showDetails(candidateName) {
-        // Redirecionar para página de detalhes
+        // Encontrar o candidato pelo nome
+        const candidate = this.candidates.find(c => c.name === candidateName);
+        if (candidate) {
+            localStorage.setItem('selectedCandidateId', candidate.id);
+        }
         window.location.href = 'detalhes-candidato.html';
     }
 
@@ -207,8 +180,9 @@ class CandidatosPage {
 let candidatosPage;
 
 // Inicializar página quando DOM estiver carregado
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     candidatosPage = new CandidatosPage();
+    await candidatosPage.init();
 });
 
 

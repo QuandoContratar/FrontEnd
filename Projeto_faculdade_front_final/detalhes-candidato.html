@@ -21,6 +21,8 @@
     
     <!-- Chart.js -->
     <script src="vendor/chart.js/Chart.min.js"></script>
+    <!-- Script de detalhes do candidato como módulo -->
+    <script type="module" src="assets/js/pages/detalhes-candidato.js"></script>
     
     <!-- Custom styles for this page -->
     <style>
@@ -599,86 +601,85 @@
                                     <!-- General Information -->
                                     <div class="candidate-profile">
                                         <h4 class="section-title">Informações Gerais</h4>
-                                        <div class="row">
-                                            <div class="col-md-3 text-center">
-                                                <img src="https://images.unsplash.com/photo-1494790108755-2616b612b786?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=687&q=80" 
-                                                     alt="Regina Oliveira" class="candidate-photo">
+                                            <div class="candidate-info">
+                                                <h4 id="candidateName"></h4>
+                                                <p><strong>Email:</strong> <span id="candidateEmail"></span></p>
+                                                <p><strong>Telefone:</strong> <span id="candidatePhone"></span></p>
+                                                <p><strong>Estado:</strong> <span id="candidateState"></span></p>
+                                                <p><strong>Nascimento:</strong> <span id="candidateBirth"></span></p>
                                             </div>
-                                            <div class="col-md-9">
-                                                <div class="candidate-info">
-                                                    <p><strong>Nome:</strong> Regina Oliveira</p>
-                                                    <p><strong>Telefone:</strong> (11) 99546-0976</p>
-                                                    <p><strong>Email:</strong> regina.oliveira@gmail.com</p>
-                                                    <p><strong>Estado:</strong> São Paulo</p>
+                                        </div>
+                                    </div>
+
+                                        <!-- Expandable Sections organizadas abaixo do card principal -->
+                                        <div style="margin-top: 24px;">
+                                            <!-- Education -->
+                                            <div class="expandable-section">
+                                                <div class="expandable-header" onclick="toggleSection('education')">
+                                                    <h6>Escolaridade:</h6>
+                                                    <i class="fas fa-chevron-down chevron-icon" id="education-chevron"></i>
+                                                </div>
+                                                <div class="expandable-content" id="education-content">
+                                                    <div class="education-item">
+                                                        <h6>Bacharelado em Ciência da Computação</h6>
+                                                        <p><strong>Instituição:</strong> Universidade de São Paulo (USP)</p>
+                                                        <p><strong>Período:</strong> 2018 - 2022</p>
+                                                        <p><strong>Status:</strong> Concluído</p>
+                                                    </div>
+                                                    <div class="education-item">
+                                                        <h6>Pós-graduação em Data Science</h6>
+                                                        <p><strong>Instituição:</strong> Instituto de Tecnologia de São Paulo</p>
+                                                        <p><strong>Período:</strong> 2023 - 2024</p>
+                                                        <p><strong>Status:</strong> Em andamento</p>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <!-- Experience -->
+                                            <div class="expandable-section">
+                                                <div class="expandable-header" onclick="toggleSection('experience')">
+                                                    <h6>Experiência:</h6>
+                                                    <i class="fas fa-chevron-down chevron-icon" id="experience-chevron"></i>
+                                                </div>
+                                                <div class="expandable-content" id="experience-content">
+                                                    <div class="experience-item">
+                                                        <h6>Analista de Dados Júnior</h6>
+                                                        <p><strong>Empresa:</strong> TechCorp Solutions</p>
+                                                        <p><strong>Período:</strong> Janeiro 2023 - Presente</p>
+                                                        <p><strong>Descrição:</strong> Análise de dados, criação de dashboards e relatórios gerenciais.</p>
+                                                    </div>
+                                                    <div class="experience-item">
+                                                        <h6>Estagiário em Desenvolvimento</h6>
+                                                        <p><strong>Empresa:</strong> StartupXYZ</p>
+                                                        <p><strong>Período:</strong> Junho 2021 - Dezembro 2022</p>
+                                                        <p><strong>Descrição:</strong> Desenvolvimento de aplicações web e mobile.</p>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <!-- Skills -->
+                                            <div class="expandable-section">
+                                                <div class="expandable-header" onclick="toggleSection('skills')">
+                                                    <h6>Competências:</h6>
+                                                    <i class="fas fa-chevron-down chevron-icon" id="skills-chevron"></i>
+                                                </div>
+                                                <div class="expandable-content" id="skills-content">
+                                                    <div class="skill-tag">Python</div>
+                                                    <div class="skill-tag">SQL</div>
+                                                    <div class="skill-tag">Power BI</div>
+                                                    <div class="skill-tag">Tableau</div>
+                                                    <div class="skill-tag">Excel Avançado</div>
+                                                    <div class="skill-tag">Machine Learning</div>
+                                                    <div class="skill-tag">JavaScript</div>
+                                                    <div class="skill-tag">React</div>
+                                                    <div class="skill-tag">Git</div>
+                                                    <div class="skill-tag">Agile</div>
                                                 </div>
                                             </div>
                                         </div>
-                                    </div>
 
                                     <!-- Expandable Sections -->
-                                    <!-- Education -->
-                                    <div class="expandable-section">
-                                        <div class="expandable-header" onclick="toggleSection('education')">
-                                            <h6>Escolaridade:</h6>
-                                            <i class="fas fa-chevron-down chevron-icon" id="education-chevron"></i>
-                                        </div>
-                                        <div class="expandable-content" id="education-content">
-                                            <div class="education-item">
-                                                <h6>Bacharelado em Ciência da Computação</h6>
-                                                <p><strong>Instituição:</strong> Universidade de São Paulo (USP)</p>
-                                                <p><strong>Período:</strong> 2018 - 2022</p>
-                                                <p><strong>Status:</strong> Concluído</p>
-                                            </div>
-                                            <div class="education-item">
-                                                <h6>Pós-graduação em Data Science</h6>
-                                                <p><strong>Instituição:</strong> Instituto de Tecnologia de São Paulo</p>
-                                                <p><strong>Período:</strong> 2023 - 2024</p>
-                                                <p><strong>Status:</strong> Em andamento</p>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <!-- Experience -->
-                                    <div class="expandable-section">
-                                        <div class="expandable-header" onclick="toggleSection('experience')">
-                                            <h6>Experiência:</h6>
-                                            <i class="fas fa-chevron-down chevron-icon" id="experience-chevron"></i>
-                                        </div>
-                                        <div class="expandable-content" id="experience-content">
-                                            <div class="experience-item">
-                                                <h6>Analista de Dados Júnior</h6>
-                                                <p><strong>Empresa:</strong> TechCorp Solutions</p>
-                                                <p><strong>Período:</strong> Janeiro 2023 - Presente</p>
-                                                <p><strong>Descrição:</strong> Análise de dados, criação de dashboards e relatórios gerenciais.</p>
-                                            </div>
-                                            <div class="experience-item">
-                                                <h6>Estagiário em Desenvolvimento</h6>
-                                                <p><strong>Empresa:</strong> StartupXYZ</p>
-                                                <p><strong>Período:</strong> Junho 2021 - Dezembro 2022</p>
-                                                <p><strong>Descrição:</strong> Desenvolvimento de aplicações web e mobile.</p>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <!-- Skills -->
-                                    <div class="expandable-section">
-                                        <div class="expandable-header" onclick="toggleSection('skills')">
-                                            <h6>Competências:</h6>
-                                            <i class="fas fa-chevron-down chevron-icon" id="skills-chevron"></i>
-                                        </div>
-                                        <div class="expandable-content" id="skills-content">
-                                            <div class="skill-tag">Python</div>
-                                            <div class="skill-tag">SQL</div>
-                                            <div class="skill-tag">Power BI</div>
-                                            <div class="skill-tag">Tableau</div>
-                                            <div class="skill-tag">Excel Avançado</div>
-                                            <div class="skill-tag">Machine Learning</div>
-                                            <div class="skill-tag">JavaScript</div>
-                                            <div class="skill-tag">React</div>
-                                            <div class="skill-tag">Git</div>
-                                            <div class="skill-tag">Agile</div>
-                                        </div>
-                                    </div>
+                                
                                 </div>
 
                                 <!-- Right Column - Selection Process -->
@@ -723,114 +724,6 @@
         </div>
         <!-- End of Content Wrapper -->
 
-    </div>
-    <!-- End of Page Wrapper -->
-
-    <!-- Scroll to Top Button-->
-    <a class="scroll-to-top rounded" href="#page-top">
-        <i class="fas fa-angle-up"></i>
-    </a>
-
-    <!-- Logout Modal-->
-    <div class="modal fade" id="logoutModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
-        <div class="modal-dialog" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="exampleModalLabel">Pronto para sair?</h5>
-                    <button class="close" type="button" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">×</span>
-                    </button>
-                </div>
-                <div class="modal-body">Selecione "Sair" abaixo se você estiver pronto para encerrar sua sessão atual.</div>
-                <div class="modal-footer">
-                    <button class="btn btn-secondary" type="button" data-dismiss="modal">Cancelar</button>
-                    <a class="btn btn-primary" href="login.html">Sair</a>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Bootstrap core JavaScript-->
-    <script src="vendor/jquery/jquery.min.js"></script>
-    <script src="vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
-
-    <!-- Core plugin JavaScript-->
-    <script src="vendor/jquery-easing/jquery.easing.min.js"></script>
-
-    <!-- Custom scripts for all pages-->
-    <script src="js/sb-admin-2.min.js"></script>
-
-    <!-- Page level custom scripts -->
-    <script>
-        $(document).ready(function() {
-            // Initialize progress chart
-            initProgressChart();
-        });
-
-        // Toggle expandable sections
-        function toggleSection(sectionName) {
-            const content = document.getElementById(sectionName + '-content');
-            const chevron = document.getElementById(sectionName + '-chevron');
-            
-            if (content.classList.contains('show')) {
-                content.classList.remove('show');
-                chevron.classList.remove('rotated');
-            } else {
-                content.classList.add('show');
-                chevron.classList.add('rotated');
-            }
-        }
-
-        // Initialize progress chart
-        function initProgressChart() {
-            const ctx = document.getElementById('progressChart').getContext('2d');
-            const progressChart = new Chart(ctx, {
-                type: 'doughnut',
-                data: {
-                    datasets: [{
-                        data: [65, 35],
-                        backgroundColor: [
-                            '#1f2937',
-                            '#e5e7eb'
-                        ],
-                        borderWidth: 0,
-                        cutout: '70%'
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            display: false
-                        }
-                    }
-                }
-            });
-
-            // Add percentage text in center
-            const canvas = document.getElementById('progressChart');
-            const ctx2 = canvas.getContext('2d');
-            ctx2.font = 'bold 24px Arial';
-            ctx2.fillStyle = '#1f2937';
-            ctx2.textAlign = 'center';
-            ctx2.textBaseline = 'middle';
-            ctx2.fillText('65%', canvas.width / 2, canvas.height / 2);
-        }
-
-        // Download resume function
-        function downloadResume() {
-            alert('Download do currículo iniciado!\n\nEsta funcionalidade será implementada em breve.');
-        }
-
-        // Exclude candidate function
-        function excludeCandidate() {
-            if (confirm('Tem certeza que deseja excluir este candidato do processo seletivo?')) {
-                alert('Candidato excluído com sucesso!');
-                // Redirect back to candidates list
-                window.location.href = 'candidatos.html';
-            }
-        }
     </script>
 
 </body>

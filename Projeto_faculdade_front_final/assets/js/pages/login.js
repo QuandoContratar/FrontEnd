@@ -118,42 +118,41 @@ class LoginPage {
      * Manipula o processo de login
      */
     async handleLogin() {
-        if (this.isLoading) return;
+            if (this.isLoading) return;
 
-        const email = this.elements.email.value.trim();
-        const password = this.elements.password.value.trim();
-        const rememberMe = this.elements.rememberCheckbox.checked;
+            const email = this.elements.email.value.trim();
+            const password = this.elements.password.value.trim();
+            const rememberMe = this.elements.rememberCheckbox.checked;
 
-        try {
-            // Validação do formulário
-            this.validateForm(email, password);
+            try {
+                // Validação do formulário
+                this.validateForm(email, password);
 
-            // Mostrar loading
-            this.setLoadingState(true);
+                // Mostrar loading
+                this.setLoadingState(true);
 
-            // Simular delay de rede (remover quando integrar com backend)
-            await this.simulateNetworkDelay();
+                // Chamada à API de login
+                const { UsersClient } = await import('../../../client/client.js');
+                const client = new UsersClient();
+                const user = await client.login({ email, password });
 
-            // Tentar fazer login
-            const user = window.authManager.login(email, password);
+                // Salvar dados se "Lembre de mim" estiver marcado
+                this.handleRememberMe(rememberMe, email);
 
-            // Salvar dados se "Lembre de mim" estiver marcado
-            this.handleRememberMe(rememberMe, email);
+                // Mostrar mensagem de sucesso
+                Utils.showMessage('Login realizado com sucesso! Redirecionando...', 'success');
 
-            // Mostrar mensagem de sucesso
-            Utils.showMessage('Login realizado com sucesso! Redirecionando...', 'success');
+                // Redirecionar após delay
+                setTimeout(() => {
+                    window.location.href = 'home.html';
+                }, 1500);
 
-            // Redirecionar após delay
-            setTimeout(() => {
-                window.location.href = 'home.html';
-            }, 1500);
-
-        } catch (error) {
-            console.error('Erro no login:', error);
-            Utils.showMessage(error.message, 'error');
-        } finally {
-            this.setLoadingState(false);
-        }
+            } catch (error) {
+                console.error('Erro no login:', error);
+                Utils.showMessage(error.message, 'error');
+            } finally {
+                this.setLoadingState(false);
+            }
     }
 
     /**
@@ -173,9 +172,6 @@ class LoginPage {
         if (!password) {
             errors.push('Senha é obrigatória');
             this.showFieldError(this.elements.password, 'Senha é obrigatória');
-        } else if (!Utils.isValidPassword(password)) {
-            errors.push('A senha deve ter pelo menos 6 caracteres');
-            this.showFieldError(this.elements.password, 'A senha deve ter pelo menos 6 caracteres');
         }
 
         if (errors.length > 0) {
