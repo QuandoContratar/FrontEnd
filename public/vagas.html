@@ -626,79 +626,9 @@
 
     <!-- Custom scripts for all pages-->
     <script src="js/sb-admin-2.min.js"></script>
-
-    <script type="module">
-        import { VacanciesClient } from './client/client.js';
-        $(document).ready(async function () {
-            const vacanciesClient = new VacanciesClient();
-            const vagasContainer = $('.card-body');
-
-
-            // Função para atualizar KPI e renderizar vagas
-            async function atualizarVagas() {
-                try {
-                    const vagas = await vacanciesClient.findAll();
-                    // Atualiza KPI
-                    $("#kpi-vagas-abertas").text(vagas.length);
-                    // Renderiza cards
-                    vagasContainer.empty();
-                    if (!vagas.length) {
-                        vagasContainer.append('<p class="text-center">Nenhuma vaga encontrada.</p>');
-                        return;
-                    }
-                    vagas.forEach(vaga => {
-                        vagasContainer.append(`
-                            <div class="vaga-card">
-                                <div class="row align-items-center">
-                                    <div class="col-md-1">
-                                        <div class="vaga-icon">
-                                            <i class="fas fa-briefcase"></i>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <div class="vaga-title">${vaga.position || ''}</div>
-                                        <div class="vaga-manager">Gestor(a): ${vaga.manager.name || '-'}</div>
-                                        <div class="vaga-details">Área: ${vaga.area || '-'} | Modelo: ${vaga.workModel || '-'} | Salário: ${vaga.salary || '-'}</div>
-                                    </div>
-                                    <div class="col-md-5 text-right">
-                                        <button class="btn btn-enviar">Enviar Currículo</button>
-                                        <button class="btn btn-ver-mais">Ver Mais</button>
-                                    </div>
-                                </div>
-                            </div>
-                        `);
-                    });
-                } catch (err) {
-                    $("#kpi-vagas-abertas").text('0');
-                    vagasContainer.empty().append('<p class="text-center text-danger">Erro ao carregar vagas.</p>');
-                }
-            }
-
-            await atualizarVagas();
-
-            // Funcionalidade dos botões (delegação)
-            vagasContainer.on('click', '.btn-enviar', function () {
-                window.location.href = 'upload-curriculos.html';
-            });
-
-            vagasContainer.on('click', '.btn-ver-mais', function () {
-                alert('Abrindo detalhes da vaga...');
-            });
-
-            // Funcionalidade de busca
-            $('.navbar-search input').on('keyup', function () {
-                const searchTerm = $(this).val().toLowerCase();
-                $('.vaga-card').each(function () {
-                    const vagaText = $(this).text().toLowerCase();
-                    if (vagaText.includes(searchTerm)) {
-                        $(this).show();
-                    } else {
-                        $(this).hide();
-                    }
-                });
-            });
-        });
-    </script>
+    <script src="./assets/js/components/utils.js"></script>
+    <script type="module" src="./assets/js/components/access-control.js"></script>
+    <script type="module" src="./assets/js/pages/vagas.js"></script>
 
 </body>
 

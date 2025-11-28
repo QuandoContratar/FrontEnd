@@ -163,13 +163,18 @@
         }
         
         .expandable-content {
-            padding: 20px;
-            display: none;
+            padding: 0 20px;
             background: white;
+            max-height: 0;
+            overflow: hidden;
+            opacity: 0;
+            transition: max-height 0.4s ease, opacity 0.3s ease, padding 0.3s ease;
         }
         
         .expandable-content.show {
-            display: block;
+            max-height: 5000px;
+            opacity: 1;
+            padding: 20px;
         }
         
         .chevron-icon {
@@ -601,85 +606,56 @@
                                     <!-- General Information -->
                                     <div class="candidate-profile">
                                         <h4 class="section-title">Informações Gerais</h4>
-                                            <div class="candidate-info">
-                                                <h4 id="candidateName"></h4>
-                                                <p><strong>Email:</strong> <span id="candidateEmail"></span></p>
-                                                <p><strong>Telefone:</strong> <span id="candidatePhone"></span></p>
-                                                <p><strong>Estado:</strong> <span id="candidateState"></span></p>
-                                                <p><strong>Nascimento:</strong> <span id="candidateBirth"></span></p>
-                                            </div>
+                                        <div class="candidate-info">
+                                            <h4 id="candidateName"></h4>
+                                            <p><strong>Email:</strong> <span id="candidateEmail"></span></p>
+                                            <p><strong>Telefone:</strong> <span id="candidatePhone"></span></p>
+                                            <p><strong>Estado:</strong> <span id="candidateState"></span></p>
+                                            <p><strong>Nascimento:</strong> <span id="candidateBirth"></span></p>
                                         </div>
                                     </div>
 
-                                        <!-- Expandable Sections organizadas abaixo do card principal -->
-                                        <div style="margin-top: 24px;">
-                                            <!-- Education -->
-                                            <div class="expandable-section">
-                                                <div class="expandable-header" onclick="toggleSection('education')">
-                                                    <h6>Escolaridade:</h6>
-                                                    <i class="fas fa-chevron-down chevron-icon" id="education-chevron"></i>
-                                                </div>
-                                                <div class="expandable-content" id="education-content">
-                                                    <div class="education-item">
-                                                        <h6>Bacharelado em Ciência da Computação</h6>
-                                                        <p><strong>Instituição:</strong> Universidade de São Paulo (USP)</p>
-                                                        <p><strong>Período:</strong> 2018 - 2022</p>
-                                                        <p><strong>Status:</strong> Concluído</p>
-                                                    </div>
-                                                    <div class="education-item">
-                                                        <h6>Pós-graduação em Data Science</h6>
-                                                        <p><strong>Instituição:</strong> Instituto de Tecnologia de São Paulo</p>
-                                                        <p><strong>Período:</strong> 2023 - 2024</p>
-                                                        <p><strong>Status:</strong> Em andamento</p>
-                                                    </div>
-                                                </div>
+                                    <!-- Expandable Sections organizadas abaixo do card principal -->
+                                    <div style="margin-top: 24px;">
+                                        <!-- Education -->
+                                        <div class="expandable-section">
+                                            <div class="expandable-header" onclick="toggleSection('education')">
+                                                <h6>Escolaridade:</h6>
+                                                <i class="fas fa-chevron-down chevron-icon" id="education-chevron"></i>
                                             </div>
-
-                                            <!-- Experience -->
-                                            <div class="expandable-section">
-                                                <div class="expandable-header" onclick="toggleSection('experience')">
-                                                    <h6>Experiência:</h6>
-                                                    <i class="fas fa-chevron-down chevron-icon" id="experience-chevron"></i>
-                                                </div>
-                                                <div class="expandable-content" id="experience-content">
-                                                    <div class="experience-item">
-                                                        <h6>Analista de Dados Júnior</h6>
-                                                        <p><strong>Empresa:</strong> TechCorp Solutions</p>
-                                                        <p><strong>Período:</strong> Janeiro 2023 - Presente</p>
-                                                        <p><strong>Descrição:</strong> Análise de dados, criação de dashboards e relatórios gerenciais.</p>
-                                                    </div>
-                                                    <div class="experience-item">
-                                                        <h6>Estagiário em Desenvolvimento</h6>
-                                                        <p><strong>Empresa:</strong> StartupXYZ</p>
-                                                        <p><strong>Período:</strong> Junho 2021 - Dezembro 2022</p>
-                                                        <p><strong>Descrição:</strong> Desenvolvimento de aplicações web e mobile.</p>
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            <!-- Skills -->
-                                            <div class="expandable-section">
-                                                <div class="expandable-header" onclick="toggleSection('skills')">
-                                                    <h6>Competências:</h6>
-                                                    <i class="fas fa-chevron-down chevron-icon" id="skills-chevron"></i>
-                                                </div>
-                                                <div class="expandable-content" id="skills-content">
-                                                    <div class="skill-tag">Python</div>
-                                                    <div class="skill-tag">SQL</div>
-                                                    <div class="skill-tag">Power BI</div>
-                                                    <div class="skill-tag">Tableau</div>
-                                                    <div class="skill-tag">Excel Avançado</div>
-                                                    <div class="skill-tag">Machine Learning</div>
-                                                    <div class="skill-tag">JavaScript</div>
-                                                    <div class="skill-tag">React</div>
-                                                    <div class="skill-tag">Git</div>
-                                                    <div class="skill-tag">Agile</div>
+                                            <div class="expandable-content" id="education-content">
+                                                <div id="education-items">
+                                                    <!-- Conteúdo será preenchido dinamicamente -->
                                                 </div>
                                             </div>
                                         </div>
 
-                                    <!-- Expandable Sections -->
-                                
+                                        <!-- Experience -->
+                                        <div class="expandable-section">
+                                            <div class="expandable-header" onclick="toggleSection('experience')">
+                                                <h6>Experiência:</h6>
+                                                <i class="fas fa-chevron-down chevron-icon" id="experience-chevron"></i>
+                                            </div>
+                                            <div class="expandable-content" id="experience-content">
+                                                <div id="experience-items">
+                                                    <!-- Conteúdo será preenchido dinamicamente -->
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Skills -->
+                                        <div class="expandable-section">
+                                            <div class="expandable-header" onclick="toggleSection('skills')">
+                                                <h6>Competências:</h6>
+                                                <i class="fas fa-chevron-down chevron-icon" id="skills-chevron"></i>
+                                            </div>
+                                            <div class="expandable-content" id="skills-content">
+                                                <div id="skills-items">
+                                                    <!-- Conteúdo será preenchido dinamicamente -->
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
 
                                 <!-- Right Column - Selection Process -->
@@ -723,8 +699,6 @@
 
         </div>
         <!-- End of Content Wrapper -->
-
-    </script>
 
 </body>
 

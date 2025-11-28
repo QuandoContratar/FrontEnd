@@ -283,7 +283,7 @@ function formatFileSize(bytes) {
 /**
  * Manipula submit do formulário
  */
-function handleFormSubmit(event) {
+async function handleFormSubmit(event) {
     event.preventDefault();
     
     const form = event.target;
@@ -303,29 +303,26 @@ function handleFormSubmit(event) {
     submitBtn.classList.add('loading');
     submitBtn.disabled = true;
     
-    // Simula envio (substitua por chamada real da API)
-    setTimeout(() => {
-        try {
-            // Aqui você faria a chamada para a API
-            saveVaga(formData);
-            
-            showNotification('Vaga criada com sucesso!', 'success');
-            
-            // Redireciona após sucesso
-            setTimeout(() => {
-                window.location.href = 'vagas.html';
-            }, 1500);
-            
-        } catch (error) {
-            console.error('Erro ao salvar vaga:', error);
-            showNotification('Erro ao salvar vaga. Tente novamente.', 'error');
-        } finally {
-            // Remove loading
-            submitBtn.classList.remove('loading');
-            submitBtn.innerHTML = originalText;
-            submitBtn.disabled = false;
-        }
-    }, 2000);
+    try {
+        // Salva a vaga via API
+        await saveVaga(formData);
+        
+        showNotification('Vaga criada com sucesso!', 'success');
+        
+        // Redireciona após sucesso
+        setTimeout(() => {
+            window.location.href = 'minhas-solicitacoes.html';
+        }, 1500);
+        
+    } catch (error) {
+        console.error('Erro ao salvar vaga:', error);
+        showNotification(error.message || 'Erro ao salvar vaga. Tente novamente.', 'error');
+    } finally {
+        // Remove loading
+        submitBtn.classList.remove('loading');
+        submitBtn.innerHTML = originalText;
+        submitBtn.disabled = false;
+    }
 }
 
 /**
@@ -346,32 +343,84 @@ function validateAllFields(form) {
 }
 
 /**
- * Salva vaga (simulação)
+ * Salva vaga via API
  */
-function saveVaga(formData) {
-    // Simula dados da vaga
-    const vaga = {
-        id: Date.now(),
-        cargo: formData.get('cargo') || document.getElementById('cargo').value,
-        periodo: formData.get('periodo') || document.getElementById('periodo').value,
-        modelo: formData.get('modelo') || document.getElementById('modelo').value,
-        regime: formData.get('regime') || document.getElementById('regime').value,
-        salario: formData.get('salario') || document.getElementById('salario').value,
-        localidade: formData.get('localidade') || document.getElementById('localidade').value,
-        requisitos: formData.get('requisitos') || document.getElementById('requisitos').value,
-        justificativa: formData.get('justificativa') || 'Arquivo anexado',
-        dataCriacao: new Date().toISOString(),
-        status: 'aberta',
-        criadoPor: 'Lucio Limeira'
+async function saveVaga(formData) {
+    // Obtém usuário logado
+    const currentUserStr = localStorage.getItem('currentUser');
+    if (!currentUserStr) {
+        throw new Error('Usuário não logado. Faça login novamente.');
+    }
+    
+    const currentUser = JSON.parse(currentUserStr);
+    
+    // Valida e converte o ID do usuário para inteiro
+    let gestorId = currentUser.id;
+    
+    console.log('Current User:', currentUser);
+    console.log('Gestor ID original:', gestorId, 'Tipo:', typeof gestorId);
+    
+    if (!gestorId) {
+        throw new Error('ID do usuário não encontrado. Faça login novamente.');
+    }
+    
+    // Converte para inteiro (garante que não seja um timestamp ou string)
+    gestorId = parseInt(gestorId, 10);
+    
+    console.log('Gestor ID convertido:', gestorId);
+    
+    if (isNaN(gestorId) || gestorId <= 0 || gestorId > 2147483647) {
+        console.error('ID inválido detectado:', gestorId);
+        throw new Error(`ID do usuário inválido (${gestorId}). Faça login novamente.`);
+    }
+    
+    // Obtém valores do formulário
+    const cargo = document.getElementById('cargo').value;
+    const periodo = document.getElementById('periodo').value;
+    const modeloTrabalho = document.getElementById('modelo').value;
+    const regimeContratacao = document.getElementById('regime').value;
+    const salarioStr = document.getElementById('salario').value;
+    const localidade = document.getElementById('localidade').value;
+    const requisitos = document.getElementById('requisitos').value;
+    const justificativaFile = document.getElementById('justificativa').files[0];
+    
+    // Converte salário para número (remove formatação)
+    const salario = parseFloat(salarioStr.replace(/[^\d,]/g, '').replace(',', '.'));
+    if (isNaN(salario) || salario <= 0) {
+        throw new Error('Salário inválido');
+    }
+    
+    // Prepara dados da requisição
+    // O Spring aceita apenas o ID para relações ManyToOne
+    const openingRequest = {
+        cargo: cargo,
+        periodo: periodo,
+        modeloTrabalho: modeloTrabalho,
+        regimeContratacao: regimeContratacao,
+        salario: salario,
+        localidade: localidade,
+        requisitos: requisitos || null,
+        gestor: {
+            id: gestorId  // Agora garantido como inteiro válido
+        }
     };
     
-    // Salva no localStorage (substitua por chamada da API)
-    const vagas = JSON.parse(localStorage.getItem('vagas') || '[]');
-    vagas.push(vaga);
-    localStorage.setItem('vagas', JSON.stringify(vagas));
+    console.log('Opening Request a ser enviado:', JSON.stringify(openingRequest, null, 2));
     
-    console.log('Vaga salva:', vaga);
-    return vaga;
+    // Importa cliente da API
+    const { OpeningRequestClient } = await import('../../../client/client.js');
+    const client = new OpeningRequestClient();
+    
+    // Cria a solicitação de abertura
+    const createdRequest = await client.insert(openingRequest);
+    
+    // Se houver arquivo de justificativa, faz upload
+    if (justificativaFile && createdRequest.id) {
+        await client.uploadJustificativa(createdRequest.id, justificativaFile);
+    }
+    
+    console.log('Vaga salva:', createdRequest);
+    return createdRequest;
 }
 
 /**

@@ -136,6 +136,20 @@ class LoginPage {
                 const client = new UsersClient();
                 const user = await client.login({ email, password });
 
+                // Valida e garante que o ID seja um número inteiro válido
+                if (!user.id || isNaN(parseInt(user.id))) {
+                    throw new Error('Resposta do servidor inválida. ID do usuário não encontrado.');
+                }
+                
+                // Garante que o ID seja um inteiro
+                user.id = parseInt(user.id, 10);
+                
+                console.log('Usuário logado:', user);
+
+                // Salvar usuário no localStorage
+                localStorage.setItem('currentUser', JSON.stringify(user));
+                localStorage.setItem('userId', user.id.toString());
+
                 // Salvar dados se "Lembre de mim" estiver marcado
                 this.handleRememberMe(rememberMe, email);
 

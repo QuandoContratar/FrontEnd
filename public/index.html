@@ -83,8 +83,10 @@
         const currentUser = localStorage.getItem('currentUser');
         
         if (currentUser) {
-            // Usuário já logado, redirecionar para home
-            window.location.href = 'home.html';
+            // Usuário já logado, redirecionar para home após 2 segundos
+            setTimeout(() => {
+                window.location.href = 'home.html';
+            }, 2000);
         } else {
             // Usuário não logado, redirecionar para login após 2 segundos
             setTimeout(() => {

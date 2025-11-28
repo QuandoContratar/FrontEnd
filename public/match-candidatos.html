@@ -428,6 +428,11 @@
 
     <!-- Page level custom scripts -->
     <script src="./assets/js/components/utils.js"></script>
+    <script type="module" src="./assets/js/components/access-control.js"></script>
+    <script type="module">
+        import { accessControl } from './assets/js/components/access-control.js';
+        accessControl.requirePermission('canManageMatch');
+    </script>
     <script src="./assets/js/pages/match-candidatos.js"></script>
 
 </body>

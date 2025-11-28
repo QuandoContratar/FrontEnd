@@ -586,6 +586,17 @@
                         </div>
                     </div>
                     <h4 class="mb-3" style="color: #1f2937; font-weight: 600;">Currículos Enviados com Sucesso!</h4>
+                    <p class="text-muted">Os currículos foram enviados e estão disponíveis na lista de candidatos.</p>
+                    <div class="mt-4">
+                        <button type="button" class="btn btn-primary px-4 py-2" data-dismiss="modal"
+                            style="background: #7c3aed; border: none; border-radius: 8px; font-weight: 500;">
+                            Continuar na Página
+                        </button>
+                        <a href="candidatos.html" class="btn btn-secondary px-4 py-2 ml-2"
+                            style="background: #6c757d; border: none; border-radius: 8px; font-weight: 500; color: white; text-decoration: none;">
+                            Ver Candidatos
+                        </a>
+                    </div>
                 </div>
             </div>
         </div>
@@ -654,6 +665,12 @@
 
     <!-- Custom scripts for all pages-->
     <script src="js/sb-admin-2.min.js"></script>
+    <script src="./assets/js/components/utils.js"></script>
+    <script type="module" src="./assets/js/components/access-control.js"></script>
+    <script type="module">
+        import { accessControl } from './assets/js/components/access-control.js';
+        accessControl.requirePermission('canUploadResumes');
+    </script>
 
     <!-- Page level custom scripts -->
     <script>
@@ -742,13 +759,13 @@
                             </div>
                         </div>
                         <div class="file-actions">
-                            <button class="btn btn-download btn-sm" onclick="downloadFile('${file.name}')">
+                            <button class="btn btn-download btn-sm" onclick="downloadFile('${file.name}'); return false;">
                                 <i class="fas fa-download"></i>
                             </button>
-                            <button class="btn btn-edit btn-sm" onclick="editFile('${file.name}')">
+                            <button class="btn btn-edit btn-sm" onclick="event.preventDefault(); editFile('${file.name}', event); return false;">
                                 <i class="fas fa-edit"></i>
                             </button>
-                            <button class="btn btn-delete btn-sm" onclick="deleteFile('${file.name}')">
+                            <button class="btn btn-delete btn-sm" onclick="deleteFile('${file.name}'); return false;">
                                 <i class="fas fa-trash"></i>
                             </button>
                         </div>
@@ -780,43 +797,119 @@
             // Send files (upload)
             $('#sendBtn').on('click', async function () {
                 if (uploadedFiles.length === 0) return;
+                
+                // Desabilita o botão durante o upload
+                const $btn = $(this);
+                $btn.prop('disabled', true);
+                $btn.html('<i class="fas fa-spinner fa-spin mr-2"></i>Enviando...');
+                
                 $('#progressBar').show();
                 let progress = 0;
                 const total = uploadedFiles.length;
                 let successCount = 0;
                 let errorCount = 0;
-                for (let i = 0; i < total; i++) {
-                    const file = uploadedFiles[i];
-                    try {
-                        await uploadSingleFile(file);
-                        successCount++;
-                    } catch (err) {
-                        errorCount++;
+                
+                try {
+                    // Valida se há arquivos antes de tentar upload
+                    if (uploadedFiles.length === 0) {
+                        throw new Error('Nenhum arquivo selecionado para upload');
                     }
-                    progress = Math.round(((i + 1) / total) * 100);
+                    
+                    // Valida tamanho dos arquivos (máximo 10MB cada)
+                    const maxSize = 10 * 1024 * 1024; // 10MB
+                    for (const file of uploadedFiles) {
+                        if (file.size > maxSize) {
+                            throw new Error(`Arquivo "${file.name}" excede o tamanho máximo de 10MB`);
+                        }
+                    }
+                    
+                    // Usa a API do backend local
+                    const { CandidateClient } = await import('./client/client.js');
+                    const client = new CandidateClient();
+                    
+                    console.log(`Enviando ${uploadedFiles.length} arquivo(s) para o backend...`);
+                    
+                    // Faz upload de todos os arquivos de uma vez
+                    const candidates = await client.uploadMultipleResumes(uploadedFiles);
+                    successCount = candidates.length;
+                    
+                    console.log(`Upload concluído: ${successCount} candidato(s) criado(s)`);
+                    
+                    progress = 100;
                     $('.progress-bar').css('width', progress + '%').attr('aria-valuenow', progress);
-                }
-                setTimeout(() => {
+                    
+                    setTimeout(() => {
+                        $('#progressBar').hide();
+                        if (successCount > 0) {
+                            // Limpa os arquivos após sucesso ANTES de mostrar o modal
+                            uploadedFiles = [];
+                            $('#fileList').empty();
+                            updateSendButton();
+                            
+                            // Previne qualquer redirecionamento automático
+                            // Remove qualquer ID de candidato do localStorage que possa causar redirecionamento
+                            if (localStorage.getItem('selectedCandidateId')) {
+                                localStorage.removeItem('selectedCandidateId');
+                            }
+                            
+                            // Mostra o modal de sucesso (sem redirecionamento automático)
+                            $('#successModal').modal({
+                                backdrop: 'static',
+                                keyboard: false
+                            });
+                            $('#successModal').modal('show');
+                        }
+                        $btn.prop('disabled', false);
+                        $btn.html('<i class="fas fa-paper-plane mr-2"></i>Enviar Currículos');
+                    }, 500);
+                } catch (err) {
+                    console.error('Erro no upload:', err);
+                    errorCount = total;
                     $('#progressBar').hide();
-                    if (successCount > 0) {
-                        $('#successModal').modal('show');
+                    
+                    // Mostra mensagem de erro mais detalhada
+                    let errorMessage = 'Erro ao enviar currículos: ' + (err.message || 'Erro desconhecido');
+                    
+                    // Verifica se é erro de CORS ou conexão
+                    if (err.message.includes('Failed to fetch') || err.message.includes('NetworkError')) {
+                        errorMessage = 'Erro de conexão. Verifique se o backend está rodando em http://localhost:8080';
                     }
-                    if (errorCount > 0) {
-                        alert(errorCount + ' arquivo(s) falharam no upload.');
-                    }
-                    uploadedFiles = [];
-                    $('#fileList').empty();
-                    updateSendButton();
-                }, 500);
+                    
+                    alert(errorMessage);
+                    $btn.prop('disabled', false);
+                    $btn.html('<i class="fas fa-paper-plane mr-2"></i>Enviar Currículos');
+                }
             });
 
             // Global functions for file actions
             window.downloadFile = function (fileName) {
-                alert('Download: ' + fileName);
+                // Encontra o arquivo na lista
+                const file = uploadedFiles.find(f => f.name === fileName);
+                if (file) {
+                    // Cria um link temporário para download
+                    const url = URL.createObjectURL(file);
+                    const link = document.createElement('a');
+                    link.href = url;
+                    link.download = fileName;
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    URL.revokeObjectURL(url);
+                }
             };
 
-            window.editFile = function (fileName) {
-                alert('Editar: ' + fileName);
+            window.editFile = function (fileName, event) {
+                // Previne qualquer comportamento padrão
+                if (event) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                }
+                
+                // Não redireciona, apenas mostra mensagem informativa
+                alert('Para editar o arquivo, remova-o da lista e faça upload novamente com as alterações.');
+                
+                // Garante que não há redirecionamento
+                return false;
             };
 
             window.deleteFile = function (fileName) {
@@ -851,55 +944,8 @@
             });
         });
 
-        // ------------------------------------------------------------------------------------------------------
-
-    const baseUrl = 'https://szjnh7goni.execute-api.us-east-1.amazonaws.com/api/quando-contratar-resumes/';
-
-
-    // Lista de MIME types permitidos
-    const allowedMimeTypes = [
-        "application/pdf",
-        "image/jpeg",
-        "image/jpg",
-        "image/png",
-        "application/msword",
-        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-        "application/rtf",
-        "text/plain",
-        "application/vnd.oasis.opendocument.text"
-    ];
-
-    // Função para upload de um arquivo individual
-    async function uploadSingleFile(file) {
-        const allowedMimeTypes = [
-            "application/pdf",
-            "image/jpeg",
-            "image/jpg",
-            "image/png",
-            "application/msword",
-            "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-            "application/rtf",
-            "text/plain",
-            "application/vnd.oasis.opendocument.text"
-        ];
-        const baseUrl = 'https://szjnh7goni.execute-api.us-east-1.amazonaws.com/api/quando-contratar-resumes/';
-        const fileName = file.name;
-        const mimeType = file.type;
-        if (!allowedMimeTypes.includes(mimeType)) {
-            throw new Error("Tipo de arquivo não suportado: " + fileName);
-        }
-        const options = {
-            method: 'PUT',
-            body: file,
-            headers: { 'Content-Type': mimeType }
-        };
-        const response = await fetch(baseUrl + fileName, options);
-        if (!response.ok) {
-            const text = await response.text();
-            throw new Error('Erro: ' + text);
-        }
-        return true;
-    }
+        // Função antiga de upload individual (mantida para compatibilidade, mas não usada mais)
+        // O upload agora é feito através do CandidateClient.uploadMultipleResumes()
     </script>
 
 </body>

@@ -9,17 +9,30 @@ class MatchCandidatos {
         this.selectedCandidates = new Set();
         this.approvedCandidates = new Set();
         this.rejectedCandidates = new Set();
+        this.vacancyId = null;
         this.init();
     }
 
     /**
      * Inicializa a página
      */
-    init() {
+    async init() {
+        // Obtém ID da vaga da URL ou localStorage
+        const urlParams = new URLSearchParams(window.location.search);
+        this.vacancyId = urlParams.get('vacancyId') || localStorage.getItem('selectedVacancyId');
+        
+        if (!this.vacancyId) {
+            this.showMessage('Nenhuma vaga selecionada. Redirecionando...', 'warning');
+            setTimeout(() => {
+                window.location.href = 'vagas.html';
+            }, 2000);
+            return;
+        }
+        
         this.setupSearch();
         this.setupFilters();
         this.setupActions();
-        this.loadCandidates();
+        await this.loadCandidates();
     }
 
     /**
@@ -86,64 +99,84 @@ class MatchCandidatos {
     }
 
     /**
-     * Carrega candidatos (simulação)
+     * Carrega candidatos do backend
      */
-    loadCandidates() {
-        // Dados simulados
-        this.candidates = [
-            {
-                id: 1,
-                name: 'John Doe',
-                age: 20,
-                location: 'São Paulo',
-                position: 'Desenvolvedor Jr Python',
-                area: 'Gedes',
-                matchLevel: 'highlight',
-                status: 'pending'
-            },
-            {
-                id: 2,
-                name: 'Maria Silva',
-                age: 25,
-                location: 'Rio de Janeiro',
-                position: 'Analista de Dados',
-                area: 'Dados',
-                matchLevel: 'low',
-                status: 'pending'
-            },
-            {
-                id: 3,
-                name: 'Pedro Santos',
-                age: 28,
-                location: 'Belo Horizonte',
-                position: 'Desenvolvedor Full-Stack',
-                area: 'Tecnologia',
-                matchLevel: 'medium',
-                status: 'pending'
-            },
-            {
-                id: 4,
-                name: 'Ana Costa',
-                age: 30,
-                location: 'São Paulo',
-                position: 'Gerente de Projetos',
-                area: 'Gestão',
-                matchLevel: 'high',
-                status: 'pending'
-            },
-            {
-                id: 5,
-                name: 'Carlos Oliveira',
-                age: 35,
-                location: 'Brasília',
-                position: 'Desenvolvedor Python',
-                area: 'Dados',
-                matchLevel: 'medium',
-                status: 'pending'
+    async loadCandidates() {
+        try {
+            const { CandidateMatchClient } = await import('../../../client/client.js');
+            const client = new CandidateMatchClient();
+            
+            // Calcula matches se necessário ou lista matches existentes
+            let matches;
+            try {
+                matches = await client.listMatches(parseInt(this.vacancyId));
+            } catch (error) {
+                // Se não houver matches, calcula
+                matches = await client.calculateMatch(parseInt(this.vacancyId));
             }
-        ];
+            
+            // Converte para formato esperado pela interface
+            this.candidates = matches.map(match => ({
+                id: match.matchId || match.id,
+                candidateId: match.candidate?.id,
+                name: match.candidate?.name || 'N/A',
+                age: this.calculateAge(match.candidate?.birthDate),
+                location: `${match.candidate?.city || ''}, ${match.candidate?.state || ''}`.trim() || 'N/A',
+                position: match.vacancy?.cargo || 'N/A',
+                area: match.vacancy?.area || 'N/A',
+                matchLevel: this.mapMatchLevel(match.matchLevel || match.score),
+                score: match.score || 0,
+                status: 'pending',
+                match: match
+            }));
 
-        this.renderCandidates();
+            this.renderCandidates();
+        } catch (error) {
+            console.error('Erro ao carregar candidatos:', error);
+            this.showMessage('Erro ao carregar matches. Tente novamente.', 'error');
+            this.candidates = [];
+            this.renderCandidates();
+        }
+    }
+
+    /**
+     * Calcula idade a partir da data de nascimento
+     */
+    calculateAge(birthDate) {
+        if (!birthDate) return 'N/A';
+        const birth = new Date(birthDate);
+        const today = new Date();
+        let age = today.getFullYear() - birth.getFullYear();
+        const monthDiff = today.getMonth() - birth.getMonth();
+        if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
+            age--;
+        }
+        return age;
+    }
+
+    /**
+     * Mapeia nível de match do backend para frontend
+     */
+    mapMatchLevel(matchLevel) {
+        if (typeof matchLevel === 'string') {
+            const levelMap = {
+                'HIGHLIGHT': 'highlight',
+                'HIGH': 'high',
+                'MEDIUM': 'medium',
+                'LOW': 'low'
+            };
+            return levelMap[matchLevel.toUpperCase()] || 'medium';
+        }
+        
+        // Se for um score numérico
+        if (typeof matchLevel === 'number') {
+            if (matchLevel >= 80) return 'highlight';
+            if (matchLevel >= 60) return 'high';
+            if (matchLevel >= 40) return 'medium';
+            return 'low';
+        }
+        
+        return 'medium';
     }
 
     /**
@@ -240,39 +273,88 @@ class MatchCandidatos {
     /**
      * Aplica filtro por tipo
      */
-    applyFilter(filterType) {
-        this.showMessage(`Filtro aplicado: ${filterType}`, 'info');
-        
-        // Aqui você pode implementar lógica de filtro específica
-        // Por exemplo, filtrar por área, nível de match, etc.
+    async applyFilter(filterType) {
+        try {
+            const { CandidateMatchClient } = await import('../../../client/client.js');
+            const client = new CandidateMatchClient();
+            
+            // Mapeia filtros do frontend para backend
+            const filters = {};
+            if (filterType.includes('Alto')) filters.level = 'HIGH';
+            if (filterType.includes('Médio')) filters.level = 'MEDIUM';
+            if (filterType.includes('Baixo')) filters.level = 'LOW';
+            
+            const matches = await client.listMatches(parseInt(this.vacancyId), filters);
+            
+            // Atualiza candidatos com resultados filtrados
+            this.candidates = matches.map(match => ({
+                id: match.matchId || match.id,
+                candidateId: match.candidate?.id,
+                name: match.candidate?.name || 'N/A',
+                age: this.calculateAge(match.candidate?.birthDate),
+                location: `${match.candidate?.city || ''}, ${match.candidate?.state || ''}`.trim() || 'N/A',
+                position: match.vacancy?.cargo || 'N/A',
+                area: match.vacancy?.area || 'N/A',
+                matchLevel: this.mapMatchLevel(match.matchLevel || match.score),
+                score: match.score || 0,
+                status: 'pending',
+                match: match
+            }));
+            
+            this.renderCandidates();
+            this.showMessage(`Filtro aplicado: ${filterType}`, 'info');
+        } catch (error) {
+            console.error('Erro ao aplicar filtro:', error);
+            this.showMessage('Erro ao aplicar filtro. Tente novamente.', 'error');
+        }
     }
 
     /**
      * Aprova candidato
      */
-    approveCandidate(index) {
+    async approveCandidate(index) {
         const candidate = this.candidates[index];
         if (!candidate) return;
 
-        this.approvedCandidates.add(candidate.id);
-        this.rejectedCandidates.delete(candidate.id);
-        
-        this.updateCandidateStatus(index, 'approved');
-        this.showMessage(`Candidato ${candidate.name} aprovado!`, 'success');
+        try {
+            const { CandidateMatchClient } = await import('../../../client/client.js');
+            const client = new CandidateMatchClient();
+            
+            await client.acceptCandidate(candidate.id);
+            
+            this.approvedCandidates.add(candidate.id);
+            this.rejectedCandidates.delete(candidate.id);
+            
+            this.updateCandidateStatus(index, 'approved');
+            this.showMessage(`Candidato ${candidate.name} aprovado!`, 'success');
+        } catch (error) {
+            console.error('Erro ao aprovar candidato:', error);
+            this.showMessage('Erro ao aprovar candidato. Tente novamente.', 'error');
+        }
     }
 
     /**
      * Rejeita candidato
      */
-    rejectCandidate(index) {
+    async rejectCandidate(index) {
         const candidate = this.candidates[index];
         if (!candidate) return;
 
-        this.rejectedCandidates.add(candidate.id);
-        this.approvedCandidates.delete(candidate.id);
-        
-        this.updateCandidateStatus(index, 'rejected');
-        this.showMessage(`Candidato ${candidate.name} rejeitado.`, 'info');
+        try {
+            const { CandidateMatchClient } = await import('../../../client/client.js');
+            const client = new CandidateMatchClient();
+            
+            await client.rejectCandidate(candidate.id);
+            
+            this.rejectedCandidates.add(candidate.id);
+            this.approvedCandidates.delete(candidate.id);
+            
+            this.updateCandidateStatus(index, 'rejected');
+            this.showMessage(`Candidato ${candidate.name} rejeitado.`, 'info');
+        } catch (error) {
+            console.error('Erro ao rejeitar candidato:', error);
+            this.showMessage('Erro ao rejeitar candidato. Tente novamente.', 'error');
+        }
     }
 
     /**
@@ -312,11 +394,13 @@ class MatchCandidatos {
         const candidate = this.candidates[index];
         if (!candidate) return;
 
-        // Simular navegação para detalhes
-        this.showMessage(`Visualizando detalhes de ${candidate.name}`, 'info');
-        
-        // Aqui você pode implementar navegação para página de detalhes
-        // window.location.href = `detalhes-candidato.html?id=${candidate.id}`;
+        // Salva ID do candidato e navega para detalhes
+        if (candidate.candidateId) {
+            localStorage.setItem('selectedCandidateId', candidate.candidateId);
+            window.location.href = `detalhes-candidato.html?id=${candidate.candidateId}`;
+        } else {
+            this.showMessage(`Visualizando detalhes de ${candidate.name}`, 'info');
+        }
     }
 
     /**

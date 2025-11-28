@@ -68,7 +68,7 @@ class RegisterPage {
         });
     }
 
-    handleRegister() {
+    async handleRegister() {
         const name = document.getElementById('name').value.trim();
         const email = document.getElementById('email').value.trim();
         const password = document.getElementById('password').value.trim();
@@ -85,8 +85,8 @@ class RegisterPage {
                 password: password
             };
 
-            // Cadastrar usuário
-            window.authManager.register(userData);
+            // Cadastrar usuário via API
+            await this.registerUser(userData);
 
             // Mostrar mensagem de sucesso
             Utils.showMessage('Cadastro realizado com sucesso! Redirecionando para login...', 'success');
@@ -98,6 +98,23 @@ class RegisterPage {
 
         } catch (error) {
             Utils.showMessage(error.message, 'error');
+        }
+    }
+
+    async registerUser(userData) {
+        try {
+            const { UsersClient } = await import('../../../client/client.js');
+            const client = new UsersClient();
+            await client.insert(userData);
+        } catch (error) {
+            console.error('Erro ao cadastrar usuário:', error);
+            let errorMessage = 'Erro ao realizar cadastro. Tente novamente.';
+            
+            if (error.message.includes('Failed to insert')) {
+                errorMessage = 'Erro ao cadastrar usuário. Verifique se o email já não está cadastrado.';
+            }
+            
+            throw new Error(errorMessage);
         }
     }
 

@@ -532,6 +532,12 @@
     <script src="vendor/datatables/dataTables.bootstrap4.min.js"></script>
 
     <!-- Page level custom scripts -->
+    <script src="./assets/js/components/utils.js"></script>
+    <script type="module" src="./assets/js/components/access-control.js"></script>
+    <script type="module">
+        import { accessControl } from './assets/js/components/access-control.js';
+        accessControl.requirePermission('canManageRH');
+    </script>
     <script type="module">
         import { UsersClient } from './client/client.js';
         $(document).ready(async function () {
@@ -549,17 +555,18 @@
             // Preencher tabela com todos os membros do RH do backend
             async function loadRHs() {
                 try {
-                    const rhs = await usersClient.findAll();
+                    // Buscar apenas membros do RH usando o endpoint específico
+                    const rhs = await usersClient.findByAccess('HR');
                     table.clear();
                     rhs.forEach(rh => {
                         table.row.add([
                             rh.name || '',
                             rh.email || '',
                             rh.area || '',
-                            `<button class="btn btn-danger btn-sm deleteBtn" title="Excluir">
+                            `<button class="btn btn-danger btn-sm deleteBtn" data-id="${rh.id}" title="Excluir">
                             <i class="fas fa-trash"></i>
                         </button>
-                        <button class="btn btn-info btn-sm ml-1" title="Editar">
+                        <button class="btn btn-info btn-sm ml-1 editBtn" data-id="${rh.id}" title="Editar">
                             <i class="fas fa-edit"></i>
                         </button>`
                         ]);
@@ -567,6 +574,7 @@
                     table.draw();
                 } catch (err) {
                     showNotification('Erro ao carregar membros do RH!', 'info');
+                    console.error(err);
                 }
             }
 
@@ -585,33 +593,30 @@
                 }
 
                 try {
-                    await usersClient.insert({ name, email, area });
+                    await usersClient.insert({ name, email, area, levelAccess: 'HR' });
                     await loadRHs();
                     $('#rhForm')[0].reset();
                     showNotification('Membro do RH adicionado com sucesso!', 'success');
                 } catch (err) {
-                    showNotification('Erro ao adicionar membro do RH!', 'info');
+                    console.error(err);
+                    showNotification('Erro ao adicionar membro do RH!', 'danger');
                 }
             });
 
             // Função para deletar membro do RH
             $(document).on('click', '.deleteBtn', async function () {
-                if (confirm('Tem certeza que deseja excluir este membro do RH?')) {
-                    const row = $(this).closest('tr');
-                    const cells = row.find('td');
-                    const email = cells.eq(1).text();
-                    try {
-                        // Busca todos membros do RH para encontrar o id pelo email
-                        const rhs = await usersClient.findAll();
-                        const rh = rhs.find(u => u.email === email);
-                        if (rh && rh.id) {
-                            await usersClient.delete(rh.id);
-                            table.row(row).remove().draw();
-                            showNotification('Membro do RH excluído com sucesso!', 'info');
-                        } else {
-                            showNotification('Não foi possível encontrar o membro do RH para excluir.', 'info');
-                        }
-                    } catch (err) {
+                const id = $(this).data('id');
+                if (!id) {
+                    showNotification('ID inválido para exclusão.', 'warning');
+                    return;
+                }
+                if (!confirm('Tem certeza que deseja excluir este membro do RH?')) return;
+                try {
+                    await usersClient.delete(id);
+                    await loadRHs();
+                    showNotification('Membro do RH excluído com sucesso!', 'success');
+                } catch (err) {
+                    console.error(err);
                         showNotification('Erro ao excluir membro do RH!', 'info');
                     }
                 }

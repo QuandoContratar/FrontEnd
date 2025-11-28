@@ -458,6 +458,12 @@
     <script src="vendor/chart.js/Chart.min.js"></script>
 
     <!-- Page level custom scripts -->
+    <script src="./assets/js/components/utils.js"></script>
+    <script type="module" src="./assets/js/components/access-control.js"></script>
+    <script type="module">
+        import { accessControl } from './assets/js/components/access-control.js';
+        accessControl.requirePermission('canViewCharts');
+    </script>
     <script src="./assets/js/pages/dashboard.js"></script>
 
 </body>

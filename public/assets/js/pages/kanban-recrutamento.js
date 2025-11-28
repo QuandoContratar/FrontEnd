@@ -13,11 +13,11 @@ class KanbanRecrutamento {
     /**
      * Inicializa a página do Kanban de Recrutamento
      */
-    init() {
+    async init() {
+        await this.loadCandidates();
         this.setupDragAndDrop();
         this.setupSearch();
         this.setupSidebar();
-        this.loadCandidates();
     }
 
     /**
@@ -52,19 +52,44 @@ class KanbanRecrutamento {
                 column.classList.remove('drag-over');
             });
 
-            column.addEventListener('drop', (e) => {
+            column.addEventListener('drop', async (e) => {
                 e.preventDefault();
                 column.classList.remove('drag-over');
                 
                 if (this.draggedElement) {
                     const columnContent = column.querySelector('.column-content');
-                    columnContent.appendChild(this.draggedElement);
+                    const processId = this.draggedElement.dataset.processId;
+                    const newStatus = column.dataset.status;
                     
-                    // Atualizar status do candidato
-                    this.updateCandidateStatus(this.draggedElement, column);
-                    
-                    // Mostrar feedback visual
-                    this.showMessage('Candidato movido com sucesso!', 'success');
+                    if (processId && newStatus) {
+                        try {
+                            // Atualiza estágio no backend
+                            const { SelectionProcessClient } = await import('../../../client/client.js');
+                            const client = new SelectionProcessClient();
+                            const newStage = this.mapStatusToStage(newStatus);
+                            
+                            await client.moveToStage(parseInt(processId), newStage);
+                            
+                            // Move o card visualmente
+                            columnContent.appendChild(this.draggedElement);
+                            
+                            // Atualiza dados locais
+                            const candidate = this.candidates.find(c => c.id === parseInt(processId));
+                            if (candidate) {
+                                candidate.status = newStatus;
+                            }
+                            
+                            this.showMessage('Candidato movido com sucesso!', 'success');
+                            this.updateColumnCounts();
+                        } catch (error) {
+                            console.error('Erro ao atualizar estágio:', error);
+                            this.showMessage('Erro ao mover candidato. Tente novamente.', 'error');
+                            // Recarrega os candidatos em caso de erro
+                            await this.loadCandidates();
+                        }
+                    } else {
+                        columnContent.appendChild(this.draggedElement);
+                    }
                 }
             });
         });
@@ -125,9 +150,46 @@ class KanbanRecrutamento {
         const searchInput = document.querySelector('.search-bar input');
         
         if (searchInput) {
-            searchInput.addEventListener('input', (e) => {
-                const searchTerm = e.target.value.toLowerCase();
-                this.filterCandidates(searchTerm);
+            let searchTimeout;
+            searchInput.addEventListener('input', async (e) => {
+                const searchTerm = e.target.value.trim();
+                
+                // Debounce
+                clearTimeout(searchTimeout);
+                searchTimeout = setTimeout(async () => {
+                    if (searchTerm.length >= 2) {
+                        try {
+                            const { SelectionProcessClient } = await import('../../../client/client.js');
+                            const client = new SelectionProcessClient();
+                            const results = await client.search(searchTerm);
+                            
+                            // Atualiza candidatos com resultados da busca
+                            this.candidates = results.map(process => ({
+                                id: process.id,
+                                name: process.candidate?.name || 'N/A',
+                                position: process.vacancy?.cargo || 'N/A',
+                                manager: process.recruiter?.name || 'N/A',
+                                model: process.vacancy?.modeloTrabalho || 'N/A',
+                                status: this.mapStageToStatus(process.currentStage),
+                                type: process.vacancy?.regimeContratacao || 'N/A',
+                                process: process
+                            }));
+                            
+                            this.renderCandidates();
+                            this.updateColumnCounts();
+                        } catch (error) {
+                            console.error('Erro na busca:', error);
+                            // Fallback para filtro local
+                            this.filterCandidates(searchTerm.toLowerCase());
+                        }
+                    } else if (searchTerm.length === 0) {
+                        // Recarrega todos se busca estiver vazia
+                        await this.loadCandidates();
+                    } else {
+                        // Filtro local para termos curtos
+                        this.filterCandidates(searchTerm.toLowerCase());
+                    }
+                }, 300);
             });
         }
     }
@@ -212,85 +274,119 @@ class KanbanRecrutamento {
     }
 
     /**
-     * Carrega candidatos (simulação)
+     * Carrega candidatos do backend
      */
-    loadCandidates() {
-        this.candidates = [
-            {
-                id: 1,
-                name: 'Regina Plaza Gomez',
-                position: 'Desenvolvedor Python Jr',
-                manager: 'Lucio Almeida',
-                model: 'Presencial',
-                status: 'screening',
-                type: 'N'
-            },
-            {
-                id: 2,
-                name: 'Pedro Daniel Pierini',
-                position: 'Estagiário de Processos',
-                manager: 'Lucio Almeida',
-                model: 'Presencial',
-                status: 'screening',
-                type: 'Estágio'
-            },
-            {
-                id: 3,
-                name: 'Christian Oliveira',
-                position: 'Diretor(a) de Processos',
-                manager: 'Lucio Almeida',
-                model: 'Presencial',
-                status: 'screening',
-                type: 'CLT'
-            },
-            {
-                id: 4,
-                name: 'Enoe Ninitz Cardoso',
-                position: 'Analista de RH',
-                manager: 'Lucio Almeida',
-                model: 'Presencial',
-                status: 'hr_interview',
-                type: 'CLT'
-            },
-            {
-                id: 5,
-                name: 'Lucas Marques',
-                position: 'Diretor(a) de Dados',
-                manager: 'Lucio Almeida',
-                model: 'Presencial',
-                status: 'hr_interview',
-                type: 'CLT'
-            },
-            {
-                id: 6,
-                name: 'Daniel Mello',
-                position: 'Diretor(a) de Dados',
-                manager: 'Lucio Almeida',
-                model: 'Presencial',
-                status: 'manager_interview',
-                type: 'N'
-            },
-            {
-                id: 7,
-                name: 'Luciana Fogaça',
-                position: 'Diretor(a) de Dados',
-                manager: 'Lucio Almeida',
-                model: 'Presencial',
-                status: 'manager_interview',
-                type: 'CLT'
-            },
-            {
-                id: 8,
-                name: 'Carlos Ellen',
-                position: 'Candidato',
-                manager: 'Lucio Almeida',
-                model: 'Presencial',
-                status: 'manager_interview',
-                type: 'Salário: R$1.890,00'
+    async loadCandidates() {
+        try {
+            const { SelectionProcessClient } = await import('../../../client/client.js');
+            const client = new SelectionProcessClient();
+            
+            // Mapeamento de estágios
+            const stages = [
+                'triagem_inicial',
+                'avaliacao_fit_cultural',
+                'teste_tecnico',
+                'entrevista_tecnica',
+                'entrevista_final',
+                'proposta_fechamento',
+                'contratacao'
+            ];
+            
+            this.candidates = [];
+            
+            // Carrega processos por estágio
+            for (const stage of stages) {
+                try {
+                    const processes = await client.listByStage(stage);
+                    processes.forEach(process => {
+                        this.candidates.push({
+                            id: process.id,
+                            name: process.candidate?.name || 'N/A',
+                            position: process.vacancy?.cargo || 'N/A',
+                            manager: process.recruiter?.name || 'N/A',
+                            model: process.vacancy?.modeloTrabalho || 'N/A',
+                            status: this.mapStageToStatus(stage),
+                            type: process.vacancy?.regimeContratacao || 'N/A',
+                            process: process
+                        });
+                    });
+                } catch (error) {
+                    console.warn(`Erro ao carregar estágio ${stage}:`, error);
+                }
             }
-        ];
+            
+            this.renderCandidates();
+            this.updateColumnCounts();
+        } catch (error) {
+            console.error('Erro ao carregar candidatos:', error);
+            this.showMessage('Erro ao carregar processos de seleção', 'error');
+            this.candidates = [];
+            this.updateColumnCounts();
+        }
+    }
 
-        this.updateColumnCounts();
+    /**
+     * Mapeia estágio do backend para status do frontend
+     */
+    mapStageToStatus(stage) {
+        const statusMap = {
+            'triagem_inicial': 'screening',
+            'avaliacao_fit_cultural': 'hr_interview',
+            'teste_tecnico': 'hr_interview',
+            'entrevista_tecnica': 'manager_interview',
+            'entrevista_final': 'manager_interview',
+            'proposta_fechamento': 'manager_interview',
+            'contratacao': 'manager_interview'
+        };
+        return statusMap[stage] || 'screening';
+    }
+
+    /**
+     * Mapeia status do frontend para estágio do backend
+     */
+    mapStatusToStage(status) {
+        const stageMap = {
+            'screening': 'triagem_inicial',
+            'hr_interview': 'avaliacao_fit_cultural',
+            'manager_interview': 'entrevista_tecnica'
+        };
+        return stageMap[status] || 'triagem_inicial';
+    }
+
+    /**
+     * Renderiza candidatos nas colunas apropriadas
+     */
+    renderCandidates() {
+        // Limpa colunas existentes
+        document.querySelectorAll('.column-content').forEach(col => {
+            col.innerHTML = '';
+        });
+        
+        // Agrupa por status
+        const byStatus = {
+            'screening': [],
+            'hr_interview': [],
+            'manager_interview': []
+        };
+        
+        this.candidates.forEach(candidate => {
+            const status = candidate.status || 'screening';
+            if (byStatus[status]) {
+                byStatus[status].push(candidate);
+            }
+        });
+        
+        // Renderiza em cada coluna
+        Object.keys(byStatus).forEach(status => {
+            const column = document.querySelector(`[data-status="${status}"] .column-content`);
+            if (column) {
+                byStatus[status].forEach(candidate => {
+                    const card = this.createCandidateCard(candidate);
+                    column.appendChild(card);
+                    this.setupCardDragAndDrop(card);
+                });
+            }
+        });
     }
 
     /**
@@ -351,6 +447,7 @@ class KanbanRecrutamento {
         const card = document.createElement('div');
         card.className = 'kanban-card';
         card.draggable = true;
+        card.dataset.processId = candidate.id;
         
         const tagClass = this.getTagClass(candidate.type);
         

@@ -533,6 +533,12 @@
     <script src="vendor/datatables/dataTables.bootstrap4.min.js"></script>
 
     <!-- Page level custom scripts -->
+    <script src="./assets/js/components/utils.js"></script>
+    <script type="module" src="./assets/js/components/access-control.js"></script>
+    <script type="module">
+        import { accessControl } from './assets/js/components/access-control.js';
+        accessControl.requirePermission('canManageAdmins');
+    </script>
     <script type="module">
         import { UsersClient } from './client/client.js';
         $(document).ready(async function () {
@@ -550,24 +556,26 @@
             // Preencher tabela com todos os administradores do backend
             async function loadAdmins() {
                 try {
-                    const admins = await usersClient.findAll();
+                    // Buscar apenas administradores usando o endpoint específico
+                    const admins = await usersClient.findByAccess('ADMIN');
                     table.clear();
                     admins.forEach(admin => {
                         table.row.add([
                             admin.name || '',
                             admin.email || '',
                             admin.area || '',
-                            `<button class="btn btn-danger btn-sm deleteBtn" title="Excluir">
+                            `<button class="btn btn-danger btn-sm deleteBtn" data-id="${admin.id}" title="Excluir">
                                      <i class="fas fa-trash"></i>
                                  </button>
-                                 <button class="btn btn-info btn-sm ml-1" title="Editar">
+                                 <button class="btn btn-info btn-sm ml-1 editBtn" data-id="${admin.id}" title="Editar">
                                      <i class="fas fa-edit"></i>
                                  </button>`
                         ]);
                     });
                     table.draw();
                 } catch (err) {
-                    showNotification('Erro ao carregar administradores!', 'info');
+                    showNotification('Erro ao carregar administradores!', 'danger');
+                    console.error(err);
                 }
             }
 
@@ -586,35 +594,31 @@
                 }
 
                 try {
-                    await usersClient.insert({ name, email, area });
+                    await usersClient.insert({ name, email, area, levelAccess: 'ADMIN' });
                     await loadAdmins();
                     $('#adminForm')[0].reset();
                     showNotification('Administrador adicionado com sucesso!', 'success');
                 } catch (err) {
-                    showNotification('Erro ao adicionar administrador!', 'info');
+                    console.error(err);
+                    showNotification('Erro ao adicionar administrador!', 'danger');
                 }
             });
 
             // Função para deletar administrador
             $(document).on('click', '.deleteBtn', async function () {
-                if (confirm('Tem certeza que deseja excluir este administrador?')) {
-                    const row = $(this).closest('tr');
-                    const cells = row.find('td');
-                    const email = cells.eq(1).text();
-                    try {
-                        // Busca todos admins para encontrar o id pelo email
-                        const admins = await usersClient.findAll();
-                        const admin = admins.find(a => a.email === email);
-                        if (admin && admin.id) {
-                            await usersClient.delete(admin.id);
-                            table.row(row).remove().draw();
-                            showNotification('Administrador excluído com sucesso!', 'info');
-                        } else {
-                            showNotification('Não foi possível encontrar o administrador para excluir.', 'info');
-                        }
-                    } catch (err) {
-                        showNotification('Erro ao excluir administrador!', 'info');
-                    }
+                const id = $(this).data('id');
+                if (!id) {
+                    showNotification('ID inválido para exclusão.', 'warning');
+                    return;
+                }
+                if (!confirm('Tem certeza que deseja excluir este administrador?')) return;
+                try {
+                    await usersClient.delete(id);
+                    await loadAdmins();
+                    showNotification('Administrador excluído com sucesso!', 'success');
+                } catch (err) {
+                    console.error(err);
+                    showNotification('Erro ao excluir administrador!', 'danger');
                 }
             });
 

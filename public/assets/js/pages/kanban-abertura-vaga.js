@@ -6,16 +6,78 @@
 class KanbanAberturaVaga {
     constructor() {
         this.draggedElement = null;
+        this.cards = [];
         this.init();
     }
 
     /**
      * Inicializa a página do Kanban
      */
-    init() {
+    async init() {
+        await this.loadCards();
         this.setupDragAndDrop();
         this.setupSearch();
         this.setupSidebar();
+    }
+
+    /**
+     * Carrega cards do backend
+     */
+    async loadCards() {
+        try {
+            const { OpeningRequestClient } = await import('../../../client/client.js');
+            const client = new OpeningRequestClient();
+            
+            // Carrega cards por status
+            const statuses = ['ENTRADA', 'ABERTA', 'APROVADA', 'REJEITADA', 'CANCELADA'];
+            const allCards = [];
+            
+            for (const status of statuses) {
+                try {
+                    const cards = await client.listByStatus(status);
+                    allCards.push(...cards);
+                } catch (error) {
+                    console.warn(`Erro ao carregar status ${status}:`, error);
+                }
+            }
+            
+            this.cards = allCards;
+            this.renderCards();
+        } catch (error) {
+            console.error('Erro ao carregar cards:', error);
+            this.showMessage('Erro ao carregar dados do kanban', 'error');
+        }
+    }
+
+    /**
+     * Renderiza os cards nas colunas apropriadas
+     */
+    renderCards() {
+        const statusMap = {
+            'ENTRADA': 'entrada',
+            'ABERTA': 'aberta',
+            'APROVADA': 'aprovada',
+            'REJEITADA': 'rejeitada',
+            'CANCELADA': 'cancelada'
+        };
+        
+        // Limpa colunas existentes
+        document.querySelectorAll('.column-content').forEach(col => {
+            col.innerHTML = '';
+        });
+        
+        // Adiciona cards às colunas
+        this.cards.forEach(card => {
+            const status = card.status || 'ENTRADA';
+            const columnId = statusMap[status] || 'entrada';
+            const column = document.querySelector(`#${columnId} .column-content`);
+            
+            if (column) {
+                const cardElement = this.createCardElement(card);
+                column.appendChild(cardElement);
+                this.setupCardDragAndDrop(cardElement);
+            }
+        });
     }
 
     /**
@@ -50,16 +112,41 @@ class KanbanAberturaVaga {
                 column.classList.remove('drag-over');
             });
 
-            column.addEventListener('drop', (e) => {
+            column.addEventListener('drop', async (e) => {
                 e.preventDefault();
                 column.classList.remove('drag-over');
                 
                 if (this.draggedElement) {
                     const columnContent = column.querySelector('.column-content');
-                    columnContent.appendChild(this.draggedElement);
+                    const cardId = this.draggedElement.dataset.cardId;
+                    const newStatus = this.getStatusFromColumn(column);
                     
-                    // Mostrar feedback visual
-                    this.showMessage('Card movido com sucesso!', 'success');
+                    if (cardId && newStatus) {
+                        try {
+                            // Atualiza status no backend
+                            const { OpeningRequestClient } = await import('../../../client/client.js');
+                            const client = new OpeningRequestClient();
+                            await client.updateStatus(parseInt(cardId), newStatus);
+                            
+                            // Move o card visualmente
+                            columnContent.appendChild(this.draggedElement);
+                            
+                            // Atualiza dados locais
+                            const card = this.cards.find(c => c.id === parseInt(cardId));
+                            if (card) {
+                                card.status = newStatus;
+                            }
+                            
+                            this.showMessage('Card movido com sucesso!', 'success');
+                        } catch (error) {
+                            console.error('Erro ao atualizar status:', error);
+                            this.showMessage('Erro ao mover card. Tente novamente.', 'error');
+                            // Recarrega os cards em caso de erro
+                            await this.loadCards();
+                        }
+                    } else {
+                        columnContent.appendChild(this.draggedElement);
+                    }
                 }
             });
         });
@@ -230,20 +317,40 @@ class KanbanAberturaVaga {
         const card = document.createElement('div');
         card.className = 'kanban-card';
         card.draggable = true;
+        card.dataset.cardId = cardData.id;
+        
+        const gestorName = cardData.gestor?.name || 'N/A';
+        const salario = cardData.salario ? `R$ ${cardData.salario.toFixed(2).replace('.', ',')}` : 'N/A';
         
         card.innerHTML = `
             <div class="card-header">
-                <h4>${cardData.title}</h4>
-                <span class="tag tag-${cardData.type}">${cardData.type.toUpperCase()}</span>
+                <h4>${cardData.cargo || 'Sem título'}</h4>
+                <span class="tag tag-${cardData.status?.toLowerCase() || 'entrada'}">${cardData.status || 'ENTRADA'}</span>
             </div>
             <div class="card-body">
-                <p><strong>Salário:</strong> ${cardData.salary}</p>
-                <p><strong>Solicitante:</strong> ${cardData.requester}</p>
-                <p><strong>Modelo:</strong> ${cardData.model}</p>
+                <p><strong>Salário:</strong> ${salario}</p>
+                <p><strong>Solicitante:</strong> ${gestorName}</p>
+                <p><strong>Modelo:</strong> ${cardData.modeloTrabalho || 'N/A'}</p>
+                <p><strong>Regime:</strong> ${cardData.regimeContratacao || 'N/A'}</p>
             </div>
         `;
 
         return card;
+    }
+
+    /**
+     * Obtém status da coluna baseado no ID
+     */
+    getStatusFromColumn(column) {
+        const columnId = column.id;
+        const statusMap = {
+            'entrada': 'ENTRADA',
+            'aberta': 'ABERTA',
+            'aprovada': 'APROVADA',
+            'rejeitada': 'REJEITADA',
+            'cancelada': 'CANCELADA'
+        };
+        return statusMap[columnId];
     }
 
     /**
