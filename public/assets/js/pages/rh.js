@@ -56,14 +56,20 @@ function setupEventListeners() {
 async function loadRHMembers() {
     try {
         showLoading(true);
-        const users = await usersClient.findAll();
         
-        // Filtra apenas membros do RH (levelAccess = HR do enum Kotlin)
-        const rhMembers = users.filter(user => 
-            user.levelAccess === "HR" || 
-            user.levelAccess === "2" || 
-            user.levelAccess === 2
-        );
+        // Usa endpoint otimizado para buscar apenas membros do RH
+        let rhMembers;
+        try {
+            rhMembers = await usersClient.findByAccess("HR");
+        } catch {
+            // Fallback: busca todos e filtra localmente
+            const users = await usersClient.findAll();
+            rhMembers = users.filter(user => 
+                user.levelAccess === "HR" || 
+                user.levelAccess === "2" || 
+                user.levelAccess === 2
+            );
+        }
         
         renderRHMembers(rhMembers);
     } catch (error) {

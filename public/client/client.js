@@ -167,6 +167,16 @@ export class SelectionProcessClient extends ApiClient {
     }
 
     /**
+     * Lista todos os processos do kanban
+     * GET /selection-process/kanban
+     */
+    async findAllKanban() {
+        const response = await fetch(`${this.url}/kanban`);
+        if (!response.ok) throw new Error('Failed to fetch all kanban processes');
+        return response.json();
+    }
+
+    /**
      * Lista cards do kanban por estágio
      * @param {string} stage - aguardando_triagem, triagem_inicial, etc.
      */
@@ -398,11 +408,11 @@ export class MatchClient extends ApiClient {
 
     /**
      * Aceita um match (aprovar candidato)
-     * POST /match/match/{matchId}/accept
+     * POST /match/{matchId}/accept
      * @param {number} matchId - ID do match
      */
     async accept(matchId) {
-        const response = await fetch(`${this.url}/match/${matchId}/accept`, {
+        const response = await fetch(`${this.url}/${matchId}/accept`, {
             method: 'POST'
         });
         if (!response.ok) throw new Error('Failed to accept match');
@@ -411,11 +421,11 @@ export class MatchClient extends ApiClient {
 
     /**
      * Rejeita um match (reprovar candidato)
-     * POST /match/match/{matchId}/reject
+     * POST /match/{matchId}/reject
      * @param {number} matchId - ID do match
      */
     async reject(matchId) {
-        const response = await fetch(`${this.url}/match/${matchId}/reject`, {
+        const response = await fetch(`${this.url}/${matchId}/reject`, {
             method: 'POST'
         });
         if (!response.ok) throw new Error('Failed to reject match');

@@ -66,14 +66,20 @@ function setupEventListeners() {
 async function loadGerentes() {
     try {
         showLoading(true);
-        const users = await usersClient.findAll();
         
-        // Filtra apenas gerentes (levelAccess = MANAGER do enum Kotlin)
-        const gerentes = users.filter(user => 
-            user.levelAccess === "MANAGER" || 
-            user.levelAccess === "3" || 
-            user.levelAccess === 3
-        );
+        // Usa endpoint otimizado para buscar apenas gerentes
+        let gerentes;
+        try {
+            gerentes = await usersClient.findByAccess("MANAGER");
+        } catch {
+            // Fallback: busca todos e filtra localmente
+            const users = await usersClient.findAll();
+            gerentes = users.filter(user => 
+                user.levelAccess === "MANAGER" || 
+                user.levelAccess === "3" || 
+                user.levelAccess === 3
+            );
+        }
         
         renderGerentes(gerentes);
     } catch (error) {

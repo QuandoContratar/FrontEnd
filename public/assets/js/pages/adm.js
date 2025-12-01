@@ -56,14 +56,20 @@ function setupEventListeners() {
 async function loadAdmins() {
     try {
         showLoading(true);
-        const admins = await usersClient.findAll();
         
-        // Filtra apenas administradores (levelAccess = ADMIN do enum Kotlin)
-        const adminUsers = admins.filter(user => 
-            user.levelAccess === "ADMIN" || 
-            user.levelAccess === "1" || 
-            user.levelAccess === 1
-        );
+        // Usa endpoint otimizado para buscar apenas administradores
+        let adminUsers;
+        try {
+            adminUsers = await usersClient.findByAccess("ADMIN");
+        } catch {
+            // Fallback: busca todos e filtra localmente
+            const admins = await usersClient.findAll();
+            adminUsers = admins.filter(user => 
+                user.levelAccess === "ADMIN" || 
+                user.levelAccess === "1" || 
+                user.levelAccess === 1
+            );
+        }
         
         renderAdmins(adminUsers);
     } catch (error) {

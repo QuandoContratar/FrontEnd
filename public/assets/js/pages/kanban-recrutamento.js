@@ -112,16 +112,20 @@ async function loadProcesses() {
     try {
         showLoading(true);
         
-        // Carrega todos os processos de todas as etapas
-        const stageKeys = Object.keys(STAGES);
-        const allProcesses = [];
-        
-        for (const stage of stageKeys) {
-            try {
-                const stageProcesses = await selectionClient.listByStage(stage);
-                allProcesses.push(...stageProcesses);
-            } catch (e) {
-                console.log(`Nenhum processo em ${stage}`);
+        // Tenta buscar todos os processos de uma vez (mais eficiente)
+        let allProcesses = [];
+        try {
+            allProcesses = await selectionClient.findAllKanban();
+        } catch {
+            // Fallback: carrega processo por processo de cada etapa
+            const stageKeys = Object.keys(STAGES);
+            for (const stage of stageKeys) {
+                try {
+                    const stageProcesses = await selectionClient.listByStage(stage);
+                    allProcesses.push(...stageProcesses);
+                } catch (e) {
+                    console.log(`Nenhum processo em ${stage}`);
+                }
             }
         }
         
