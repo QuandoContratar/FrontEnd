@@ -211,17 +211,25 @@
                         <div class="col-xl-12">
                             <div class="filters-section">
                                 <div class="filter-buttons">
-                                    <button class="filter-btn active">
-                                        Cursos
-                                        <i class="fas fa-chevron-right"></i>
+                                    <button class="filter-btn active" data-filter="todos">
+                                        Todos
+                                        <i class="fas fa-list"></i>
                                     </button>
-                                    <button class="filter-btn">
-                                        Cursos
-                                        <i class="fas fa-chevron-right"></i>
+                                    <button class="filter-btn" data-filter="pendentes">
+                                        Pendentes
+                                        <i class="fas fa-clock"></i>
                                     </button>
-                                    <button class="filter-btn">
-                                        Cursos
-                                        <i class="fas fa-chevron-right"></i>
+                                    <button class="filter-btn" data-filter="aprovados">
+                                        Aprovados
+                                        <i class="fas fa-check"></i>
+                                    </button>
+                                    <button class="filter-btn" data-filter="rejeitados">
+                                        Rejeitados
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                    <button class="filter-btn" data-filter="destaque">
+                                        Destaque
+                                        <i class="fas fa-star"></i>
                                     </button>
                                 </div>
                             </div>
@@ -231,140 +239,11 @@
                     <!-- Candidates List -->
                     <div class="row">
                         <div class="col-xl-12">
+                            <!-- Lista será preenchida dinamicamente pelo JS -->
                             <div class="candidates-list">
-                                <!-- Candidate 1 -->
-                                <div class="candidate-item">
-                                    <div class="candidate-avatar">
-                                        <i class="fas fa-user"></i>
-                                    </div>
-                                    <div class="candidate-info">
-                                        <h3>John Doe</h3>
-                                        <p>20 Anos, São Paulo</p>
-                                        <a href="#" class="view-more">Ver mais</a>
-                                    </div>
-                                    <div class="candidate-details">
-                                        <p><strong>Vaga:</strong> Desenvolvedor Jr Python</p>
-                                        <p><strong>Área:</strong> Gedes</p>
-                                    </div>
-                                    <div class="candidate-actions">
-                                        <button class="btn-action btn-approve" title="Aprovar">
-                                            <i class="fas fa-check"></i>
-                                        </button>
-                                        <button class="btn-action btn-reject" title="Rejeitar">
-                                            <i class="fas fa-times"></i>
-                                        </button>
-                                    </div>
-                                    <div class="match-level">
-                                        <span class="match-badge match-highlight">Destaque</span>
-                                    </div>
-                                </div>
-
-                                <!-- Candidate 2 -->
-                                <div class="candidate-item">
-                                    <div class="candidate-avatar">
-                                        <i class="fas fa-user"></i>
-                                    </div>
-                                    <div class="candidate-info">
-                                        <h3>Maria Silva</h3>
-                                        <p>25 Anos, Rio de Janeiro</p>
-                                        <a href="#" class="view-more">Ver mais</a>
-                                    </div>
-                                    <div class="candidate-details">
-                                        <p><strong>Vaga:</strong> Analista de Dados</p>
-                                        <p><strong>Área:</strong> Dados</p>
-                                    </div>
-                                    <div class="candidate-actions">
-                                        <button class="btn-action btn-approve" title="Aprovar">
-                                            <i class="fas fa-check"></i>
-                                        </button>
-                                        <button class="btn-action btn-reject" title="Rejeitar">
-                                            <i class="fas fa-times"></i>
-                                        </button>
-                                    </div>
-                                    <div class="match-level">
-                                        <span class="match-badge match-low">Baixo Match</span>
-                                    </div>
-                                </div>
-
-                                <!-- Candidate 3 -->
-                                <div class="candidate-item">
-                                    <div class="candidate-avatar">
-                                        <i class="fas fa-user"></i>
-                                    </div>
-                                    <div class="candidate-info">
-                                        <h3>Pedro Santos</h3>
-                                        <p>28 Anos, Belo Horizonte</p>
-                                        <a href="#" class="view-more">Ver mais</a>
-                                    </div>
-                                    <div class="candidate-details">
-                                        <p><strong>Vaga:</strong> Desenvolvedor Full-Stack</p>
-                                        <p><strong>Área:</strong> Tecnologia</p>
-                                    </div>
-                                    <div class="candidate-actions">
-                                        <button class="btn-action btn-approve" title="Aprovar">
-                                            <i class="fas fa-check"></i>
-                                        </button>
-                                        <button class="btn-action btn-reject" title="Rejeitar">
-                                            <i class="fas fa-times"></i>
-                                        </button>
-                                    </div>
-                                    <div class="match-level">
-                                        <span class="match-badge match-medium">Médio Match</span>
-                                    </div>
-                                </div>
-
-                                <!-- Candidate 4 -->
-                                <div class="candidate-item">
-                                    <div class="candidate-avatar">
-                                        <i class="fas fa-user"></i>
-                                    </div>
-                                    <div class="candidate-info">
-                                        <h3>Ana Costa</h3>
-                                        <p>30 Anos, São Paulo</p>
-                                        <a href="#" class="view-more">Ver mais</a>
-                                    </div>
-                                    <div class="candidate-details">
-                                        <p><strong>Vaga:</strong> Gerente de Projetos</p>
-                                        <p><strong>Área:</strong> Gestão</p>
-                                    </div>
-                                    <div class="candidate-actions">
-                                        <button class="btn-action btn-approve" title="Aprovar">
-                                            <i class="fas fa-check"></i>
-                                        </button>
-                                        <button class="btn-action btn-reject" title="Rejeitar">
-                                            <i class="fas fa-times"></i>
-                                        </button>
-                                    </div>
-                                    <div class="match-level">
-                                        <span class="match-badge match-high">Alto Match</span>
-                                    </div>
-                                </div>
-
-                                <!-- Candidate 5 -->
-                                <div class="candidate-item">
-                                    <div class="candidate-avatar">
-                                        <i class="fas fa-user"></i>
-                                    </div>
-                                    <div class="candidate-info">
-                                        <h3>Carlos Oliveira</h3>
-                                        <p>35 Anos, Brasília</p>
-                                        <a href="#" class="view-more">Ver mais</a>
-                                    </div>
-                                    <div class="candidate-details">
-                                        <p><strong>Vaga:</strong> Desenvolvedor Python</p>
-                                        <p><strong>Área:</strong> Dados</p>
-                                    </div>
-                                    <div class="candidate-actions">
-                                        <button class="btn-action btn-approve" title="Aprovar">
-                                            <i class="fas fa-check"></i>
-                                        </button>
-                                        <button class="btn-action btn-reject" title="Rejeitar">
-                                            <i class="fas fa-times"></i>
-                                        </button>
-                                    </div>
-                                    <div class="match-level">
-                                        <span class="match-badge match-medium">Médio Match</span>
-                                    </div>
+                                <!-- Candidatos serão carregados da API -->
+                                <div class="candidates-loader">
+                                    <i class="fas fa-spinner fa-spin"></i> Carregando candidatos...
                                 </div>
                             </div>
                         </div>
@@ -428,7 +307,7 @@
 
     <!-- Page level custom scripts -->
     <script src="./assets/js/components/utils.js"></script>
-    <script src="./assets/js/pages/match-candidatos.js"></script>
+    <script type="module" src="./assets/js/pages/match-candidatos.js"></script>
 
 </body>
 

@@ -1,386 +1,508 @@
 /* ========================================
    MINHAS SOLICITAÇÕES
-   Funcionalidades de gerenciamento de vagas
+   Gerenciamento de solicitações de vagas do gestor
    ======================================== */
 
-class MinhasSolicitacoes {
-    constructor() {
-        this.vacancies = [];
-        this.selectedVacancies = new Set();
-        this.init();
+import { OpeningRequestClient } from '../../../client/client.js';
+
+// Instância do cliente de solicitações
+const openingRequestClient = new OpeningRequestClient();
+
+// Estado da página
+let vacancies = [];
+let filteredVacancies = [];
+let currentDeleteId = null;
+let currentUser = null;
+
+// Inicialização
+document.addEventListener('DOMContentLoaded', async () => {
+    await initPage();
+});
+
+/**
+ * Inicializa a página
+ */
+async function initPage() {
+    // Pega usuário logado do localStorage
+    currentUser = JSON.parse(localStorage.getItem('userLogged')) || { id_user: 1, name: 'Lucio Limeira' };
+    
+    // Atualiza nome do usuário na topbar
+    updateUserInfo();
+    
+    // Configura event listeners
+    setupEventListeners();
+    
+    // Carrega vagas do gestor
+    await loadVacancies();
+}
+
+/**
+ * Atualiza informações do usuário na topbar
+ */
+function updateUserInfo() {
+    const userSpan = document.querySelector('#userDropdown span');
+    if (userSpan && currentUser) {
+        userSpan.textContent = `${currentUser.name} | Gestor`;
+    }
+}
+
+/**
+ * Configura todos os event listeners
+ */
+function setupEventListeners() {
+    // Busca
+    const searchInput = document.querySelector('.search-bar input');
+    if (searchInput) {
+        searchInput.addEventListener('input', handleSearch);
     }
 
-    /**
-     * Inicializa a página
-     */
-    init() {
-        this.setupSearch();
-        this.setupSorting();
-        this.setupActions();
-        this.loadVacancies();
+    // Ordenação
+    const sortSelect = document.querySelector('.sort-select');
+    if (sortSelect) {
+        sortSelect.addEventListener('change', handleSort);
     }
 
-    /**
-     * Configura funcionalidade de busca
-     */
-    setupSearch() {
-        const searchInput = document.querySelector('.search-bar input');
+    // Botão Adicionar Vaga
+    const addBtn = document.querySelector('.action-buttons .btn-primary:first-child');
+    if (addBtn) {
+        addBtn.addEventListener('click', () => {
+            window.location.href = 'abertura-vaga.html';
+        });
+    }
+
+    // Botão Envio Massivo
+    const massBtn = document.querySelector('.action-buttons .btn-primary:nth-child(2)');
+    if (massBtn) {
+        massBtn.addEventListener('click', handleMassApproval);
+    }
+
+    // Botão Voltar
+    const backBtn = document.querySelector('.action-buttons .btn-secondary');
+    if (backBtn) {
+        backBtn.addEventListener('click', () => {
+            window.history.back();
+        });
+    }
+
+    // Delegação de eventos para ações da lista
+    const vacancyList = document.querySelector('.vacancy-list');
+    if (vacancyList) {
+        vacancyList.addEventListener('click', handleVacancyActions);
+    }
+
+    // Botões do modal
+    const confirmDeleteBtn = document.querySelector('#deleteModal .btn-danger');
+    if (confirmDeleteBtn) {
+        confirmDeleteBtn.addEventListener('click', confirmDelete);
+    }
+
+    const cancelDeleteBtn = document.querySelector('#deleteModal .btn-secondary');
+    if (cancelDeleteBtn) {
+        cancelDeleteBtn.addEventListener('click', hideDeleteModal);
+    }
+
+    const closeModalBtn = document.querySelector('#deleteModal .modal-close');
+    if (closeModalBtn) {
+        closeModalBtn.addEventListener('click', hideDeleteModal);
+    }
+}
+
+/**
+ * Carrega as solicitações do gestor logado
+ */
+async function loadVacancies() {
+    try {
+        showLoading(true);
         
-        if (searchInput) {
-            searchInput.addEventListener('input', (e) => {
-                const searchTerm = e.target.value.toLowerCase();
-                this.filterVacancies(searchTerm);
-            });
+        // Busca solicitações pelo gestor usando o endpoint correto do backend
+        try {
+            vacancies = await openingRequestClient.findByGestor(currentUser.id_user);
+        } catch {
+            // Fallback: busca todas e filtra pelo gestor
+            const allRequests = await openingRequestClient.findAll();
+            vacancies = allRequests.filter(v => 
+                v.manager?.id_user === currentUser.id_user ||
+                v.managerId === currentUser.id_user ||
+                v.id_manager === currentUser.id_user ||
+                v.gestor?.id_user === currentUser.id_user
+            );
         }
-    }
-
-    /**
-     * Configura funcionalidade de ordenação
-     */
-    setupSorting() {
-        const sortSelect = document.querySelector('.sort-select');
         
-        if (sortSelect) {
-            sortSelect.addEventListener('change', (e) => {
-                this.sortVacancies(e.target.value);
-            });
-        }
+        filteredVacancies = [...vacancies];
+        
+        // Ordena por mais recentes
+        sortVacancies('recent');
+        
+        renderVacancies();
+    } catch (error) {
+        console.error('Erro ao carregar solicitações:', error);
+        showNotification('Erro ao carregar solicitações!', 'danger');
+    } finally {
+        showLoading(false);
     }
+}
 
-    /**
-     * Configura ações dos botões
-     */
-    setupActions() {
-        // Botão Adicionar Vaga
-        const addBtn = document.querySelector('.btn-primary');
-        if (addBtn && addBtn.textContent.includes('ADICIONAR VAGA')) {
-            addBtn.addEventListener('click', () => {
-                window.location.href = 'abertura-vaga.html';
-            });
-        }
+/**
+ * Renderiza a lista de vagas
+ */
+function renderVacancies() {
+    const vacancyList = document.querySelector('.vacancy-list');
+    if (!vacancyList) return;
 
-        // Botão Envio Massivo
-        const massBtn = document.querySelector('.btn-primary:nth-of-type(2)');
-        if (massBtn && massBtn.textContent.includes('ENVIAR MASSIVO')) {
-            massBtn.addEventListener('click', () => {
-                this.handleMassApproval();
-            });
-        }
+    vacancyList.innerHTML = '';
 
-        // Botão Voltar
-        const backBtn = document.querySelector('.btn-secondary');
-        if (backBtn && backBtn.textContent.includes('VOLTAR')) {
-            backBtn.addEventListener('click', () => {
-                window.history.back();
-            });
-        }
-
-        // Ações dos itens
-        this.setupItemActions();
-    }
-
-    /**
-     * Configura ações dos itens da lista
-     */
-    setupItemActions() {
-        const detailBtns = document.querySelectorAll('.btn-detail');
-        const editBtns = document.querySelectorAll('.btn-edit');
-        const deleteBtns = document.querySelectorAll('.btn-delete');
-
-        detailBtns.forEach((btn, index) => {
-            btn.addEventListener('click', () => {
-                this.viewDetails(index);
-            });
-        });
-
-        editBtns.forEach((btn, index) => {
-            btn.addEventListener('click', () => {
-                this.editVacancy(index);
-            });
-        });
-
-        deleteBtns.forEach((btn, index) => {
-            btn.addEventListener('click', () => {
-                this.showDeleteModal(index);
-            });
-        });
-    }
-
-    /**
-     * Carrega vagas (simulação)
-     */
-    loadVacancies() {
-        // Dados simulados
-        this.vacancies = [
-            {
-                id: 1,
-                manager: 'Lucio Limeira',
-                position: 'Desenvolvedor Jr Python',
-                area: 'Dados',
-                status: 'pending',
-                created: new Date('2024-01-15')
-            },
-            {
-                id: 2,
-                manager: 'Lucio Limeira',
-                position: 'Analista de Dados',
-                area: 'Dados',
-                status: 'pending',
-                created: new Date('2024-01-10')
-            },
-            {
-                id: 3,
-                manager: 'Lucio Limeira',
-                position: 'Gerente de Projetos',
-                area: 'Gestão',
-                status: 'pending',
-                created: new Date('2024-01-05')
-            }
-        ];
-
-        this.renderVacancies();
-    }
-
-    /**
-     * Renderiza a lista de vagas
-     */
-    renderVacancies() {
-        const vacancyList = document.querySelector('.vacancy-list');
-        if (!vacancyList) return;
-
-        vacancyList.innerHTML = '';
-
-        this.vacancies.forEach((vacancy, index) => {
-            const vacancyItem = this.createVacancyItem(vacancy, index);
-            vacancyList.appendChild(vacancyItem);
-        });
-
-        // Reconfigurar ações
-        this.setupItemActions();
-    }
-
-    /**
-     * Cria elemento de item de vaga
-     */
-    createVacancyItem(vacancy, index) {
-        const item = document.createElement('div');
-        item.className = 'vacancy-item';
-        item.dataset.index = index;
-
-        item.innerHTML = `
-            <div class="vacancy-icon">
-                <i class="fas fa-briefcase"></i>
-            </div>
-            <div class="vacancy-info">
-                <div class="vacancy-details">
-                    <p><strong>Gestor:</strong> ${vacancy.manager}</p>
-                    <p><strong>Vaga:</strong> ${vacancy.position}</p>
-                    <p><strong>Área:</strong> ${vacancy.area}</p>
-                </div>
-            </div>
-            <div class="vacancy-actions">
-                <button class="btn-action btn-detail" title="Exibir detalhe/enviar para aprovação">
-                    <i class="fas fa-eye"></i>
-                </button>
-                <button class="btn-action btn-edit" title="Editar">
-                    <i class="fas fa-edit"></i>
-                </button>
-                <button class="btn-action btn-delete" title="Excluir">
-                    <i class="fas fa-times"></i>
+    if (filteredVacancies.length === 0) {
+        vacancyList.innerHTML = `
+            <div class="empty-state text-center py-5">
+                <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                <p class="text-muted">Nenhuma solicitação encontrada</p>
+                <button class="btn btn-primary mt-2" onclick="window.location.href='abertura-vaga.html'">
+                    <i class="fas fa-plus"></i> Criar Nova Vaga
                 </button>
             </div>
         `;
-
-        return item;
+        return;
     }
 
-    /**
-     * Filtra vagas baseado no termo de busca
-     */
-    filterVacancies(searchTerm) {
-        const items = document.querySelectorAll('.vacancy-item');
-        
-        items.forEach(item => {
-            const text = item.textContent.toLowerCase();
-            if (text.includes(searchTerm)) {
-                item.style.display = 'flex';
-            } else {
-                item.style.display = 'none';
-            }
-        });
-    }
+    filteredVacancies.forEach(vacancy => {
+        const item = createVacancyItem(vacancy);
+        vacancyList.appendChild(item);
+    });
+}
 
-    /**
-     * Ordena vagas
-     */
-    sortVacancies(sortBy) {
-        if (sortBy === 'recent') {
-            this.vacancies.sort((a, b) => b.created - a.created);
-        } else if (sortBy === 'oldest') {
-            this.vacancies.sort((a, b) => a.created - b.created);
-        }
+/**
+ * Cria elemento de item de solicitação
+ * @param {Object} vacancy - Dados da solicitação (OpeningRequestDTO)
+ */
+function createVacancyItem(vacancy) {
+    const item = document.createElement('div');
+    item.className = 'vacancy-item';
+    item.dataset.id = vacancy.id || vacancy.idOpeningRequest;
 
-        this.renderVacancies();
-    }
+    // OpeningRequestDTO campos: status, gestor (UserDTO), vacancy (VacancyDTO)
+    const statusBadge = getStatusBadge(vacancy.status);
+    const managerName = vacancy.gestor?.name || vacancy.manager?.name || currentUser?.name || 'N/A';
+    const position = vacancy.vacancy?.position_job || vacancy.position_job || vacancy.positionJob || vacancy.position || 'N/A';
+    const area = vacancy.vacancy?.area || vacancy.area || 'N/A';
+    const createdDate = vacancy.createdAt ? formatDate(vacancy.createdAt) : '';
 
-    /**
-     * Visualiza detalhes da vaga
-     */
-    viewDetails(index) {
-        const vacancy = this.vacancies[index];
-        if (!vacancy) return;
+    item.innerHTML = `
+        <div class="vacancy-icon">
+            <i class="fas fa-briefcase"></i>
+        </div>
+        <div class="vacancy-info">
+            <div class="vacancy-details">
+                <p><strong>Gestor:</strong> ${escapeHtml(managerName)}</p>
+                <p><strong>Vaga:</strong> ${escapeHtml(position)}</p>
+                <p><strong>Área:</strong> ${escapeHtml(area)}</p>
+                ${createdDate ? `<p class="text-muted small"><i class="fas fa-calendar"></i> ${createdDate}</p>` : ''}
+            </div>
+            ${statusBadge}
+        </div>
+        <div class="vacancy-actions">
+            <button class="btn-action btn-detail" data-action="view" data-id="${vacancy.id || vacancy.idOpeningRequest}" title="Exibir detalhe/enviar para aprovação">
+                <i class="fas fa-eye"></i>
+            </button>
+            <button class="btn-action btn-edit" data-action="edit" data-id="${vacancy.id || vacancy.idOpeningRequest}" title="Editar">
+                <i class="fas fa-edit"></i>
+            </button>
+            <button class="btn-action btn-delete" data-action="delete" data-id="${vacancy.id || vacancy.idOpeningRequest}" title="Excluir">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+    `;
 
-        // Simular navegação para detalhes
-        this.showMessage(`Visualizando detalhes da vaga: ${vacancy.position}`, 'info');
-        
-        // Aqui você pode implementar navegação para página de detalhes
-        // window.location.href = `detalhes-vaga.html?id=${vacancy.id}`;
-    }
+    return item;
+}
 
-    /**
-     * Edita vaga
-     */
-    editVacancy(index) {
-        const vacancy = this.vacancies[index];
-        if (!vacancy) return;
+/**
+ * Retorna badge de status
+ * @param {string} status - Status da solicitação (OpeningRequestStatus enum do backend)
+ */
+function getStatusBadge(status) {
+    // OpeningRequestStatus enum: em_analise, aprovada, rejeitada, cancelada
+    const statusMap = {
+        'em_analise': { class: 'badge-warning', text: 'Em Análise' },
+        'aprovada': { class: 'badge-success', text: 'Aprovada' },
+        'rejeitada': { class: 'badge-danger', text: 'Rejeitada' },
+        'cancelada': { class: 'badge-secondary', text: 'Cancelada' },
+        // Fallbacks para compatibilidade
+        'rascunho': { class: 'badge-secondary', text: 'Rascunho' },
+        'pendente': { class: 'badge-warning', text: 'Pendente' },
+        'pendente aprovação': { class: 'badge-info', text: 'Aguardando Aprovação' }
+    };
 
-        this.showMessage(`Editando vaga: ${vacancy.position}`, 'info');
-        
-        // Navegar para página de edição
-        window.location.href = `abertura-vaga.html?edit=${vacancy.id}`;
-    }
+    const statusInfo = statusMap[status] || { class: 'badge-secondary', text: status || 'Em Análise' };
+    
+    return `<span class="badge ${statusInfo.class}">${statusInfo.text}</span>`;
+}
 
-    /**
-     * Mostra modal de exclusão
-     */
-    showDeleteModal(index) {
-        this.currentDeleteIndex = index;
-        const modal = document.getElementById('deleteModal');
-        if (modal) {
-            modal.classList.add('show');
-            modal.style.display = 'flex';
-        }
-    }
+/**
+ * Manipula ações nos itens da lista
+ * @param {Event} e - Evento de click
+ */
+function handleVacancyActions(e) {
+    const btn = e.target.closest('button[data-action]');
+    if (!btn) return;
 
-    /**
-     * Esconde modal de exclusão
-     */
-    hideDeleteModal() {
-        const modal = document.getElementById('deleteModal');
-        if (modal) {
-            modal.classList.remove('show');
-            modal.style.display = 'none';
-        }
-    }
+    const action = btn.dataset.action;
+    const id = btn.dataset.id;
 
-    /**
-     * Confirma exclusão
-     */
-    confirmDelete() {
-        if (this.currentDeleteIndex !== undefined) {
-            const vacancy = this.vacancies[this.currentDeleteIndex];
-            this.vacancies.splice(this.currentDeleteIndex, 1);
-            this.renderVacancies();
-            this.showMessage(`Vaga "${vacancy.position}" excluída com sucesso!`, 'success');
-        }
-        
-        this.hideDeleteModal();
-    }
-
-    /**
-     * Manipula envio massivo para aprovação
-     */
-    handleMassApproval() {
-        if (this.vacancies.length === 0) {
-            this.showMessage('Não há vagas para enviar para aprovação', 'warning');
-            return;
-        }
-
-        const confirmed = confirm(`Deseja enviar ${this.vacancies.length} vaga(s) para aprovação?`);
-        if (confirmed) {
-            this.showMessage(`${this.vacancies.length} vaga(s) enviada(s) para aprovação com sucesso!`, 'success');
-            
-            // Simular envio
-            setTimeout(() => {
-                this.vacancies = [];
-                this.renderVacancies();
-            }, 2000);
-        }
-    }
-
-    /**
-     * Mostra mensagem de feedback
-     */
-    showMessage(message, type = 'info') {
-        // Remove mensagem anterior se existir
-        const existingMessage = document.querySelector('.vacancy-message');
-        if (existingMessage) {
-            existingMessage.remove();
-        }
-
-        // Cria nova mensagem
-        const messageEl = document.createElement('div');
-        messageEl.className = `vacancy-message vacancy-message-${type}`;
-        messageEl.textContent = message;
-        
-        // Estilos da mensagem
-        Object.assign(messageEl.style, {
-            position: 'fixed',
-            top: '20px',
-            right: '20px',
-            padding: '12px 20px',
-            borderRadius: '6px',
-            color: 'white',
-            fontWeight: '500',
-            zIndex: '10000',
-            animation: 'slideIn 0.3s ease'
-        });
-
-        // Cores baseadas no tipo
-        const colors = {
-            success: '#28a745',
-            error: '#dc3545',
-            info: '#17a2b8',
-            warning: '#ffc107'
-        };
-
-        messageEl.style.backgroundColor = colors[type] || colors.info;
-
-        // Adiciona ao DOM
-        document.body.appendChild(messageEl);
-
-        // Remove após 3 segundos
-        setTimeout(() => {
-            if (messageEl.parentNode) {
-                messageEl.remove();
-            }
-        }, 3000);
+    switch (action) {
+        case 'view':
+            viewVacancy(id);
+            break;
+        case 'edit':
+            editVacancy(id);
+            break;
+        case 'delete':
+            showDeleteModal(id);
+            break;
     }
 }
 
-// Funções globais para o modal
-function showDeleteModal() {
-    const page = window.minhasSolicitacoes;
-    if (page) {
-        page.showDeleteModal(0); // Índice padrão, pode ser ajustado
+/**
+ * Visualiza detalhes da vaga
+ * @param {string|number} id - ID da vaga
+ */
+function viewVacancy(id) {
+    localStorage.setItem('selectedVacancy', id);
+    window.location.href = `detalhes-vaga.html?id=${id}`;
+}
+
+/**
+ * Edita vaga
+ * @param {string|number} id - ID da vaga
+ */
+function editVacancy(id) {
+    localStorage.setItem('editVacancy', id);
+    window.location.href = `abertura-vaga.html?edit=${id}`;
+}
+
+/**
+ * Mostra modal de exclusão
+ * @param {string|number} id - ID da vaga
+ */
+function showDeleteModal(id) {
+    currentDeleteId = id;
+    const modal = document.getElementById('deleteModal');
+    if (modal) {
+        modal.classList.add('show');
+        modal.style.display = 'flex';
     }
 }
 
+/**
+ * Esconde modal de exclusão
+ */
 function hideDeleteModal() {
-    const page = window.minhasSolicitacoes;
-    if (page) {
-        page.hideDeleteModal();
+    currentDeleteId = null;
+    const modal = document.getElementById('deleteModal');
+    if (modal) {
+        modal.classList.remove('show');
+        modal.style.display = 'none';
     }
 }
 
-function confirmDelete() {
-    const page = window.minhasSolicitacoes;
-    if (page) {
-        page.confirmDelete();
+/**
+ * Confirma exclusão da solicitação
+ */
+async function confirmDelete() {
+    if (!currentDeleteId) return;
+
+    try {
+        await openingRequestClient.delete(currentDeleteId);
+        
+        // Remove da lista local
+        vacancies = vacancies.filter(v => (v.id || v.id_vacancy || v.idOpeningRequest) != currentDeleteId);
+        filteredVacancies = filteredVacancies.filter(v => (v.id || v.id_vacancy || v.idOpeningRequest) != currentDeleteId);
+        
+        renderVacancies();
+        showNotification('Solicitação excluída com sucesso!', 'success');
+    } catch (error) {
+        console.error('Erro ao excluir:', error);
+        showNotification('Erro ao excluir solicitação!', 'danger');
+    } finally {
+        hideDeleteModal();
     }
 }
 
-// Inicializar quando DOM estiver carregado
-document.addEventListener('DOMContentLoaded', () => {
-    window.minhasSolicitacoes = new MinhasSolicitacoes();
-});
+/**
+ * Manipula busca
+ * @param {Event} e - Evento de input
+ */
+function handleSearch(e) {
+    const searchTerm = e.target.value.toLowerCase().trim();
+    
+    if (!searchTerm) {
+        filteredVacancies = [...vacancies];
+    } else {
+        filteredVacancies = vacancies.filter(v => {
+            const position = (v.position_job || v.positionJob || v.position || '').toLowerCase();
+            const area = (v.area || '').toLowerCase();
+            const manager = (v.manager?.name || '').toLowerCase();
+            
+            return position.includes(searchTerm) || 
+                   area.includes(searchTerm) || 
+                   manager.includes(searchTerm);
+        });
+    }
+    
+    renderVacancies();
+}
+
+/**
+ * Manipula ordenação
+ * @param {Event} e - Evento de change
+ */
+function handleSort(e) {
+    sortVacancies(e.target.value);
+    renderVacancies();
+}
+
+/**
+ * Ordena vagas
+ * @param {string} sortBy - Critério de ordenação
+ */
+function sortVacancies(sortBy) {
+    filteredVacancies.sort((a, b) => {
+        const dateA = new Date(a.createdAt || a.created || 0);
+        const dateB = new Date(b.createdAt || b.created || 0);
+        
+        if (sortBy === 'recent') {
+            return dateB - dateA;
+        } else {
+            return dateA - dateB;
+        }
+    });
+}
+
+/**
+ * Envia todas as solicitações para aprovação em massa
+ */
+async function handleMassApproval() {
+    // Filtra apenas solicitações em análise
+    const pendingVacancies = vacancies.filter(v => 
+        v.status === 'em_analise' || !v.status
+    );
+
+    if (pendingVacancies.length === 0) {
+        showNotification('Não há solicitações pendentes para enviar', 'warning');
+        return;
+    }
+
+    const confirmed = confirm(`Deseja enviar ${pendingVacancies.length} solicitação(s) para aprovação?`);
+    if (!confirmed) return;
+
+    try {
+        // Atualiza status de cada uma
+        for (const request of pendingVacancies) {
+            const id = request.id || request.idOpeningRequest;
+            await openingRequestClient.updateStatus(id, 'aprovada');
+        }
+        
+        showNotification(`${pendingVacancies.length} solicitação(s) enviada(s) para aprovação!`, 'success');
+        
+        // Recarrega a lista
+        await loadVacancies();
+    } catch (error) {
+        console.error('Erro ao enviar para aprovação:', error);
+        showNotification('Erro ao enviar solicitações para aprovação!', 'danger');
+    }
+}
+
+/**
+ * Exibe loading
+ * @param {boolean} show - Mostrar ou esconder
+ */
+function showLoading(show) {
+    const vacancyList = document.querySelector('.vacancy-list');
+    if (!vacancyList) return;
+
+    if (show) {
+        vacancyList.innerHTML = `
+            <div class="text-center py-5">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="sr-only">Carregando...</span>
+                </div>
+                <p class="mt-2 text-muted">Carregando solicitações...</p>
+            </div>
+        `;
+    }
+}
+
+/**
+ * Exibe notificação
+ * @param {string} message - Mensagem
+ * @param {string} type - Tipo (success, danger, warning, info)
+ */
+function showNotification(message, type = 'info') {
+    // Remove notificações anteriores
+    document.querySelectorAll('.vacancy-notification').forEach(el => el.remove());
+
+    const colors = {
+        success: '#28a745',
+        danger: '#dc3545',
+        warning: '#ffc107',
+        info: '#17a2b8'
+    };
+
+    const notification = document.createElement('div');
+    notification.className = 'vacancy-notification';
+    notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 15px 25px;
+        border-radius: 6px;
+        color: white;
+        font-weight: 500;
+        z-index: 10000;
+        background-color: ${colors[type] || colors.info};
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        animation: slideIn 0.3s ease;
+    `;
+    notification.innerHTML = `
+        ${message}
+        <button onclick="this.parentElement.remove()" style="background:none;border:none;color:white;margin-left:15px;cursor:pointer;">
+            <i class="fas fa-times"></i>
+        </button>
+    `;
+
+    document.body.appendChild(notification);
+
+    setTimeout(() => {
+        if (notification.parentNode) {
+            notification.remove();
+        }
+    }, 4000);
+}
+
+/**
+ * Formata data
+ * @param {string} dateStr - String de data
+ */
+function formatDate(dateStr) {
+    try {
+        const date = new Date(dateStr);
+        return date.toLocaleDateString('pt-BR');
+    } catch {
+        return '';
+    }
+}
+
+/**
+ * Escapa HTML para prevenir XSS
+ * @param {string} text - Texto
+ */
+function escapeHtml(text) {
+    if (!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+// Funções globais para o modal (compatibilidade com onclick no HTML)
+window.showDeleteModal = showDeleteModal;
+window.hideDeleteModal = hideDeleteModal;
+window.confirmDelete = confirmDelete;

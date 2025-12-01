@@ -230,6 +230,112 @@
     color: white;
 }
 
+/* Status badges */
+.status-badge {
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 500;
+    text-transform: capitalize;
+    margin-left: 8px;
+}
+
+.status-aceito {
+    background: #d1fae5;
+    color: #065f46;
+}
+
+.status-rejeitado {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.status-pendente {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+/* Candidate item status states */
+.candidate-item.approved {
+    border-left: 4px solid #10b981;
+    background: linear-gradient(to right, #ecfdf5, white);
+}
+
+.candidate-item.rejected {
+    border-left: 4px solid #ef4444;
+    background: linear-gradient(to right, #fef2f2, white);
+    opacity: 0.7;
+}
+
+.candidate-item.rejected .candidate-info h3 {
+    text-decoration: line-through;
+    color: #9ca3af;
+}
+
+/* Buttons disabled state */
+.btn-action:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+}
+
+.btn-action.approved {
+    background: #28a745 !important;
+    box-shadow: 0 0 0 3px rgba(40, 167, 69, 0.3);
+}
+
+.btn-action.rejected {
+    background: #dc3545 !important;
+    box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.3);
+}
+
+/* Vacancy selector */
+.vacancy-selector {
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    padding: 10px 15px;
+    font-size: 14px;
+    color: #6c757d;
+    background: #f8f9fa;
+    cursor: pointer;
+}
+
+.vacancy-selector:focus {
+    border-color: #7c3aed;
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.1);
+}
+
+/* Loading state */
+.candidates-loader {
+    text-align: center;
+    padding: 40px;
+    color: #6c757d;
+    font-size: 16px;
+}
+
+.candidates-loader i {
+    margin-right: 10px;
+    color: #7c3aed;
+}
+
+/* No results */
+.no-results {
+    text-align: center;
+    padding: 60px 20px;
+    color: #9ca3af;
+}
+
+.no-results i {
+    font-size: 48px;
+    margin-bottom: 15px;
+    display: block;
+}
+
+.no-results p {
+    font-size: 16px;
+    margin: 0;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
     .candidate-item {
