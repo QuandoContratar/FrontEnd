@@ -303,29 +303,27 @@ function handleFormSubmit(event) {
     submitBtn.classList.add('loading');
     submitBtn.disabled = true;
     
-    // Simula envio (substitua por chamada real da API)
-    setTimeout(() => {
-        try {
-            // Aqui você faria a chamada para a API
-            saveVaga(formData);
+    // Salva temporariamente no localStorage
+    // O envio para API será feito em minhas-solicitacoes.html
+    saveVagaLocal(formData)
+        .then(() => {
+            showNotification('Solicitação salva temporariamente! Envie em "Minhas Solicitações".', 'success');
             
-            showNotification('Vaga criada com sucesso!', 'success');
-            
-            // Redireciona após sucesso
+            // Redireciona para minhas-solicitacoes.html
             setTimeout(() => {
-                window.location.href = 'vagas.html';
+                window.location.href = 'minhas-solicitacoes.html';
             }, 1500);
-            
-        } catch (error) {
-            console.error('Erro ao salvar vaga:', error);
-            showNotification('Erro ao salvar vaga. Tente novamente.', 'error');
-        } finally {
+        })
+        .catch(error => {
+            console.error('Erro ao salvar solicitação:', error);
+            showNotification('Erro ao salvar solicitação. Tente novamente.', 'error');
+        })
+        .finally(() => {
             // Remove loading
             submitBtn.classList.remove('loading');
             submitBtn.innerHTML = originalText;
             submitBtn.disabled = false;
-        }
-    }, 2000);
+        });
 }
 
 /**
@@ -346,32 +344,133 @@ function validateAllFields(form) {
 }
 
 /**
- * Salva vaga (simulação)
+ * Salva solicitação de abertura de vaga temporariamente no localStorage
+ * O envio para API será feito em minhas-solicitacoes.html
  */
-function saveVaga(formData) {
-    // Simula dados da vaga
-    const vaga = {
-        id: Date.now(),
-        cargo: formData.get('cargo') || document.getElementById('cargo').value,
-        periodo: formData.get('periodo') || document.getElementById('periodo').value,
-        modelo: formData.get('modelo') || document.getElementById('modelo').value,
-        regime: formData.get('regime') || document.getElementById('regime').value,
-        salario: formData.get('salario') || document.getElementById('salario').value,
-        localidade: formData.get('localidade') || document.getElementById('localidade').value,
-        requisitos: formData.get('requisitos') || document.getElementById('requisitos').value,
-        justificativa: formData.get('justificativa') || 'Arquivo anexado',
-        dataCriacao: new Date().toISOString(),
-        status: 'aberta',
-        criadoPor: 'Lucio Limeira'
-    };
+function saveVagaLocal(formData) {
+    return new Promise((resolve, reject) => {
+        // Pega usuário logado
+        const userLoggedStr = localStorage.getItem('userLogged');
+        let currentUser;
+        try {
+            currentUser = userLoggedStr ? JSON.parse(userLoggedStr) : null;
+        } catch (e) {
+            console.error('Erro ao fazer parse do userLogged:', e);
+            currentUser = null;
+        }
+        
+        // Fallback se não encontrar
+        if (!currentUser || !currentUser.id_user) {
+            console.warn('userLogged não encontrado ou inválido, usando fallback');
+            currentUser = { id_user: 1, name: 'Usuário Padrão' };
+        }
+        
+        // Prepara dados da vaga
+        const cargo = formData.get('cargo') || document.getElementById('cargo').value;
+        const periodo = formData.get('periodo') || document.getElementById('periodo').value;
+        const modelo = formData.get('modelo') || document.getElementById('modelo').value;
+        const regimeRaw = formData.get('regime') || document.getElementById('regime').value;
+        const salario = formData.get('salario') || document.getElementById('salario').value;
+        const localidade = formData.get('localidade') || document.getElementById('localidade').value;
+        const requisitos = formData.get('requisitos') || document.getElementById('requisitos').value;
+        
+        // Mapeia valores do formulário para valores do enum do backend
+        const regimeMap = {
+            'clt': 'CLT',
+            'pj': 'PJ',
+            'estagio': 'Estágio',
+            'trainee': 'Estágio',
+            'temporario': 'Temporário',
+            'autonomo': 'Autônomo'
+        };
+        const regime = regimeMap[regimeRaw.toLowerCase()] || 'CLT';
+        
+        // Remove formatação do salário e garante que seja um número válido
+        let salarioNumerico = 0;
+        if (salario) {
+            const salarioLimpo = salario.replace(/[^\d,]/g, '').replace(',', '.');
+            salarioNumerico = parseFloat(salarioLimpo) || 0;
+        }
+        
+        // Garante que gestor_id seja um número válido
+        let gestorId = currentUser.id_user;
+        if (gestorId) {
+            gestorId = Number(gestorId);
+            if (isNaN(gestorId)) {
+                reject(new Error('ID do usuário inválido'));
+                return;
+            }
+        } else {
+            reject(new Error('Usuário não está logado corretamente'));
+            return;
+        }
+        
+        // Prepara dados da solicitação conforme a estrutura da tabela opening_requests
+        const openingRequestData = {
+            id: 'temp_' + Date.now(), // ID temporário
+            cargo: cargo,
+            periodo: periodo,
+            modeloTrabalho: modelo,
+            regimeContratacao: regime,
+            salario: salarioNumerico,
+            localidade: localidade,
+            requisitos: requisitos || '',
+            gestor_id: gestorId,
+            gestor: {
+                id_user: gestorId
+            },
+            status: 'ENTRADA',
+            createdAt: new Date().toISOString(),
+            isPending: true, // Flag para indicar que está pendente de envio
+            justificativaFile: null // Será tratado no envio
+        };
+        
+        // Se houver arquivo de justificativa, converte para base64 para armazenar temporariamente
+        const justificativaFile = document.getElementById('justificativa').files[0];
+        if (justificativaFile) {
+            // Converte arquivo para base64 para armazenar no localStorage
+            const fileReader = new FileReader();
+            fileReader.onload = function(e) {
+                openingRequestData.justificativaFile = {
+                    name: justificativaFile.name,
+                    type: justificativaFile.type,
+                    size: justificativaFile.size,
+                    base64: e.target.result // Arquivo em base64
+                };
+                
+                // Salva no localStorage
+                saveToLocalStorage(openingRequestData);
+                resolve(openingRequestData);
+            };
+            fileReader.onerror = function(error) {
+                console.error('Erro ao ler arquivo:', error);
+                // Salva mesmo sem o arquivo
+                saveToLocalStorage(openingRequestData);
+                resolve(openingRequestData);
+            };
+            fileReader.readAsDataURL(justificativaFile);
+        } else {
+            // Salva no localStorage sem arquivo
+            saveToLocalStorage(openingRequestData);
+            resolve(openingRequestData);
+        }
+    });
+}
+
+/**
+ * Salva solicitação no localStorage
+ */
+function saveToLocalStorage(openingRequestData) {
+    // Busca solicitações pendentes existentes
+    const pendingRequests = JSON.parse(localStorage.getItem('pendingOpeningRequests') || '[]');
     
-    // Salva no localStorage (substitua por chamada da API)
-    const vagas = JSON.parse(localStorage.getItem('vagas') || '[]');
-    vagas.push(vaga);
-    localStorage.setItem('vagas', JSON.stringify(vagas));
+    // Adiciona a nova solicitação
+    pendingRequests.push(openingRequestData);
     
-    console.log('Vaga salva:', vaga);
-    return vaga;
+    // Salva no localStorage
+    localStorage.setItem('pendingOpeningRequests', JSON.stringify(pendingRequests));
+    
+    console.log('Solicitação salva no localStorage:', openingRequestData);
 }
 
 /**

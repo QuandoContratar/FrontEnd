@@ -21,12 +21,35 @@ export class ApiClient {
     }
 
     async insert(data) {
+        const jsonBody = JSON.stringify(data);
+        console.log('📤 [ApiClient.insert] Chamando endpoint:', this.url);
+        console.log('📤 [ApiClient.insert] Route:', this.route);
+        console.log('📤 [ApiClient.insert] Dados enviados:', data);
+        console.log('📤 [ApiClient.insert] JSON:', jsonBody);
+        
         const response = await fetch(this.url, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(data)
+            body: jsonBody
         })
-        if (!response.ok) throw new Error('Failed to insert')
+        
+        if (!response.ok) {
+            let errorText;
+            try {
+                errorText = await response.text();
+                const errorJson = JSON.parse(errorText);
+                console.error('❌ [ApiClient.insert] Erro:', response.status);
+                console.error('❌ [ApiClient.insert] Endpoint:', this.url);
+                console.error('❌ [ApiClient.insert] Erro JSON:', errorJson);
+                console.error('❌ [ApiClient.insert] Mensagem:', errorJson.message || errorText);
+            } catch (e) {
+                errorText = await response.text();
+                console.error('❌ [ApiClient.insert] Erro:', response.status, errorText);
+                console.error('❌ [ApiClient.insert] Endpoint:', this.url);
+            }
+            console.error('❌ [ApiClient.insert] Dados enviados:', jsonBody);
+            throw new Error(`Failed to insert: ${response.status} - ${errorText}`)
+        }
         return response.json()
     }
 
