@@ -6,7 +6,19 @@
 import { OpeningRequestClient } from '../../../client/client.js';
 
 // Instância do cliente de solicitações
-const openingRequestClient = new OpeningRequestClient();
+let openingRequestClient;
+try {
+    openingRequestClient = new OpeningRequestClient();
+} catch (error) {
+    console.error('Erro ao inicializar OpeningRequestClient:', error);
+    // Fallback: criar um objeto vazio para evitar erros
+    openingRequestClient = {
+        findByGestor: async () => [],
+        findAll: async () => [],
+        delete: async () => {},
+        updateStatus: async () => {}
+    };
+}
 
 // Estado da página
 let vacancies = [];
