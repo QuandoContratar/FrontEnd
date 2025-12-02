@@ -25,6 +25,7 @@ let vacancies = [];
 let filteredVacancies = [];
 let currentDeleteId = null;
 let currentUser = null;
+let isLoading = false;
 
 // Inicialização
 document.addEventListener('DOMContentLoaded', async () => {
@@ -123,21 +124,38 @@ function setupEventListeners() {
  * Carrega as solicitações do gestor logado
  */
 async function loadVacancies() {
+    // Evita múltiplas chamadas simultâneas
+    if (isLoading) return;
+    
     try {
         showLoading(true);
         
         // Busca solicitações pelo gestor usando o endpoint correto do backend
         try {
-            vacancies = await openingRequestClient.findByGestor(currentUser.id_user);
-        } catch {
+            const result = await openingRequestClient.findByGestor(currentUser.id_user);
+            vacancies = Array.isArray(result) ? result : [];
+        } catch (error) {
+            console.warn('Erro ao buscar por gestor:', error);
             // Fallback: busca todas e filtra pelo gestor
-            const allRequests = await openingRequestClient.findAll();
-            vacancies = allRequests.filter(v => 
-                v.manager?.id_user === currentUser.id_user ||
-                v.managerId === currentUser.id_user ||
-                v.id_manager === currentUser.id_user ||
-                v.gestor?.id_user === currentUser.id_user
-            );
+            try {
+                const allRequests = await openingRequestClient.findAll();
+                vacancies = Array.isArray(allRequests) 
+                    ? allRequests.filter(v => 
+                        v.manager?.id_user === currentUser.id_user ||
+                        v.managerId === currentUser.id_user ||
+                        v.id_manager === currentUser.id_user ||
+                        v.gestor?.id_user === currentUser.id_user
+                    )
+                    : [];
+            } catch (fallbackError) {
+                console.warn('Erro no fallback:', fallbackError);
+                vacancies = [];
+            }
+        }
+        
+        // Garante que seja array
+        if (!Array.isArray(vacancies)) {
+            vacancies = [];
         }
         
         filteredVacancies = [...vacancies];
@@ -148,7 +166,9 @@ async function loadVacancies() {
         renderVacancies();
     } catch (error) {
         console.error('Erro ao carregar solicitações:', error);
-        showNotification('Erro ao carregar solicitações!', 'danger');
+        vacancies = [];
+        filteredVacancies = [];
+        renderVacancies();
     } finally {
         showLoading(false);
     }
@@ -160,6 +180,11 @@ async function loadVacancies() {
 function renderVacancies() {
     const vacancyList = document.querySelector('.vacancy-list');
     if (!vacancyList) return;
+
+    // Garante que filteredVacancies seja um array
+    if (!Array.isArray(filteredVacancies)) {
+        filteredVacancies = [];
+    }
 
     vacancyList.innerHTML = '';
 
@@ -428,6 +453,7 @@ async function handleMassApproval() {
  * @param {boolean} show - Mostrar ou esconder
  */
 function showLoading(show) {
+    isLoading = show;
     const vacancyList = document.querySelector('.vacancy-list');
     if (!vacancyList) return;
 
