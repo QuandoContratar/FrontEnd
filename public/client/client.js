@@ -55,13 +55,57 @@ export class ApiClient {
     }
 
     async update(id, data) {
+        // Remove campos que não devem ser enviados no update
+        const updateData = { ...data };
+        delete updateData.id;
+        delete updateData.id_user;
+        
+        console.log('📤 [ApiClient.update] Atualizando:', `${this.url}/${id}`);
+        console.log('📤 [ApiClient.update] Dados:', updateData);
+        
         const response = await fetch(`${this.url}/${id}`, {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(data)
+            credentials: 'include', // Inclui cookies da sessão para autenticação
+            body: JSON.stringify(updateData)
         })
-        if (!response.ok) throw new Error('Failed to update')
-        return response.json()
+        
+        // Verifica se a resposta foi bem-sucedida
+        if (!response.ok) {
+            let errorText;
+            try {
+                errorText = await response.text();
+                console.error('❌ [ApiClient.update] Erro:', response.status);
+                console.error('❌ [ApiClient.update] Resposta:', errorText);
+            } catch (e) {
+                errorText = 'Erro desconhecido';
+            }
+            throw new Error(`Failed to update: ${response.status} - ${errorText}`)
+        }
+        
+        // Verifica se há conteúdo na resposta antes de tentar fazer parse
+        const contentType = response.headers.get('content-type');
+        const contentLength = response.headers.get('content-length');
+        
+        // Se não há conteúdo ou é texto vazio, retorna objeto vazio
+        if (contentLength === '0' || !contentType || !contentType.includes('application/json')) {
+            console.log('✅ [ApiClient.update] Resposta vazia ou não-JSON, retornando sucesso');
+            return { success: true, id: id };
+        }
+        
+        // Tenta fazer parse do JSON
+        try {
+            const text = await response.text();
+            if (!text || text.trim() === '') {
+                console.log('✅ [ApiClient.update] Resposta vazia, retornando sucesso');
+                return { success: true, id: id };
+            }
+            return JSON.parse(text);
+        } catch (e) {
+            // Se falhar ao fazer parse, mas status foi 200, retorna sucesso
+            console.warn('⚠️ [ApiClient.update] Erro ao fazer parse do JSON, mas status foi 200:', e);
+            return { success: true, id: id };
+        }
     }
 
     async delete(id) {
@@ -232,9 +276,20 @@ export class SelectionProcessClient extends ApiClient {
      * GET /selection-process/kanban
      */
     async findAllKanban() {
-        const response = await fetch(`${this.url}/kanban`);
-        if (!response.ok) throw new Error('Failed to fetch all kanban processes');
-        return response.json();
+        console.log(`📤 [SelectionProcessClient] Buscando todos os processos do kanban...`);
+        const response = await fetch(`${this.url}/kanban`, {
+            credentials: 'include'
+        });
+        
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error(`❌ [SelectionProcessClient] Erro ao buscar todos os processos:`, response.status, errorText);
+            throw new Error(`Failed to fetch all kanban processes: ${response.status} - ${errorText}`);
+        }
+        
+        const data = await response.json();
+        console.log(`✅ [SelectionProcessClient] Total de processos encontrados: ${Array.isArray(data) ? data.length : 0}`);
+        return Array.isArray(data) ? data : [];
     }
 
     /**
@@ -242,9 +297,20 @@ export class SelectionProcessClient extends ApiClient {
      * @param {string} stage - aguardando_triagem, triagem_inicial, etc.
      */
     async listByStage(stage) {
-        const response = await fetch(`${this.url}/kanban/${stage}`);
-        if (!response.ok) throw new Error('Failed to fetch by stage');
-        return response.json();
+        console.log(`📤 [SelectionProcessClient] Buscando processos do estágio: ${stage}`);
+        const response = await fetch(`${this.url}/kanban/${stage}`, {
+            credentials: 'include'
+        });
+        
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error(`❌ [SelectionProcessClient] Erro ao buscar estágio ${stage}:`, response.status, errorText);
+            throw new Error(`Failed to fetch by stage: ${response.status} - ${errorText}`);
+        }
+        
+        const data = await response.json();
+        console.log(`✅ [SelectionProcessClient] Estágio ${stage}: ${Array.isArray(data) ? data.length : 0} processos`);
+        return data;
     }
 
     /**
@@ -253,10 +319,18 @@ export class SelectionProcessClient extends ApiClient {
      * @param {string} stage - Novo estágio
      */
     async moveToStage(id, stage) {
+        console.log(`📤 [SelectionProcessClient] Movendo processo ${id} para estágio: ${stage}`);
         const response = await fetch(`${this.url}/${id}/stage/${stage}`, {
-            method: 'PATCH'
+            method: 'PATCH',
+            credentials: 'include'
         });
-        if (!response.ok) throw new Error('Failed to move to stage');
+        
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error(`❌ [SelectionProcessClient] Erro ao mover processo:`, response.status, errorText);
+            throw new Error(`Failed to move to stage: ${response.status} - ${errorText}`);
+        }
+        
         return response.json();
     }
 
