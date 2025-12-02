@@ -231,11 +231,20 @@ function handleFileSelect(event) {
  * Processa arquivo selecionado
  */
 function handleFile(file) {
-    // Valida tipo de arquivo
-    const allowedTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+    // Valida tipo de arquivo - apenas PDF
+    const allowedTypes = ['application/pdf'];
     
-    if (!allowedTypes.includes(file.type)) {
-        showNotification('Tipo de arquivo não permitido. Use PDF, DOC ou DOCX.', 'error');
+    // Verifica também pela extensão
+    const fileName = file.name.toLowerCase();
+    const isValidExtension = fileName.endsWith('.pdf');
+    
+    if (!allowedTypes.includes(file.type) && !isValidExtension) {
+        showNotification('Tipo de arquivo não permitido. Apenas arquivos PDF são aceitos.', 'error');
+        // Limpa o input
+        const fileInput = document.getElementById('justificativa');
+        if (fileInput) {
+            fileInput.value = '';
+        }
         return;
     }
     
@@ -243,12 +252,17 @@ function handleFile(file) {
     const maxSize = 5 * 1024 * 1024; // 5MB
     if (file.size > maxSize) {
         showNotification('Arquivo muito grande. Tamanho máximo: 5MB', 'error');
+        // Limpa o input
+        const fileInput = document.getElementById('justificativa');
+        if (fileInput) {
+            fileInput.value = '';
+        }
         return;
     }
     
     // Atualiza interface
     updateFileDisplay(file);
-    showNotification('Arquivo carregado com sucesso!', 'success');
+    showNotification('Arquivo PDF carregado com sucesso!', 'success');
 }
 
 /**

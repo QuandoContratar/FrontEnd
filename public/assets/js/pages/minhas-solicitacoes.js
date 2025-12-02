@@ -248,20 +248,40 @@ async function sendPendingRequests() {
                 
                 console.log('✅ Dados preparados para criar vaga:', vacancyData);
                 console.log('✅ gestor_id garantido (número inteiro):', gestorId, typeof gestorId);
-                console.log('✅ Usando vacanciesClient.insert (endpoint: /vacancies)');
                 
-                // Cria a vaga usando o endpoint /vacancies (NÃO /opening-requests)
-                const createdVacancy = await vacanciesClient.insert(vacancyData);
-                console.log('✅ Vaga criada na API:', createdVacancy);
-                console.log('✅ Resposta completa:', JSON.stringify(createdVacancy));
+                // Verifica se há arquivo de justificativa
+                const hasFile = request.justificativaFile && request.justificativaFile.base64;
                 
-                // Envia para aprovação usando o endpoint /vacancies/send-to-approval
-                const vacancyId = createdVacancy.id || createdVacancy.id_vacancy;
-                if (vacancyId) {
-                    await vacanciesClient.sendToApproval([vacancyId]);
-                    console.log('✅ Vaga enviada para aprovação:', vacancyId);
+                if (hasFile) {
+                    // Converte base64 para File
+                    const file = await base64ToFile(
+                        request.justificativaFile.base64,
+                        request.justificativaFile.name,
+                        request.justificativaFile.type || 'application/pdf'
+                    );
+                    
+                    console.log('✅ Arquivo encontrado, usando sendMassive:', file.name);
+                    
+                    // Usa sendMassive para enviar com arquivo
+                    await vacanciesClient.sendMassive([vacancyData], [file]);
+                    console.log('✅ Vaga enviada com arquivo para aprovação via sendMassive');
                 } else {
-                    console.warn('⚠️ ID da vaga não encontrado na resposta:', createdVacancy);
+                    console.log('✅ Nenhum arquivo encontrado, usando insert + sendToApproval');
+                    console.log('✅ Usando vacanciesClient.insert (endpoint: /vacancies)');
+                    
+                    // Cria a vaga usando o endpoint /vacancies (NÃO /opening-requests)
+                    const createdVacancy = await vacanciesClient.insert(vacancyData);
+                    console.log('✅ Vaga criada na API:', createdVacancy);
+                    console.log('✅ Resposta completa:', JSON.stringify(createdVacancy));
+                    
+                    // Envia para aprovação usando o endpoint /vacancies/send-to-approval
+                    const vacancyId = createdVacancy.id || createdVacancy.id_vacancy;
+                    if (vacancyId) {
+                        await vacanciesClient.sendToApproval([vacancyId]);
+                        console.log('✅ Vaga enviada para aprovação:', vacancyId);
+                    } else {
+                        console.warn('⚠️ ID da vaga não encontrado na resposta:', createdVacancy);
+                    }
                 }
                 
                 successfulIds.push(request.id);
@@ -600,20 +620,39 @@ async function sendSinglePendingRequest(requestId) {
         
         console.log('✅ Enviando solicitação com gestor_id (número inteiro):', gestorId, typeof gestorId);
         console.log('✅ Dados completos para criar vaga:', vacancyData);
-        console.log('✅ Usando vacanciesClient.insert (endpoint: /vacancies)');
         
-        // Cria a vaga usando o endpoint /vacancies (NÃO /opening-requests)
-        const createdVacancy = await vacanciesClient.insert(vacancyData);
-        console.log('✅ Vaga criada:', createdVacancy);
-        console.log('✅ Resposta completa:', JSON.stringify(createdVacancy));
+        // Verifica se há arquivo de justificativa
+        const hasFile = request.justificativaFile && request.justificativaFile.base64;
         
-        // Envia para aprovação usando o endpoint /vacancies/send-to-approval
-        const vacancyId = createdVacancy.id || createdVacancy.id_vacancy;
-        if (vacancyId) {
-            await vacanciesClient.sendToApproval([vacancyId]);
-            console.log('✅ Vaga enviada para aprovação:', vacancyId);
+        if (hasFile) {
+            // Converte base64 para File
+            const file = await base64ToFile(
+                request.justificativaFile.base64,
+                request.justificativaFile.name,
+                request.justificativaFile.type || 'application/pdf'
+            );
+            
+            console.log('✅ Arquivo encontrado, usando sendMassive:', file.name);
+            
+            // Usa sendMassive para enviar com arquivo
+            await vacanciesClient.sendMassive([vacancyData], [file]);
+            console.log('✅ Vaga enviada com arquivo para aprovação via sendMassive');
         } else {
-            console.warn('⚠️ ID da vaga não encontrado na resposta:', createdVacancy);
+            console.log('✅ Nenhum arquivo encontrado, usando insert + sendToApproval');
+            
+            // Cria a vaga usando o endpoint /vacancies (NÃO /opening-requests)
+            const createdVacancy = await vacanciesClient.insert(vacancyData);
+            console.log('✅ Vaga criada:', createdVacancy);
+            console.log('✅ Resposta completa:', JSON.stringify(createdVacancy));
+            
+            // Envia para aprovação usando o endpoint /vacancies/send-to-approval
+            const vacancyId = createdVacancy.id || createdVacancy.id_vacancy;
+            if (vacancyId) {
+                await vacanciesClient.sendToApproval([vacancyId]);
+                console.log('✅ Vaga enviada para aprovação:', vacancyId);
+            } else {
+                console.warn('⚠️ ID da vaga não encontrado na resposta:', createdVacancy);
+            }
         }
         
         // Remove do localStorage
@@ -827,14 +866,30 @@ async function handleMassApproval() {
                     gestor: gestorId
                 };
                 
-                // Cria a vaga usando o endpoint /vacancies
-                const createdVacancy = await vacanciesClient.insert(vacancyData);
-                const vacancyId = createdVacancy.id || createdVacancy.id_vacancy;
+                // Verifica se há arquivo de justificativa
+                const hasFile = request.justificativaFile && request.justificativaFile.base64;
                 
-                if (vacancyId) {
-                    // Envia para aprovação usando o endpoint /vacancies/send-to-approval
-                    await vacanciesClient.sendToApproval([vacancyId]);
+                if (hasFile) {
+                    // Converte base64 para File
+                    const file = await base64ToFile(
+                        request.justificativaFile.base64,
+                        request.justificativaFile.name,
+                        request.justificativaFile.type || 'application/pdf'
+                    );
+                    
+                    // Usa sendMassive para enviar com arquivo
+                    await vacanciesClient.sendMassive([vacancyData], [file]);
                     sentCount++;
+                } else {
+                    // Cria a vaga usando o endpoint /vacancies
+                    const createdVacancy = await vacanciesClient.insert(vacancyData);
+                    const vacancyId = createdVacancy.id || createdVacancy.id_vacancy;
+                    
+                    if (vacancyId) {
+                        // Envia para aprovação usando o endpoint /vacancies/send-to-approval
+                        await vacanciesClient.sendToApproval([vacancyId]);
+                        sentCount++;
+                    }
                 }
             } catch (error) {
                 console.error('❌ Erro ao enviar solicitação pendente:', error);
@@ -983,6 +1038,30 @@ function escapeHtml(text) {
     const div = document.createElement('div');
     div.textContent = text;
     return div.innerHTML;
+}
+
+/**
+ * Converte base64 para File
+ * @param {string} base64 - String base64 do arquivo
+ * @param {string} fileName - Nome do arquivo
+ * @param {string} mimeType - Tipo MIME do arquivo
+ * @returns {Promise<File>} - Arquivo convertido
+ */
+async function base64ToFile(base64, fileName, mimeType = 'application/pdf') {
+    // Remove o prefixo data:application/pdf;base64, se existir
+    const base64Data = base64.includes(',') ? base64.split(',')[1] : base64;
+    
+    // Converte base64 para bytes
+    const byteCharacters = atob(base64Data);
+    const byteNumbers = new Array(byteCharacters.length);
+    for (let i = 0; i < byteCharacters.length; i++) {
+        byteNumbers[i] = byteCharacters.charCodeAt(i);
+    }
+    const byteArray = new Uint8Array(byteNumbers);
+    
+    // Cria o arquivo
+    const file = new File([byteArray], fileName, { type: mimeType });
+    return file;
 }
 
 // Funções globais para o modal (compatibilidade com onclick no HTML)

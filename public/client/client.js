@@ -30,6 +30,7 @@ export class ApiClient {
         const response = await fetch(this.url, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
+            credentials: 'include', // Inclui cookies da sessão para autenticação
             body: jsonBody
         })
         
@@ -110,6 +111,7 @@ export class VacanciesClient extends ApiClient {
         const response = await fetch(`${this.url}/send-to-approval`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
+            credentials: 'include', // Inclui cookies da sessão para autenticação
             body: JSON.stringify({ vacancyIds: ids })
         });
         if (!response.ok) throw new Error('Failed to send vacancies to approval');
@@ -124,6 +126,42 @@ export class VacanciesClient extends ApiClient {
         const response = await fetch(`${this.url}/status/${status}`);
         if (!response.ok) throw new Error('Failed to fetch vacancies by status');
         return response.json();
+    }
+
+    /**
+     * Envia múltiplas vagas com arquivos para aprovação usando /send-massive
+     * @param {Array<Object>} vacancies - Array de objetos VacancyOpeningDTO
+     * @param {Array<File>} files - Array de arquivos (PDFs)
+     */
+    async sendMassive(vacancies, files = []) {
+        const formData = new FormData();
+        
+        // Adiciona o JSON das vagas
+        formData.append('vacancies', JSON.stringify(vacancies));
+        
+        // Adiciona os arquivos
+        files.forEach(file => {
+            formData.append('files', file);
+        });
+        
+        console.log('📤 [VacanciesClient.sendMassive] Enviando para:', `${this.url}/send-massive`);
+        console.log('📤 [VacanciesClient.sendMassive] Vagas:', vacancies);
+        console.log('📤 [VacanciesClient.sendMassive] Arquivos:', files.map(f => ({ name: f.name, size: f.size, type: f.type })));
+        
+        const response = await fetch(`${this.url}/send-massive`, {
+            method: 'POST',
+            credentials: 'include', // Importante: inclui cookies da sessão para autenticação
+            body: formData
+        });
+        
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('❌ [VacanciesClient.sendMassive] Erro:', response.status);
+            console.error('❌ [VacanciesClient.sendMassive] Resposta:', errorText);
+            throw new Error(`Failed to send massive: ${response.status} - ${errorText}`);
+        }
+        
+        return response.text();
     }
 }
 
