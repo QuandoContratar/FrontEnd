@@ -637,7 +637,7 @@
             // Função para atualizar KPI e renderizar vagas
             async function atualizarVagas() {
                 try {
-                    const vagas = await vacanciesClient.findAll();
+                    const vagas = await vacanciesClient.findActiveVacancies();
                     // Atualiza KPI
                     $("#kpi-vagas-abertas").text(vagas.length);
                     // Renderiza cards
@@ -656,9 +656,9 @@
                                         </div>
                                     </div>
                                     <div class="col-md-6">
-                                        <div class="vaga-title">${vaga.position || ''}</div>
-                                        <div class="vaga-manager">Gestor(a): ${vaga.manager.name || '-'}</div>
-                                        <div class="vaga-details">Área: ${vaga.area || '-'} | Modelo: ${vaga.workModel || '-'} | Salário: ${vaga.salary || '-'}</div>
+                                        <div class="vaga-title">${vaga.positionJob || ''}</div>
+                                        <div class="vaga-manager">Gestor(a): ${vaga.managerName || '-'}</div>
+                                        <div class="vaga-details">Área: ${vaga.area || '-'} | Modelo: ${vaga.workModel || '-'}</div>
                                     </div>
                                     <div class="col-md-5 text-right">
                                         <button class="btn btn-enviar">Enviar Currículo</button>

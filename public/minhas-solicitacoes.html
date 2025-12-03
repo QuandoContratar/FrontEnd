@@ -309,35 +309,34 @@
                 VOLTAR
             </button>
         </div>
-    </div>
-
-    <!-- Delete Confirmation Modal -->
-    <div id="deleteModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3>pop-up excluir</h3>
-                <button class="modal-close" onclick="hideDeleteModal()">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-            <div class="modal-body">
-                <div class="delete-icon">
-                    <i class="fas fa-trash"></i>
-                </div>
-                <p>Deseja excluir a vaga?</p>
-            </div>
-            <div class="modal-footer">
-                <button class="btn btn-danger" onclick="confirmDelete()">Sim</button>
-                <button class="btn btn-secondary" onclick="hideDeleteModal()">Não</button>
-            </div>
-        </div>
-    </div>
-
                 </div>
                 <!-- /.container-fluid -->
 
             </div>
             <!-- End of Main Content -->
+
+            <!-- Delete Confirmation Modal -->
+            <div id="deleteModal" class="modal" style="display: none;">
+                <div class="modal-overlay" onclick="hideDeleteModal()"></div>
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h3>Confirmar Exclusão</h3>
+                        <button class="modal-close" onclick="hideDeleteModal()">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="delete-icon">
+                            <i class="fas fa-trash"></i>
+                        </div>
+                        <p>Deseja excluir a solicitação de vaga?</p>
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn btn-danger" onclick="confirmDelete()">Sim</button>
+                        <button class="btn btn-secondary" onclick="hideDeleteModal()">Não</button>
+                    </div>
+                </div>
+            </div>
 
             <!-- Footer -->
             <footer class="sticky-footer bg-white">
@@ -378,6 +377,7 @@
             </div>
         </div>
     </div>
+    <!-- teste -->
 
     <!-- Bootstrap core JavaScript-->
     <script src="vendor/jquery/jquery.min.js"></script>
@@ -390,7 +390,7 @@
     <script src="js/sb-admin-2.min.js"></script>
 
     <!-- Page level custom scripts - Minhas Solicitações Integration -->
-    <script type="module" src="./assets/js/pages/minhas-solicitacoes.js"></script>
+    <script type="module" src="assets/js/pages/minhas-solicitacoes.js"></script>
 
 </body>
 

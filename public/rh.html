@@ -82,6 +82,28 @@
             color: var(--roxo-escuro);
             font-weight: 600;
         }
+
+        .input-group-append .btn {
+            border-left: 0;
+        }
+
+        .input-group .form-control.is-valid {
+            border-color: #28a745;
+        }
+
+        .input-group .form-control.is-invalid {
+            border-color: #dc3545;
+        }
+
+        #passwordHelp {
+            font-size: 0.875rem;
+            margin-top: 0.25rem;
+        }
+
+        #passwordHint {
+            font-size: 0.75rem;
+            font-weight: normal;
+        }
     </style>
 </head>
 
@@ -379,6 +401,25 @@
                         <h1 class="h3 mb-0 text-gray-800 page-title">Cadastro de RH</h1>
                     </div>
 
+                    <!-- Tabs Navigation -->
+                    <ul class="nav nav-tabs mb-4" id="rhTabs" role="tablist">
+                        <li class="nav-item">
+                            <a class="nav-link active" id="members-tab" data-toggle="tab" href="#members" role="tab" aria-controls="members" aria-selected="true">
+                                <i class="fas fa-users"></i> Membros do RH
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" id="approvals-tab" data-toggle="tab" href="#approvals" role="tab" aria-controls="approvals" aria-selected="false">
+                                <i class="fas fa-check-circle"></i> Aprovação de Vagas
+                                <span class="badge badge-warning ml-2" id="pendingCount">0</span>
+                            </a>
+                        </li>
+                    </ul>
+
+                    <!-- Tabs Content -->
+                    <div class="tab-content" id="rhTabsContent">
+                        <!-- Tab: Membros do RH -->
+                        <div class="tab-pane fade show active" id="members" role="tabpanel" aria-labelledby="members-tab">
                     <!-- Content Row -->
                     <div class="row">
 
@@ -402,15 +443,41 @@
                                                 <input type="text" id="name" class="form-control"
                                                     placeholder="Ex: Maria Silva" required>
                                             </div>
-                                            <div class="col-md-4 mb-3">
+                                            <div class="col-md-3 mb-3">
                                                 <label for="email" class="form-label">E-mail</label>
                                                 <input type="email" id="email" class="form-control"
                                                     placeholder="Ex: maria.silva@empresa.com" required>
                                             </div>
-                                            <div class="col-md-3 mb-3">
+                                            <div class="col-md-2 mb-3">
                                                 <label for="area" class="form-label">Área de Atuação</label>
                                                 <input type="text" id="area" class="form-control"
                                                     placeholder="Ex: Recrutamento" required>
+                                            </div>
+                                            <div class="col-md-3 mb-3">
+                                                <label for="password" class="form-label">
+                                                    Senha
+                                                    <small class="text-muted" id="passwordHint">(obrigatória para novo cadastro)</small>
+                                                </label>
+                                                <div class="input-group">
+                                                    <input type="password" id="password" class="form-control"
+                                                        placeholder="Mínimo 6 caracteres" 
+                                                        minlength="6"
+                                                        autocomplete="new-password">
+                                                    <div class="input-group-append">
+                                                        <button class="btn btn-outline-secondary" type="button" id="togglePasswordBtn">
+                                                            <i class="fas fa-eye" id="togglePasswordIcon"></i>
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                                <div class="form-check mt-2" id="changePasswordCheckboxContainer" style="display: none;">
+                                                    <input class="form-check-input" type="checkbox" id="changePasswordCheckbox">
+                                                    <label class="form-check-label" for="changePasswordCheckbox">
+                                                        Alterar senha deste membro do RH
+                                                    </label>
+                                                </div>
+                                                <small class="form-text text-muted" id="passwordHelp">
+                                                    Deixe em branco para manter a senha atual (ao editar)
+                                                </small>
                                             </div>
                                             <div class="col-md-1 mb-3 d-flex align-items-end">
                                                 <button type="submit" class="btn btn-primary w-100" id="addRHBtn">
@@ -468,6 +535,69 @@
                         </div>
 
                     </div>
+                        </div>
+                        <!-- End Tab: Membros do RH -->
+
+                        <!-- Tab: Aprovação de Vagas -->
+                        <div class="tab-pane fade" id="approvals" role="tabpanel" aria-labelledby="approvals-tab">
+                            <div class="row">
+                                <!-- Card de Solicitações Pendentes -->
+                                <div class="col-xl-12 col-lg-12">
+                                    <div class="card shadow mb-4">
+                                        <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                                            <h6 class="m-0 font-weight-bold text-primary">
+                                                <i class="fas fa-clipboard-list fa-fw"></i>
+                                                Solicitações Pendentes de Aprovação
+                                            </h6>
+                                            <div class="d-flex align-items-center">
+                                                <button class="btn btn-sm btn-primary mr-2" id="refreshApprovalsBtn" title="Recarregar">
+                                                    <i class="fas fa-sync-alt"></i>
+                                                </button>
+                                                <div class="search-container">
+                                                    <div class="input-group">
+                                                        <input type="text" id="searchApprovalsInput"
+                                                            class="form-control bg-light border-0 small"
+                                                            placeholder="Pesquisar solicitações...">
+                                                        <div class="input-group-append">
+                                                            <button class="btn btn-primary" type="button">
+                                                                <i class="fas fa-search fa-sm"></i>
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="card-body">
+                                            <div class="table-responsive">
+                                                <table class="table table-bordered" id="approvalsTable" width="100%" cellspacing="0">
+                                                    <thead>
+                                                        <tr>
+                                                            <th>Gestor</th>
+                                                            <th>Cargo</th>
+                                                            <th>Área</th>
+                                                            <th>Período</th>
+                                                            <th>Modelo</th>
+                                                            <th>Regime</th>
+                                                            <th>Salário</th>
+                                                            <th>Localidade</th>
+                                                            <th>Data</th>
+                                                            <th>Status</th>
+                                                            <th>Ações</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody id="approvalsTableBody">
+                                                        <!-- Conteúdo dinâmico -->
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- End Tab: Aprovação de Vagas -->
+                    </div>
+                    <!-- End Tabs Content -->
 
                 </div>
                 <!-- /.container-fluid -->
