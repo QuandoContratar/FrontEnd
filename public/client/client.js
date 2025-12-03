@@ -241,9 +241,28 @@ export class OpeningRequestClient extends ApiClient {
      * @param {string} status - ENTRADA, ABERTA, APROVADA, REJEITADA, CANCELADA
      */
     async findByStatus(status) {
-        const response = await fetch(`${this.url}/status/${status}`);
-        if (!response.ok) throw new Error('Failed to fetch by status');
-        return response.json();
+        const url = `${this.url}/status/${status}`;
+        console.log('📡 [OpeningRequestClient] Buscando por status:', url);
+        
+        const response = await fetch(url, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            credentials: 'include'
+        });
+        
+        console.log('📡 [OpeningRequestClient] Resposta:', response.status, response.statusText);
+        
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('❌ [OpeningRequestClient] Erro:', response.status, errorText);
+            throw new Error(`Failed to fetch by status: ${response.status} - ${errorText}`);
+        }
+        
+        const data = await response.json();
+        console.log('✅ [OpeningRequestClient] Dados recebidos:', data);
+        return data;
     }
 
     /**
