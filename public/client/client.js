@@ -21,23 +21,91 @@ export class ApiClient {
     }
 
     async insert(data) {
+        const jsonBody = JSON.stringify(data);
+        console.log('📤 [ApiClient.insert] Chamando endpoint:', this.url);
+        console.log('📤 [ApiClient.insert] Route:', this.route);
+        console.log('📤 [ApiClient.insert] Dados enviados:', data);
+        console.log('📤 [ApiClient.insert] JSON:', jsonBody);
+        
         const response = await fetch(this.url, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(data)
+            credentials: 'include', // Inclui cookies da sessão para autenticação
+            body: jsonBody
         })
-        if (!response.ok) throw new Error('Failed to insert')
+        
+        if (!response.ok) {
+            let errorText;
+            try {
+                errorText = await response.text();
+                const errorJson = JSON.parse(errorText);
+                console.error('❌ [ApiClient.insert] Erro:', response.status);
+                console.error('❌ [ApiClient.insert] Endpoint:', this.url);
+                console.error('❌ [ApiClient.insert] Erro JSON:', errorJson);
+                console.error('❌ [ApiClient.insert] Mensagem:', errorJson.message || errorText);
+            } catch (e) {
+                errorText = await response.text();
+                console.error('❌ [ApiClient.insert] Erro:', response.status, errorText);
+                console.error('❌ [ApiClient.insert] Endpoint:', this.url);
+            }
+            console.error('❌ [ApiClient.insert] Dados enviados:', jsonBody);
+            throw new Error(`Failed to insert: ${response.status} - ${errorText}`)
+        }
         return response.json()
     }
 
     async update(id, data) {
+        // Remove campos que não devem ser enviados no update
+        const updateData = { ...data };
+        delete updateData.id;
+        delete updateData.id_user;
+        
+        console.log('📤 [ApiClient.update] Atualizando:', `${this.url}/${id}`);
+        console.log('📤 [ApiClient.update] Dados:', updateData);
+        
         const response = await fetch(`${this.url}/${id}`, {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(data)
+            credentials: 'include', // Inclui cookies da sessão para autenticação
+            body: JSON.stringify(updateData)
         })
-        if (!response.ok) throw new Error('Failed to update')
-        return response.json()
+        
+        // Verifica se a resposta foi bem-sucedida
+        if (!response.ok) {
+            let errorText;
+            try {
+                errorText = await response.text();
+                console.error('❌ [ApiClient.update] Erro:', response.status);
+                console.error('❌ [ApiClient.update] Resposta:', errorText);
+            } catch (e) {
+                errorText = 'Erro desconhecido';
+            }
+            throw new Error(`Failed to update: ${response.status} - ${errorText}`)
+        }
+        
+        // Verifica se há conteúdo na resposta antes de tentar fazer parse
+        const contentType = response.headers.get('content-type');
+        const contentLength = response.headers.get('content-length');
+        
+        // Se não há conteúdo ou é texto vazio, retorna objeto vazio
+        if (contentLength === '0' || !contentType || !contentType.includes('application/json')) {
+            console.log('✅ [ApiClient.update] Resposta vazia ou não-JSON, retornando sucesso');
+            return { success: true, id: id };
+        }
+        
+        // Tenta fazer parse do JSON
+        try {
+            const text = await response.text();
+            if (!text || text.trim() === '') {
+                console.log('✅ [ApiClient.update] Resposta vazia, retornando sucesso');
+                return { success: true, id: id };
+            }
+            return JSON.parse(text);
+        } catch (e) {
+            // Se falhar ao fazer parse, mas status foi 200, retorna sucesso
+            console.warn('⚠️ [ApiClient.update] Erro ao fazer parse do JSON, mas status foi 200:', e);
+            return { success: true, id: id };
+        }
     }
 
     async delete(id) {
@@ -87,6 +155,7 @@ export class VacanciesClient extends ApiClient {
         const response = await fetch(`${this.url}/send-to-approval`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
+            credentials: 'include', // Inclui cookies da sessão para autenticação
             body: JSON.stringify({ vacancyIds: ids })
         });
         if (!response.ok) throw new Error('Failed to send vacancies to approval');
@@ -102,6 +171,53 @@ export class VacanciesClient extends ApiClient {
         if (!response.ok) throw new Error('Failed to fetch vacancies by status');
         return response.json();
     }
+
+    async findActiveVacancies() {
+    const response = await fetch(`${this.url}/activesVacancies`);
+    if (!response.ok) throw new Error('Erro ao buscar vagas ativas');
+    return response.json();
+}
+
+
+    /**
+     * Envia múltiplas vagas com arquivos para aprovação usando /send-massive
+     * @param {Array<Object>} vacancies - Array de objetos VacancyOpeningDTO
+     * @param {Array<File>} files - Array de arquivos (PDFs)
+     */
+    async sendMassive(vacancies, files = []) {
+        const formData = new FormData();
+        
+        // Adiciona o JSON das vagas
+        formData.append('vacancies', JSON.stringify(vacancies));
+        
+        // Adiciona os arquivos
+        files.forEach(file => {
+            formData.append('files', file);
+        });
+        
+        console.log('📤 [VacanciesClient.sendMassive] Enviando para:', `${this.url}/send-massive`);
+        console.log('📤 [VacanciesClient.sendMassive] Vagas:', vacancies);
+        console.log('📤 [VacanciesClient.sendMassive] Arquivos:', files.map(f => ({ name: f.name, size: f.size, type: f.type })));
+        
+        const response = await fetch(`${this.url}/send-massive`, {
+            method: 'POST',
+            credentials: 'include', // Importante: inclui cookies da sessão para autenticação
+            body: formData
+        });
+        
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('❌ [VacanciesClient.sendMassive] Erro:', response.status);
+            console.error('❌ [VacanciesClient.sendMassive] Resposta:', errorText);
+            throw new Error(`Failed to send massive: ${response.status} - ${errorText}`);
+        }
+        
+        return response.text();
+    }
+
+    
+
+    
 }
 
 // Client para Opening Requests (solicitações de abertura de vaga)
@@ -125,9 +241,28 @@ export class OpeningRequestClient extends ApiClient {
      * @param {string} status - ENTRADA, ABERTA, APROVADA, REJEITADA, CANCELADA
      */
     async findByStatus(status) {
-        const response = await fetch(`${this.url}/status/${status}`);
-        if (!response.ok) throw new Error('Failed to fetch by status');
-        return response.json();
+        const url = `${this.url}/status/${status}`;
+        console.log('📡 [OpeningRequestClient] Buscando por status:', url);
+        
+        const response = await fetch(url, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            credentials: 'include'
+        });
+        
+        console.log('📡 [OpeningRequestClient] Resposta:', response.status, response.statusText);
+        
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('❌ [OpeningRequestClient] Erro:', response.status, errorText);
+            throw new Error(`Failed to fetch by status: ${response.status} - ${errorText}`);
+        }
+        
+        const data = await response.json();
+        console.log('✅ [OpeningRequestClient] Dados recebidos:', data);
+        return data;
     }
 
     /**
@@ -171,9 +306,20 @@ export class SelectionProcessClient extends ApiClient {
      * GET /selection-process/kanban
      */
     async findAllKanban() {
-        const response = await fetch(`${this.url}/kanban`);
-        if (!response.ok) throw new Error('Failed to fetch all kanban processes');
-        return response.json();
+        console.log(`📤 [SelectionProcessClient] Buscando todos os processos do kanban...`);
+        const response = await fetch(`${this.url}/kanban`, {
+            credentials: 'include'
+        });
+        
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error(`❌ [SelectionProcessClient] Erro ao buscar todos os processos:`, response.status, errorText);
+            throw new Error(`Failed to fetch all kanban processes: ${response.status} - ${errorText}`);
+        }
+        
+        const data = await response.json();
+        console.log(`✅ [SelectionProcessClient] Total de processos encontrados: ${Array.isArray(data) ? data.length : 0}`);
+        return Array.isArray(data) ? data : [];
     }
 
     /**
@@ -181,9 +327,20 @@ export class SelectionProcessClient extends ApiClient {
      * @param {string} stage - aguardando_triagem, triagem_inicial, etc.
      */
     async listByStage(stage) {
-        const response = await fetch(`${this.url}/kanban/${stage}`);
-        if (!response.ok) throw new Error('Failed to fetch by stage');
-        return response.json();
+        console.log(`📤 [SelectionProcessClient] Buscando processos do estágio: ${stage}`);
+        const response = await fetch(`${this.url}/kanban/${stage}`, {
+            credentials: 'include'
+        });
+        
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error(`❌ [SelectionProcessClient] Erro ao buscar estágio ${stage}:`, response.status, errorText);
+            throw new Error(`Failed to fetch by stage: ${response.status} - ${errorText}`);
+        }
+        
+        const data = await response.json();
+        console.log(`✅ [SelectionProcessClient] Estágio ${stage}: ${Array.isArray(data) ? data.length : 0} processos`);
+        return data;
     }
 
     /**
@@ -192,10 +349,18 @@ export class SelectionProcessClient extends ApiClient {
      * @param {string} stage - Novo estágio
      */
     async moveToStage(id, stage) {
+        console.log(`📤 [SelectionProcessClient] Movendo processo ${id} para estágio: ${stage}`);
         const response = await fetch(`${this.url}/${id}/stage/${stage}`, {
-            method: 'PATCH'
+            method: 'PATCH',
+            credentials: 'include'
         });
-        if (!response.ok) throw new Error('Failed to move to stage');
+        
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error(`❌ [SelectionProcessClient] Erro ao mover processo:`, response.status, errorText);
+            throw new Error(`Failed to move to stage: ${response.status} - ${errorText}`);
+        }
+        
         return response.json();
     }
 
@@ -243,6 +408,18 @@ export class UsersClient extends ApiClient {
         if (!response.ok) throw new Error('Failed to fetch by access');
         return response.json();
     }
+
+    async updateUser(id, dto) {
+    const response = await fetch(`${this.url}/update/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(dto)
+    });
+
+    if (!response.ok) throw new Error('Failed to update user');
+    return response.json();
+}
+
 }
 
 export class CandidateClient extends ApiClient {

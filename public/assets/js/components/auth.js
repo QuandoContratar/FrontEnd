@@ -42,7 +42,12 @@ class AuthManager {
     // Fazer logout
     logout() {
         this.currentUser = null;
+        // Remove todas as chaves relacionadas à autenticação
         localStorage.removeItem('currentUser');
+        localStorage.removeItem('userLogged');
+        localStorage.removeItem('userId');
+        // Limpa também dados de sessão se houver
+        sessionStorage.clear();
     }
 
     // Cadastrar novo usuário

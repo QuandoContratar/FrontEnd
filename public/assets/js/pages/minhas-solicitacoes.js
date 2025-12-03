@@ -3,16 +3,36 @@
    Gerenciamento de solicitações de vagas do gestor
    ======================================== */
 
-import { OpeningRequestClient } from '../../../client/client.js';
+import { OpeningRequestClient, VacanciesClient } from '../../../client/client.js';
 
-// Instância do cliente de solicitações
-const openingRequestClient = new OpeningRequestClient();
+// Instâncias dos clientes
+let openingRequestClient;
+let vacanciesClient;
+try {
+    openingRequestClient = new OpeningRequestClient();
+    vacanciesClient = new VacanciesClient();
+} catch (error) {
+    console.error('Erro ao inicializar clientes:', error);
+    // Fallback: criar objetos vazios para evitar erros
+    openingRequestClient = {
+        findByGestor: async () => [],
+        findAll: async () => [],
+        delete: async () => {},
+        updateStatus: async () => {}
+    };
+    vacanciesClient = {
+        insert: async () => ({}),
+        sendToApproval: async () => [],
+        findByManager: async () => []
+    };
+}
 
 // Estado da página
 let vacancies = [];
 let filteredVacancies = [];
 let currentDeleteId = null;
 let currentUser = null;
+let isLoading = false;
 
 // Inicialização
 document.addEventListener('DOMContentLoaded', async () => {
@@ -23,8 +43,25 @@ document.addEventListener('DOMContentLoaded', async () => {
  * Inicializa a página
  */
 async function initPage() {
-    // Pega usuário logado do localStorage
-    currentUser = JSON.parse(localStorage.getItem('userLogged')) || { id_user: 1, name: 'Lucio Limeira' };
+    // Pega usuário logado do localStorage - com logs detalhados
+    const userLoggedStr = localStorage.getItem('userLogged');
+    console.log('🔍 [minhas-solicitacoes] userLogged do localStorage (string):', userLoggedStr);
+    
+    try {
+        currentUser = userLoggedStr ? JSON.parse(userLoggedStr) : null;
+    } catch (e) {
+        console.error('❌ [minhas-solicitacoes] Erro ao fazer parse do userLogged:', e);
+        currentUser = null;
+    }
+    
+    // Fallback se não encontrar
+    if (!currentUser || !currentUser.id_user) {
+        console.warn('⚠️ [minhas-solicitacoes] userLogged não encontrado ou inválido, usando fallback');
+        currentUser = { id_user: 1, name: 'Lucio Limeira' };
+    }
+    
+    console.log('👤 [minhas-solicitacoes] currentUser recuperado:', currentUser);
+    console.log('👤 [minhas-solicitacoes] currentUser.id_user:', currentUser.id_user, 'tipo:', typeof currentUser.id_user);
     
     // Atualiza nome do usuário na topbar
     updateUserInfo();
@@ -32,7 +69,9 @@ async function initPage() {
     // Configura event listeners
     setupEventListeners();
     
-    // Carrega vagas do gestor
+    // Carrega as vagas (incluindo pendentes do localStorage)
+    // NÃO envia automaticamente - apenas lista
+    console.log('🔍 Iniciando carregamento de solicitações...');
     await loadVacancies();
 }
 
@@ -108,24 +147,227 @@ function setupEventListeners() {
 }
 
 /**
+ * Verifica se um ID é válido para chamadas à API (não é temporário)
+ */
+function isValidApiId(id) {
+    if (!id) return false;
+    const idStr = String(id);
+    // IDs temporários começam com "temp_"
+    return !idStr.startsWith('temp_') && !isNaN(Number(idStr));
+}
+
+/**
+ * Envia solicitações pendentes do localStorage para a API
+ */
+async function sendPendingRequests() {
+    try {
+        const pendingRequests = JSON.parse(localStorage.getItem('pendingOpeningRequests') || '[]');
+        
+        if (pendingRequests.length === 0) {
+            console.log('Nenhuma solicitação pendente encontrada');
+            return; // Não há solicitações pendentes
+        }
+        
+        console.log(`📤 Enviando ${pendingRequests.length} solicitação(ões) pendente(s) para a API...`, pendingRequests);
+        
+        const successfulIds = [];
+        const failedIds = [];
+        
+        for (const request of pendingRequests) {
+            try {
+                console.log('📤 Enviando solicitação:', request);
+                console.log('📤 request.gestor_id:', request.gestor_id, 'tipo:', typeof request.gestor_id);
+                console.log('📤 request.gestor:', request.gestor);
+                console.log('📤 currentUser:', currentUser);
+                console.log('📤 currentUser?.id_user:', currentUser?.id_user, 'tipo:', typeof currentUser?.id_user);
+                
+                // Garante que gestor_id esteja presente e seja um número (usa currentUser como fallback)
+                let gestorId = request.gestor_id || request.gestor?.id_user || currentUser?.id_user;
+                
+                console.log('📤 gestorId antes da conversão:', gestorId, 'tipo:', typeof gestorId);
+                
+                // Converte para número inteiro se necessário
+                if (gestorId) {
+                    gestorId = parseInt(gestorId, 10); // Usar parseInt para garantir inteiro
+                }
+                
+                console.log('📤 gestorId após conversão:', gestorId, 'tipo:', typeof gestorId, 'isNaN:', isNaN(gestorId));
+                
+                if (!gestorId || isNaN(gestorId) || gestorId <= 0) {
+                    console.error('❌ Erro: gestor_id inválido. Request:', request, 'CurrentUser:', currentUser);
+                    throw new Error('gestor_id não encontrado ou inválido. Usuário não está logado?');
+                }
+                
+                // Mapeia valores do formulário para valores do enum do backend
+                // Backend espera: CLT, PJ, Estágio, Temporário, Autônomo (não aceita Trainee)
+                const regimeMap = {
+                    'clt': 'CLT',
+                    'pj': 'PJ',
+                    'estagio': 'Estágio',
+                    'trainee': 'Estágio', // Trainee mapeado para Estágio (backend não tem Trainee)
+                    'temporario': 'Temporário',
+                    'autonomo': 'Autônomo'
+                };
+                const contractType = regimeMap[request.regimeContratacao?.toLowerCase()] || 'CLT';
+                
+                // Mapeia modelo de trabalho para valores do enum do backend
+                // Backend espera: presencial, remoto, híbrido
+                const workModelMap = {
+                    'presencial': 'presencial',
+                    'remoto': 'remoto',
+                    'hibrido': 'híbrido',
+                    'híbrido': 'híbrido'
+                };
+                const workModel = workModelMap[request.modeloTrabalho?.toLowerCase()] || request.modeloTrabalho || 'presencial';
+                
+                // Prepara dados para criar a vaga (formato VacancyOpeningDTO)
+                // O backend precisa de uma referência persistida ao User
+                // Vamos enviar apenas o ID do gestor e deixar o backend buscar o User do banco
+                const vacancyData = {
+                    position_job: request.cargo,
+                    period: request.periodo,
+                    workModel: workModel,
+                    contractType: contractType, // Valores do enum: CLT, PJ, Estágio, Temporário, Autônomo
+                    salary: Number(request.salario) || 0,
+                    location: request.localidade,
+                    requirements: request.requisitos || '',
+                    area: request.area || 'Tecnologia',
+                    gestor: gestorId // Apenas o ID como número - o backend deve buscar o User
+                };
+                
+                console.log('✅ contractType mapeado:', contractType, '(original:', request.regimeContratacao, ')');
+                console.log('✅ workModel mapeado:', workModel, '(original:', request.modeloTrabalho, ')');
+                console.log('✅ gestor (ID numérico):', gestorId, typeof gestorId);
+                
+                // Validação final antes de enviar
+                if (!gestorId || isNaN(gestorId) || gestorId <= 0) {
+                    console.error('❌ VALIDAÇÃO FINAL FALHOU: gestor_id inválido:', gestorId);
+                    console.error('❌ Request completo:', request);
+                    throw new Error('gestor_id inválido após preparação dos dados');
+                }
+                
+                console.log('✅ Dados preparados para criar vaga:', vacancyData);
+                console.log('✅ gestor_id garantido (número inteiro):', gestorId, typeof gestorId);
+                
+                // Verifica se há arquivo de justificativa
+                const hasFile = request.justificativaFile && request.justificativaFile.base64;
+                
+                if (hasFile) {
+                    // Converte base64 para File
+                    const file = await base64ToFile(
+                        request.justificativaFile.base64,
+                        request.justificativaFile.name,
+                        request.justificativaFile.type || 'application/pdf'
+                    );
+                    
+                    console.log('✅ Arquivo encontrado, usando sendMassive:', file.name);
+                    
+                    // Usa sendMassive para enviar com arquivo
+                    await vacanciesClient.sendMassive([vacancyData], [file]);
+                    console.log('✅ Vaga enviada com arquivo para aprovação via sendMassive');
+                } else {
+                    console.log('✅ Nenhum arquivo encontrado, usando insert + sendToApproval');
+                    console.log('✅ Usando vacanciesClient.insert (endpoint: /vacancies)');
+                    
+                    // Cria a vaga usando o endpoint /vacancies (NÃO /opening-requests)
+                    const createdVacancy = await vacanciesClient.insert(vacancyData);
+                    console.log('✅ Vaga criada na API:', createdVacancy);
+                    console.log('✅ Resposta completa:', JSON.stringify(createdVacancy));
+                    
+                    // Envia para aprovação usando o endpoint /vacancies/send-to-approval
+                    const vacancyId = createdVacancy.id || createdVacancy.id_vacancy;
+                    if (vacancyId) {
+                        await vacanciesClient.sendToApproval([vacancyId]);
+                        console.log('✅ Vaga enviada para aprovação:', vacancyId);
+                    } else {
+                        console.warn('⚠️ ID da vaga não encontrado na resposta:', createdVacancy);
+                    }
+                }
+                
+                successfulIds.push(request.id);
+            } catch (error) {
+                console.error('❌ Erro ao enviar solicitação pendente:', error);
+                console.error('Dados da solicitação que falhou:', request);
+                failedIds.push(request.id);
+            }
+        }
+        
+        // Remove solicitações enviadas com sucesso do localStorage
+        if (successfulIds.length > 0) {
+            const remainingRequests = pendingRequests.filter(req => !successfulIds.includes(req.id));
+            localStorage.setItem('pendingOpeningRequests', JSON.stringify(remainingRequests));
+            
+            showNotification(`${successfulIds.length} solicitação(ões) enviada(s) com sucesso!`, 'success');
+            console.log(`✅ ${successfulIds.length} solicitação(ões) removida(s) do localStorage`);
+        }
+        
+        // Mantém as que falharam para tentar novamente depois
+        if (failedIds.length > 0) {
+            console.warn(`⚠️ ${failedIds.length} solicitação(ões) falharam ao enviar e serão mantidas para nova tentativa`);
+            showNotification(`${failedIds.length} solicitação(ões) falharam ao enviar. Tente novamente.`, 'warning');
+        }
+    } catch (error) {
+        console.error('❌ Erro geral ao processar solicitações pendentes:', error);
+    }
+}
+
+/**
  * Carrega as solicitações do gestor logado
  */
 async function loadVacancies() {
+    // Evita múltiplas chamadas simultâneas
+    if (isLoading) return;
+    
     try {
         showLoading(true);
         
+        // Primeiro, adiciona solicitações pendentes do localStorage à lista
+        const pendingRequests = JSON.parse(localStorage.getItem('pendingOpeningRequests') || '[]');
+        console.log('📋 Solicitações pendentes no localStorage:', pendingRequests.length);
+        
         // Busca solicitações pelo gestor usando o endpoint correto do backend
         try {
-            vacancies = await openingRequestClient.findByGestor(currentUser.id_user);
-        } catch {
+            const result = await openingRequestClient.findByGestor(currentUser.id_user);
+            vacancies = Array.isArray(result) ? result : [];
+            console.log('📋 Solicitações da API:', vacancies.length);
+        } catch (error) {
+            console.warn('⚠️ Erro ao buscar por gestor:', error);
             // Fallback: busca todas e filtra pelo gestor
-            const allRequests = await openingRequestClient.findAll();
-            vacancies = allRequests.filter(v => 
-                v.manager?.id_user === currentUser.id_user ||
-                v.managerId === currentUser.id_user ||
-                v.id_manager === currentUser.id_user ||
-                v.gestor?.id_user === currentUser.id_user
-            );
+            try {
+                const allRequests = await openingRequestClient.findAll();
+                vacancies = Array.isArray(allRequests) 
+                    ? allRequests.filter(v => 
+                        v.manager?.id_user === currentUser.id_user ||
+                        v.managerId === currentUser.id_user ||
+                        v.id_manager === currentUser.id_user ||
+                        v.gestor?.id_user === currentUser.id_user
+                    )
+                    : [];
+                console.log('📋 Solicitações do fallback:', vacancies.length);
+            } catch (fallbackError) {
+                console.warn('⚠️ Erro no fallback:', fallbackError);
+                vacancies = [];
+            }
+        }
+        
+        // Garante que seja array
+        if (!Array.isArray(vacancies)) {
+            vacancies = [];
+        }
+        
+        // Adiciona solicitações pendentes à lista (marcadas como pendentes)
+        if (pendingRequests.length > 0) {
+            console.log('📋 Encontradas', pendingRequests.length, 'solicitações pendentes no localStorage:', pendingRequests);
+            const pendingMapped = pendingRequests.map(req => ({
+                ...req,
+                isPending: true, // Flag para identificar como pendente
+                gestor: req.gestor || { id_user: req.gestor_id, name: currentUser.name }
+            }));
+            vacancies = [...pendingMapped, ...vacancies];
+            console.log('📋 Total de solicitações (pendentes + API):', vacancies.length);
+            console.log('📋 Solicitações mapeadas:', pendingMapped);
+        } else {
+            console.log('📋 Nenhuma solicitação pendente encontrada no localStorage');
         }
         
         filteredVacancies = [...vacancies];
@@ -135,8 +377,10 @@ async function loadVacancies() {
         
         renderVacancies();
     } catch (error) {
-        console.error('Erro ao carregar solicitações:', error);
-        showNotification('Erro ao carregar solicitações!', 'danger');
+        console.error('❌ Erro ao carregar solicitações:', error);
+        vacancies = [];
+        filteredVacancies = [];
+        renderVacancies();
     } finally {
         showLoading(false);
     }
@@ -148,6 +392,11 @@ async function loadVacancies() {
 function renderVacancies() {
     const vacancyList = document.querySelector('.vacancy-list');
     if (!vacancyList) return;
+
+    // Garante que filteredVacancies seja um array
+    if (!Array.isArray(filteredVacancies)) {
+        filteredVacancies = [];
+    }
 
     vacancyList.innerHTML = '';
 
@@ -164,10 +413,13 @@ function renderVacancies() {
         return;
     }
 
-    filteredVacancies.forEach(vacancy => {
+    console.log('🎨 Renderizando', filteredVacancies.length, 'solicitações...');
+    filteredVacancies.forEach((vacancy, index) => {
+        console.log(`🎨 Renderizando item ${index + 1}:`, vacancy);
         const item = createVacancyItem(vacancy);
         vacancyList.appendChild(item);
     });
+    console.log('✅ Renderização concluída');
 }
 
 /**
@@ -177,12 +429,24 @@ function renderVacancies() {
 function createVacancyItem(vacancy) {
     const item = document.createElement('div');
     item.className = 'vacancy-item';
+    if (vacancy.isPending) {
+        item.classList.add('pending-item'); // Classe para identificar pendentes
+    }
     item.dataset.id = vacancy.id || vacancy.idOpeningRequest;
 
     // OpeningRequestDTO campos: status, gestor (UserDTO), vacancy (VacancyDTO)
-    const statusBadge = getStatusBadge(vacancy.status);
+    // Para solicitações pendentes, usa os campos diretos
+    const statusBadge = vacancy.isPending 
+        ? '<span class="badge badge-warning">Pendente de Envio</span>'
+        : getStatusBadge(vacancy.status);
+    
     const managerName = vacancy.gestor?.name || vacancy.manager?.name || currentUser?.name || 'N/A';
-    const position = vacancy.vacancy?.position_job || vacancy.position_job || vacancy.positionJob || vacancy.position || 'N/A';
+    
+    // Para pendentes, usa cargo diretamente; para API, usa vacancy.position_job
+    const position = vacancy.isPending 
+        ? (vacancy.cargo || 'N/A')
+        : (vacancy.vacancy?.position_job || vacancy.position_job || vacancy.positionJob || vacancy.position || vacancy.cargo || 'N/A');
+    
     const area = vacancy.vacancy?.area || vacancy.area || 'N/A';
     const createdDate = vacancy.createdAt ? formatDate(vacancy.createdAt) : '';
 
@@ -200,12 +464,18 @@ function createVacancyItem(vacancy) {
             ${statusBadge}
         </div>
         <div class="vacancy-actions">
-            <button class="btn-action btn-detail" data-action="view" data-id="${vacancy.id || vacancy.idOpeningRequest}" title="Exibir detalhe/enviar para aprovação">
-                <i class="fas fa-eye"></i>
-            </button>
-            <button class="btn-action btn-edit" data-action="edit" data-id="${vacancy.id || vacancy.idOpeningRequest}" title="Editar">
-                <i class="fas fa-edit"></i>
-            </button>
+            ${vacancy.isPending ? `
+                <button class="btn-action btn-primary" data-action="send" data-id="${vacancy.id}" title="Enviar para API">
+                    <i class="fas fa-paper-plane"></i>
+                </button>
+            ` : `
+                <button class="btn-action btn-detail" data-action="view" data-id="${vacancy.id || vacancy.idOpeningRequest}" title="Exibir detalhe/enviar para aprovação">
+                    <i class="fas fa-eye"></i>
+                </button>
+                <button class="btn-action btn-edit" data-action="edit" data-id="${vacancy.id || vacancy.idOpeningRequest}" title="Editar">
+                    <i class="fas fa-edit"></i>
+                </button>
+            `}
             <button class="btn-action btn-delete" data-action="delete" data-id="${vacancy.id || vacancy.idOpeningRequest}" title="Excluir">
                 <i class="fas fa-times"></i>
             </button>
@@ -220,13 +490,18 @@ function createVacancyItem(vacancy) {
  * @param {string} status - Status da solicitação (OpeningRequestStatus enum do backend)
  */
 function getStatusBadge(status) {
-    // OpeningRequestStatus enum: em_analise, aprovada, rejeitada, cancelada
+    // OpeningRequestStatus enum: ABERTA, CANCELADA, REJEITADA, ENTRADA, APROVADA
     const statusMap = {
+        'ENTRADA': { class: 'badge-info', text: 'Entrada' },
+        'ABERTA': { class: 'badge-primary', text: 'Aberta' },
+        'APROVADA': { class: 'badge-success', text: 'Aprovada' },
+        'REJEITADA': { class: 'badge-danger', text: 'Rejeitada' },
+        'CANCELADA': { class: 'badge-secondary', text: 'Cancelada' },
+        // Fallbacks para compatibilidade (lowercase)
         'em_analise': { class: 'badge-warning', text: 'Em Análise' },
         'aprovada': { class: 'badge-success', text: 'Aprovada' },
         'rejeitada': { class: 'badge-danger', text: 'Rejeitada' },
         'cancelada': { class: 'badge-secondary', text: 'Cancelada' },
-        // Fallbacks para compatibilidade
         'rascunho': { class: 'badge-secondary', text: 'Rascunho' },
         'pendente': { class: 'badge-warning', text: 'Pendente' },
         'pendente aprovação': { class: 'badge-info', text: 'Aguardando Aprovação' }
@@ -258,6 +533,139 @@ function handleVacancyActions(e) {
         case 'delete':
             showDeleteModal(id);
             break;
+        case 'send':
+            sendSinglePendingRequest(id);
+            break;
+    }
+}
+
+/**
+ * Envia uma solicitação pendente individual para a API
+ * @param {string|number} requestId - ID da solicitação pendente
+ */
+async function sendSinglePendingRequest(requestId) {
+    const pendingRequests = JSON.parse(localStorage.getItem('pendingOpeningRequests') || '[]');
+    const request = pendingRequests.find(req => req.id === requestId);
+    
+    if (!request) {
+        showNotification('Solicitação não encontrada!', 'warning');
+        return;
+    }
+    
+    try {
+        showNotification('Enviando solicitação...', 'info');
+        
+        // Garante que gestor_id esteja presente e seja um número inteiro (usa currentUser como fallback)
+        let gestorId = request.gestor_id || request.gestor?.id_user || currentUser?.id_user;
+        
+        // Converte para número inteiro se necessário
+        if (gestorId) {
+            gestorId = parseInt(gestorId, 10); // Usar parseInt para garantir inteiro
+        }
+        
+        if (!gestorId || isNaN(gestorId) || gestorId <= 0) {
+            console.error('❌ Erro: gestor_id inválido. Request:', request, 'CurrentUser:', currentUser);
+            showNotification('Erro: gestor_id não encontrado ou inválido. Faça login novamente.', 'danger');
+            return;
+        }
+        
+        // Mapeia valores do formulário para valores do enum do backend
+        // Backend espera: CLT, PJ, Estágio, Temporário, Autônomo (não aceita Trainee)
+        const regimeMap = {
+            'clt': 'CLT',
+            'pj': 'PJ',
+            'estagio': 'Estágio',
+            'trainee': 'Estágio', // Trainee mapeado para Estágio (backend não tem Trainee)
+            'temporario': 'Temporário',
+            'autonomo': 'Autônomo'
+        };
+        const contractType = regimeMap[request.regimeContratacao?.toLowerCase()] || 'CLT';
+        
+        // Mapeia modelo de trabalho para valores do enum do backend
+        // Backend espera: presencial, remoto, híbrido
+        const workModelMap = {
+            'presencial': 'presencial',
+            'remoto': 'remoto',
+            'hibrido': 'híbrido',
+            'híbrido': 'híbrido'
+        };
+        const workModel = workModelMap[request.modeloTrabalho?.toLowerCase()] || request.modeloTrabalho || 'presencial';
+        
+        // Prepara dados para criar a vaga (formato VacancyOpeningDTO)
+        // O backend precisa de uma referência persistida ao User
+        // Vamos enviar apenas o ID do gestor e deixar o backend buscar o User do banco
+        const vacancyData = {
+            position_job: request.cargo,
+            period: request.periodo,
+            workModel: workModel,
+            contractType: contractType, // Valores do enum: CLT, PJ, Estágio, Temporário, Autônomo
+            salary: Number(request.salario) || 0,
+            location: request.localidade,
+            requirements: request.requisitos || '',
+            area: request.area || 'Tecnologia',
+            gestor: gestorId // Apenas o ID como número - o backend deve buscar o User
+        };
+        
+        console.log('✅ contractType mapeado:', contractType, '(original:', request.regimeContratacao, ')');
+        console.log('✅ workModel mapeado:', workModel, '(original:', request.modeloTrabalho, ')');
+        console.log('✅ gestor (ID numérico):', gestorId, typeof gestorId);
+        
+        // Validação final antes de enviar
+        if (!gestorId || isNaN(gestorId) || gestorId <= 0) {
+            console.error('❌ VALIDAÇÃO FINAL FALHOU: gestor_id inválido:', gestorId);
+            console.error('❌ Request completo:', request);
+            showNotification('Erro: gestor_id inválido após preparação dos dados.', 'danger');
+            return;
+        }
+        
+        console.log('✅ Enviando solicitação com gestor_id (número inteiro):', gestorId, typeof gestorId);
+        console.log('✅ Dados completos para criar vaga:', vacancyData);
+        
+        // Verifica se há arquivo de justificativa
+        const hasFile = request.justificativaFile && request.justificativaFile.base64;
+        
+        if (hasFile) {
+            // Converte base64 para File
+            const file = await base64ToFile(
+                request.justificativaFile.base64,
+                request.justificativaFile.name,
+                request.justificativaFile.type || 'application/pdf'
+            );
+            
+            console.log('✅ Arquivo encontrado, usando sendMassive:', file.name);
+            
+            // Usa sendMassive para enviar com arquivo
+            await vacanciesClient.sendMassive([vacancyData], [file]);
+            console.log('✅ Vaga enviada com arquivo para aprovação via sendMassive');
+        } else {
+            console.log('✅ Nenhum arquivo encontrado, usando insert + sendToApproval');
+            
+            // Cria a vaga usando o endpoint /vacancies (NÃO /opening-requests)
+            const createdVacancy = await vacanciesClient.insert(vacancyData);
+            console.log('✅ Vaga criada:', createdVacancy);
+            console.log('✅ Resposta completa:', JSON.stringify(createdVacancy));
+            
+            // Envia para aprovação usando o endpoint /vacancies/send-to-approval
+            const vacancyId = createdVacancy.id || createdVacancy.id_vacancy;
+            if (vacancyId) {
+                await vacanciesClient.sendToApproval([vacancyId]);
+                console.log('✅ Vaga enviada para aprovação:', vacancyId);
+            } else {
+                console.warn('⚠️ ID da vaga não encontrado na resposta:', createdVacancy);
+            }
+        }
+        
+        // Remove do localStorage
+        const remainingRequests = pendingRequests.filter(req => req.id !== requestId);
+        localStorage.setItem('pendingOpeningRequests', JSON.stringify(remainingRequests));
+        
+        showNotification('Solicitação enviada com sucesso!', 'success');
+        
+        // Recarrega a lista
+        await loadVacancies();
+    } catch (error) {
+        console.error('Erro ao enviar solicitação:', error);
+        showNotification('Erro ao enviar solicitação. Tente novamente.', 'danger');
     }
 }
 
@@ -266,6 +674,11 @@ function handleVacancyActions(e) {
  * @param {string|number} id - ID da vaga
  */
 function viewVacancy(id) {
+    // Não permite visualizar solicitações pendentes (ainda não enviadas)
+    if (!isValidApiId(id)) {
+        showNotification('Esta solicitação ainda não foi enviada. Envie-a primeiro para visualizar os detalhes.', 'warning');
+        return;
+    }
     localStorage.setItem('selectedVacancy', id);
     window.location.href = `detalhes-vaga.html?id=${id}`;
 }
@@ -275,6 +688,11 @@ function viewVacancy(id) {
  * @param {string|number} id - ID da vaga
  */
 function editVacancy(id) {
+    // Não permite editar solicitações pendentes (ainda não enviadas)
+    if (!isValidApiId(id)) {
+        showNotification('Esta solicitação ainda não foi enviada. Envie-a primeiro para poder editá-la.', 'warning');
+        return;
+    }
     localStorage.setItem('editVacancy', id);
     window.location.href = `abertura-vaga.html?edit=${id}`;
 }
@@ -311,14 +729,29 @@ async function confirmDelete() {
     if (!currentDeleteId) return;
 
     try {
-        await openingRequestClient.delete(currentDeleteId);
-        
-        // Remove da lista local
-        vacancies = vacancies.filter(v => (v.id || v.id_vacancy || v.idOpeningRequest) != currentDeleteId);
-        filteredVacancies = filteredVacancies.filter(v => (v.id || v.id_vacancy || v.idOpeningRequest) != currentDeleteId);
-        
-        renderVacancies();
-        showNotification('Solicitação excluída com sucesso!', 'success');
+        // Se for ID temporário (pendente), remove apenas do localStorage
+        if (!isValidApiId(currentDeleteId)) {
+            const pendingRequests = JSON.parse(localStorage.getItem('pendingOpeningRequests') || '[]');
+            const remainingRequests = pendingRequests.filter(req => req.id !== currentDeleteId);
+            localStorage.setItem('pendingOpeningRequests', JSON.stringify(remainingRequests));
+            
+            // Remove da lista local
+            vacancies = vacancies.filter(v => (v.id || v.id_vacancy || v.idOpeningRequest) != currentDeleteId);
+            filteredVacancies = filteredVacancies.filter(v => (v.id || v.id_vacancy || v.idOpeningRequest) != currentDeleteId);
+            
+            renderVacancies();
+            showNotification('Solicitação removida com sucesso!', 'success');
+        } else {
+            // Se for ID válido da API, deleta da API
+            await openingRequestClient.delete(currentDeleteId);
+            
+            // Remove da lista local
+            vacancies = vacancies.filter(v => (v.id || v.id_vacancy || v.idOpeningRequest) != currentDeleteId);
+            filteredVacancies = filteredVacancies.filter(v => (v.id || v.id_vacancy || v.idOpeningRequest) != currentDeleteId);
+            
+            renderVacancies();
+            showNotification('Solicitação excluída com sucesso!', 'success');
+        }
     } catch (error) {
         console.error('Erro ao excluir:', error);
         showNotification('Erro ao excluir solicitação!', 'danger');
@@ -381,27 +814,131 @@ function sortVacancies(sortBy) {
  * Envia todas as solicitações para aprovação em massa
  */
 async function handleMassApproval() {
-    // Filtra apenas solicitações em análise
-    const pendingVacancies = vacancies.filter(v => 
-        v.status === 'em_analise' || !v.status
-    );
+    // Primeiro, envia solicitações pendentes do localStorage para a API
+    const pendingRequests = JSON.parse(localStorage.getItem('pendingOpeningRequests') || '[]');
+    let sentCount = 0;
+    
+    if (pendingRequests.length > 0) {
+        console.log(`📤 Enviando ${pendingRequests.length} solicitação(ões) pendente(s) do localStorage para a API...`);
+        
+        for (const request of pendingRequests) {
+            try {
+                // Garante que gestor_id esteja presente e seja um número
+                let gestorId = request.gestor_id || request.gestor?.id_user || currentUser?.id_user;
+                if (gestorId) {
+                    gestorId = parseInt(gestorId, 10);
+                }
+                
+                if (!gestorId || isNaN(gestorId) || gestorId <= 0) {
+                    console.warn('⚠️ Ignorando solicitação com gestor_id inválido:', request);
+                    continue;
+                }
+                
+                // Mapeia valores do formulário para valores do enum do backend
+                const regimeMap = {
+                    'clt': 'CLT',
+                    'pj': 'PJ',
+                    'estagio': 'Estágio',
+                    'trainee': 'Estágio',
+                    'temporario': 'Temporário',
+                    'autonomo': 'Autônomo'
+                };
+                const contractType = regimeMap[request.regimeContratacao?.toLowerCase()] || 'CLT';
+                
+                const workModelMap = {
+                    'presencial': 'presencial',
+                    'remoto': 'remoto',
+                    'hibrido': 'híbrido',
+                    'híbrido': 'híbrido'
+                };
+                const workModel = workModelMap[request.modeloTrabalho?.toLowerCase()] || request.modeloTrabalho || 'presencial';
+                
+                // Prepara dados para criar a vaga
+                const vacancyData = {
+                    position_job: request.cargo,
+                    period: request.periodo,
+                    workModel: workModel,
+                    contractType: contractType,
+                    salary: Number(request.salario) || 0,
+                    location: request.localidade,
+                    requirements: request.requisitos || '',
+                    area: request.area || 'Tecnologia',
+                    gestor: gestorId
+                };
+                
+                // Verifica se há arquivo de justificativa
+                const hasFile = request.justificativaFile && request.justificativaFile.base64;
+                
+                if (hasFile) {
+                    // Converte base64 para File
+                    const file = await base64ToFile(
+                        request.justificativaFile.base64,
+                        request.justificativaFile.name,
+                        request.justificativaFile.type || 'application/pdf'
+                    );
+                    
+                    // Usa sendMassive para enviar com arquivo
+                    await vacanciesClient.sendMassive([vacancyData], [file]);
+                    sentCount++;
+                } else {
+                    // Cria a vaga usando o endpoint /vacancies
+                    const createdVacancy = await vacanciesClient.insert(vacancyData);
+                    const vacancyId = createdVacancy.id || createdVacancy.id_vacancy;
+                    
+                    if (vacancyId) {
+                        // Envia para aprovação usando o endpoint /vacancies/send-to-approval
+                        await vacanciesClient.sendToApproval([vacancyId]);
+                        sentCount++;
+                    }
+                }
+            } catch (error) {
+                console.error('❌ Erro ao enviar solicitação pendente:', error);
+            }
+        }
+        
+        // Remove solicitações enviadas com sucesso do localStorage
+        if (sentCount > 0) {
+            const remainingRequests = pendingRequests.slice(sentCount);
+            localStorage.setItem('pendingOpeningRequests', JSON.stringify(remainingRequests));
+        }
+    }
+    
+    // Depois, envia solicitações que já estão na API para aprovação
+    const pendingVacancies = filteredVacancies.filter(v => {
+        const id = v.id || v.idOpeningRequest;
+        // Só inclui se não for pendente de envio (isPending) e tiver ID válido da API
+        if (v.isPending || !isValidApiId(id)) {
+            return false;
+        }
+        return v.status === 'ENTRADA' || 
+               v.status === 'em_analise' || 
+               v.status === 'pendente' ||
+               v.status === 'pendente aprovação' ||
+               !v.status;
+    });
 
-    if (pendingVacancies.length === 0) {
-        showNotification('Não há solicitações pendentes para enviar', 'warning');
+    const totalToApprove = sentCount + pendingVacancies.length;
+    
+    if (totalToApprove === 0) {
+        showNotification('Não há solicitações pendentes para enviar.', 'warning');
         return;
     }
 
-    const confirmed = confirm(`Deseja enviar ${pendingVacancies.length} solicitação(s) para aprovação?`);
+    const confirmed = confirm(`Deseja enviar ${totalToApprove} solicitação(s) para aprovação?\n\n- ${sentCount} do localStorage\n- ${pendingVacancies.length} já na API`);
     if (!confirmed) return;
 
     try {
-        // Atualiza status de cada uma
+        // Atualiza status das que já estão na API
         for (const request of pendingVacancies) {
             const id = request.id || request.idOpeningRequest;
+            if (!isValidApiId(id)) {
+                console.warn('Ignorando solicitação com ID inválido:', id);
+                continue;
+            }
             await openingRequestClient.updateStatus(id, 'aprovada');
         }
         
-        showNotification(`${pendingVacancies.length} solicitação(s) enviada(s) para aprovação!`, 'success');
+        showNotification(`${totalToApprove} solicitação(s) enviada(s) para aprovação!`, 'success');
         
         // Recarrega a lista
         await loadVacancies();
@@ -416,6 +953,7 @@ async function handleMassApproval() {
  * @param {boolean} show - Mostrar ou esconder
  */
 function showLoading(show) {
+    isLoading = show;
     const vacancyList = document.querySelector('.vacancy-list');
     if (!vacancyList) return;
 
@@ -500,6 +1038,30 @@ function escapeHtml(text) {
     const div = document.createElement('div');
     div.textContent = text;
     return div.innerHTML;
+}
+
+/**
+ * Converte base64 para File
+ * @param {string} base64 - String base64 do arquivo
+ * @param {string} fileName - Nome do arquivo
+ * @param {string} mimeType - Tipo MIME do arquivo
+ * @returns {Promise<File>} - Arquivo convertido
+ */
+async function base64ToFile(base64, fileName, mimeType = 'application/pdf') {
+    // Remove o prefixo data:application/pdf;base64, se existir
+    const base64Data = base64.includes(',') ? base64.split(',')[1] : base64;
+    
+    // Converte base64 para bytes
+    const byteCharacters = atob(base64Data);
+    const byteNumbers = new Array(byteCharacters.length);
+    for (let i = 0; i < byteCharacters.length; i++) {
+        byteNumbers[i] = byteCharacters.charCodeAt(i);
+    }
+    const byteArray = new Uint8Array(byteNumbers);
+    
+    // Cria o arquivo
+    const file = new File([byteArray], fileName, { type: mimeType });
+    return file;
 }
 
 // Funções globais para o modal (compatibilidade com onclick no HTML)

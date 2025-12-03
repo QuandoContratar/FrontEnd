@@ -136,6 +136,18 @@ class LoginPage {
                 const client = new UsersClient();
                 const user = await client.login({ email, password });
 
+                // Salvar dados do usuário no localStorage
+                localStorage.setItem('currentUser', JSON.stringify(user));
+                localStorage.setItem('userLogged', JSON.stringify(user));
+                if (user.id_user || user.id) {
+                    localStorage.setItem('userId', (user.id_user || user.id).toString());
+                }
+
+                // Atualizar authManager se disponível
+                if (window.authManager) {
+                    window.authManager.currentUser = user;
+                }
+
                 // Salvar dados se "Lembre de mim" estiver marcado
                 this.handleRememberMe(rememberMe, email);
 

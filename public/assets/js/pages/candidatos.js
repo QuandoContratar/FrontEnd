@@ -172,7 +172,15 @@ class CandidatosPage {
     }
 
     viewProcess(candidateName) {
-        Utils.showMessage(`Processo seletivo de: ${candidateName}\n\nEsta funcionalidade será implementada em breve.`, 'info');
+        // Encontrar o candidato pelo nome para pegar o ID
+        const candidate = this.candidates.find(c => c.name === candidateName);
+        if (candidate && candidate.id) {
+            // Salva o ID do candidato no localStorage para o kanban poder filtrar se necessário
+            localStorage.setItem('selectedCandidateId', candidate.id);
+            localStorage.setItem('selectedCandidateName', candidateName);
+        }
+        // Redireciona para o kanban de recrutamento
+        window.location.href = 'kanban-recrutamento.html';
     }
 }
 
