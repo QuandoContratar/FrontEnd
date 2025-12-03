@@ -172,6 +172,13 @@ export class VacanciesClient extends ApiClient {
         return response.json();
     }
 
+    async findActiveVacancies() {
+    const response = await fetch(`${this.url}/activesVacancies`);
+    if (!response.ok) throw new Error('Erro ao buscar vagas ativas');
+    return response.json();
+}
+
+
     /**
      * Envia múltiplas vagas com arquivos para aprovação usando /send-massive
      * @param {Array<Object>} vacancies - Array de objetos VacancyOpeningDTO
@@ -207,6 +214,10 @@ export class VacanciesClient extends ApiClient {
         
         return response.text();
     }
+
+    
+
+    
 }
 
 // Client para Opening Requests (solicitações de abertura de vaga)
