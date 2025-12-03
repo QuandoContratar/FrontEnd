@@ -116,6 +116,7 @@ async function loadProcesses() {
         let allProcesses = [];
         try {
             allProcesses = await selectionClient.findAllKanban();
+            console.log(allProcesses)
         } catch {
             // Fallback: carrega processo por processo de cada etapa
             const stageKeys = Object.keys(STAGES);
@@ -131,7 +132,7 @@ async function loadProcesses() {
         
         processes = allProcesses;
         filteredProcesses = [...processes];
-        renderKanban();
+        renderKanban(filteredProcesses);
     } catch (error) {
         console.error('Erro ao carregar processos:', error);
         showNotification('Erro ao carregar processos. Carregando dados de demonstração.', 'warning');
@@ -197,16 +198,22 @@ function loadMockData() {
 /**
  * Renderiza o Kanban completo
  */
-function renderKanban() {
+function renderKanban(filteredProcesses) {
     const columns = document.querySelectorAll('.kanban-column');
     const stageKeys = Object.keys(STAGES);
     
+    console.log(stageKeys)
+
     columns.forEach((column, index) => {
+        console.log(index)
         const stageKey = column.dataset.stage || stageKeys[index];
+        console.log(stageKeys[index])
         if (!column.dataset.stage) column.dataset.stage = stageKey;
         
         const content = column.querySelector('.column-content');
         if (!content) return;
+
+        //console.log(filteredProcesses)
         
         content.innerHTML = '';
         
@@ -215,10 +222,16 @@ function renderKanban() {
             return p.currentStage === stageKey;
         });
         
+        console.log(stageKey)
+
         // Ordena por progresso (maior primeiro)
-        stageProcesses.sort((a, b) => b.progress - a.progress);
+        stageProcesses.sort((a, b) => {
+            b.progress - a.progress
+        });
         
         // Renderiza cards
+        console.log(stageProcesses)
+
         stageProcesses.forEach(process => {
             const card = createProcessCard(process, stageKey);
             content.appendChild(card);
@@ -246,14 +259,14 @@ function createProcessCard(process, stage) {
     
     card.innerHTML = `
         <div class="card-header">
-            <h4>${escapeHtml(process.candidateName)}</h4>
+            <h4>${escapeHtml(process.candidate)}</h4>
             <span class="progress-badge">${process.progress.toFixed(0)}%</span>
         </div>
         <div class="card-content">
-            <p><strong>Vaga:</strong> ${escapeHtml(process.vacancyTitle)}</p>
-            <p><strong>Modelo:</strong> ${escapeHtml(process.workModel || 'N/A')}</p>
-            <p><strong>Contrato:</strong> ${escapeHtml(process.contractType || 'N/A')}</p>
-            <p><strong>Gestor:</strong> ${escapeHtml(process.managerName || 'N/A')}</p>
+            <p><strong>Vaga:</strong> ${escapeHtml(process.vacancy.position_job)}</p>
+            <p><strong>Modelo:</strong> ${escapeHtml(process.vacancy.workModel || 'N/A')}</p>
+            <p><strong>Contrato:</strong> ${escapeHtml(process.vacancy.contractType || 'N/A')}</p>
+            <p><strong>Gestor:</strong> ${escapeHtml(process.managerId || 'N/A')}</p>
         </div>
         <div class="card-actions">
             ${isLastStage ? `
