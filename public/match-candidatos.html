@@ -165,7 +165,7 @@
                         <!-- Nav Item - User Information -->
                         <li class="nav-item dropdown no-arrow">
                             <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                <span class="mr-2 d-none d-lg-inline text-gray-600 small">Henrique Szapiro | RH</span>
+                                <span class="mr-2 d-none d-lg-inline text-gray-600 small">Carregando...</span>
                                 <img class="img-profile rounded-circle" src="./img/undraw_profile.svg">
                             </a>
                             <!-- Dropdown - User Information -->
@@ -289,7 +289,7 @@
                 <div class="modal-body">Selecione "Sair" abaixo se você estiver pronto para encerrar sua sessão atual.</div>
                 <div class="modal-footer">
                     <button class="btn btn-secondary" type="button" data-dismiss="modal">Cancelar</button>
-                    <a class="btn btn-primary" href="login.html">Sair</a>
+                    <button class="btn btn-primary" type="button" onclick="handleLogout()">Sair</button>
                 </div>
             </div>
         </div>
@@ -307,7 +307,15 @@
 
     <!-- Page level custom scripts -->
     <script src="./assets/js/components/utils.js"></script>
+    <script src="./assets/js/components/auth.js"></script>
     <script type="module" src="./assets/js/pages/match-candidatos.js"></script>
+    <script>
+      $(document).ready(function() {
+        if (window.Utils) {
+          Utils.updateUserName();
+        }
+      });
+    </script>
 
 </body>
 

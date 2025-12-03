@@ -171,9 +171,108 @@ class Utils {
         window.addEventListener('online', () => callback(true));
         window.addEventListener('offline', () => callback(false));
     }
+
+    // Função para fazer logout
+    static handleLogout() {
+        // Usa authManager se disponível
+        if (window.authManager) {
+            window.authManager.logout();
+        } else {
+            // Fallback: limpa manualmente todas as chaves de autenticação
+            localStorage.removeItem('currentUser');
+            localStorage.removeItem('userLogged');
+            localStorage.removeItem('userId');
+            sessionStorage.clear();
+        }
+        // Fecha o modal se estiver aberto
+        if (typeof $ !== 'undefined' && $('#logoutModal').length) {
+            $('#logoutModal').modal('hide');
+        }
+        // Redireciona para login
+        window.location.href = 'login.html';
+    }
+
+    // Função para atualizar nome do usuário na topbar
+    static updateUserName() {
+        try {
+            // Tenta obter usuário do localStorage
+            let user = null;
+            
+            // Tenta userLogged primeiro
+            const userLoggedStr = localStorage.getItem('userLogged');
+            if (userLoggedStr) {
+                try {
+                    user = JSON.parse(userLoggedStr);
+                } catch (e) {
+                    console.warn('Erro ao fazer parse do userLogged:', e);
+                }
+            }
+            
+            // Se não encontrou, tenta currentUser
+            if (!user) {
+                const currentUserStr = localStorage.getItem('currentUser');
+                if (currentUserStr) {
+                    try {
+                        user = JSON.parse(currentUserStr);
+                    } catch (e) {
+                        console.warn('Erro ao fazer parse do currentUser:', e);
+                    }
+                }
+            }
+            
+            // Se encontrou usuário, atualiza o nome
+            if (user && user.name) {
+                // Procura pelo span dentro do #userDropdown
+                const userSpan = document.querySelector('#userDropdown span');
+                if (userSpan) {
+                    // Verifica se já tem um cargo/área no texto
+                    const currentText = userSpan.textContent.trim();
+                    let newText = user.name;
+                    
+                    // Se o texto atual contém "|", mantém a parte após o "|"
+                    if (currentText.includes('|')) {
+                        const parts = currentText.split('|');
+                        if (parts.length > 1) {
+                            newText = `${user.name} | ${parts[1].trim()}`;
+                        }
+                    } else {
+                        // Se não tem cargo, tenta determinar pelo levelAccess ou area
+                        if (user.levelAccess) {
+                            const levelMap = {
+                                'ADMIN': 'Administrador',
+                                'HR': 'RH',
+                                'MANAGER': 'Gestor'
+                            };
+                            const role = levelMap[user.levelAccess] || user.levelAccess;
+                            newText = `${user.name} | ${role}`;
+                        } else if (user.area) {
+                            newText = `${user.name} | ${user.area}`;
+                        }
+                    }
+                    
+                    userSpan.textContent = newText;
+                }
+                
+                // Também atualiza outros elementos que possam ter o nome do usuário
+                const userNameElements = document.querySelectorAll('.user-name, .text-white.mr-2.user-name');
+                userNameElements.forEach(el => {
+                    if (el && !el.closest('#userDropdown')) {
+                        el.textContent = user.name;
+                    }
+                });
+            }
+        } catch (error) {
+            console.error('Erro ao atualizar nome do usuário:', error);
+        }
+    }
 }
 
 // Disponibilizar globalmente
 window.Utils = Utils;
+
+// Função global para logout (para uso em onclick)
+window.handleLogout = function() {
+    Utils.handleLogout();
+};
 
 
