@@ -378,6 +378,18 @@ export class UsersClient extends ApiClient {
         if (!response.ok) throw new Error('Failed to fetch by access');
         return response.json();
     }
+
+    async updateUser(id, dto) {
+    const response = await fetch(`${this.url}/update/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(dto)
+    });
+
+    if (!response.ok) throw new Error('Failed to update user');
+    return response.json();
+}
+
 }
 
 export class CandidateClient extends ApiClient {

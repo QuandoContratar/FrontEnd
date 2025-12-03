@@ -156,7 +156,7 @@ async function handleFormSubmit(e) {
     try {
         if (editingUserId) {
             // Modo edição - atualiza o membro existente
-            await usersClient.update(editingUserId, rhData);
+            await usersClient.updateUser(editingUserId, rhData);
             showNotification("Membro do RH atualizado com sucesso!", "success");
             cancelEdit();
         } else {

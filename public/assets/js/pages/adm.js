@@ -245,7 +245,7 @@ async function handleFormSubmit(e) {
         
         if (editingUserId) {
             // Modo edição - atualiza o administrador existente
-            const result = await usersClient.update(editingUserId, adminData);
+            const result = await usersClient.updateUser(editingUserId, adminData);
             console.log("✅ [adm.js] Resposta do update:", result);
             
             // Se chegou aqui, a atualização foi bem-sucedida
