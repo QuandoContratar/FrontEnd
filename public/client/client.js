@@ -427,6 +427,14 @@ export class CandidateClient extends ApiClient {
         super('candidates');
     }
 
+    async deleteCandidate(id){
+        const response = await fetch(`${this.url}/${id}`, {
+            method: 'DELETE'
+        });
+        if (!response.ok) throw new Error('Failed to delete candidate');
+        return response.json()
+    }
+
     async downloadResume(id) {
         const response = await fetch(`${this.url}/${id}/resume`);
         if (!response.ok) throw new Error('Failed to download resume');
