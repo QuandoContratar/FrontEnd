@@ -853,22 +853,6 @@
 
         // ------------------------------------------------------------------------------------------------------
 
-    const baseUrl = 'https://szjnh7goni.execute-api.us-east-1.amazonaws.com/api/quando-contratar-resumes/';
-
-
-    // Lista de MIME types permitidos
-    const allowedMimeTypes = [
-        "application/pdf",
-        "image/jpeg",
-        "image/jpg",
-        "image/png",
-        "application/msword",
-        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-        "application/rtf",
-        "text/plain",
-        "application/vnd.oasis.opendocument.text"
-    ];
-
     // Função para upload de um arquivo individual
     async function uploadSingleFile(file) {
         const allowedMimeTypes = [
@@ -882,7 +866,7 @@
             "text/plain",
             "application/vnd.oasis.opendocument.text"
         ];
-        const baseUrl = 'https://szjnh7goni.execute-api.us-east-1.amazonaws.com/api/quando-contratar-resumes/';
+        const baseUrl = 'https://x7cmx55txd.execute-api.us-east-1.amazonaws.com/prd/files/quando-contratar-resumes/';
         const fileName = file.name;
         const mimeType = file.type;
         if (!allowedMimeTypes.includes(mimeType)) {
