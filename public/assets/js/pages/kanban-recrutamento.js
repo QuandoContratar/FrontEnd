@@ -17,17 +17,33 @@ let draggedProcessId = null;
 // Mapeamento de etapas (corresponde ao enum CurrentStage do backend)
 const STAGES = {
     aguardando_triagem: { key: 'aguardando_triagem', title: 'Aguardando Triagem', order: 0 },
+    triagem: { key: 'triagem', title: 'Triagem', order: 1 },
     triagem_inicial: { key: 'triagem_inicial', title: 'Triagem Inicial', order: 1 },
-    avaliacao_fit_cultural: { key: 'avaliacao_fit_cultural', title: 'Fit Cultural', order: 2 },
-    teste_tecnico: { key: 'teste_tecnico', title: 'Teste Técnico', order: 3 },
-    entrevista_tecnica: { key: 'entrevista_tecnica', title: 'Entrevista Técnica', order: 4 },
-    entrevista_final: { key: 'entrevista_final', title: 'Entrevista Final', order: 5 },
-    proposta_fechamento: { key: 'proposta_fechamento', title: 'Proposta', order: 6 },
-    contratacao: { key: 'contratacao', title: 'Contratação', order: 7 }
+    entrevista_rh: { key: 'entrevista_rh', title: 'Entrevista RH', order: 2 },
+    avaliacao_fit_cultural: { key: 'avaliacao_fit_cultural', title: 'Fit Cultural', order: 3 },
+    teste_tecnico: { key: 'teste_tecnico', title: 'Teste Técnico', order: 4 },
+    entrevista_tecnica: { key: 'entrevista_tecnica', title: 'Entrevista Técnica', order: 5 },
+    entrevista_final: { key: 'entrevista_final', title: 'Entrevista Final', order: 6 },
+    proposta_fechamento: { key: 'proposta_fechamento', title: 'Proposta', order: 7 },
+    contratacao: { key: 'contratacao', title: 'Contratação', order: 8 }
+};
+
+// Mapeamento de nomes de stage do backend para os nomes esperados pelo frontend
+const STAGE_MAPPING = {
+    'triagem': 'triagem',
+    'entrevista_rh': 'entrevista_rh',
+    'aguardando_triagem': 'aguardando_triagem',
+    'triagem_inicial': 'triagem_inicial',
+    'avaliacao_fit_cultural': 'avaliacao_fit_cultural',
+    'teste_tecnico': 'teste_tecnico',
+    'entrevista_tecnica': 'entrevista_tecnica',
+    'entrevista_final': 'entrevista_final',
+    'proposta_fechamento': 'proposta_fechamento',
+    'contratacao': 'contratacao'
 };
 
 // Flag para forçar dados de teste (útil para desenvolvimento)
-const FORCE_MOCK_DATA = true; // Mude para true para sempre carregar dados de teste
+const FORCE_MOCK_DATA = false; // Mude para true para sempre carregar dados de teste
 
 // Inicialização
 document.addEventListener('DOMContentLoaded', async () => {
@@ -102,7 +118,9 @@ function setupDragAndDrop() {
             
             if (draggedElement && draggedProcessId) {
                 const newStage = column.dataset.stage;
-                await moveProcessToStage(draggedProcessId, newStage);
+                if (newStage) {
+                    await moveProcessToStage(draggedProcessId, newStage);
+                }
             }
         });
     });
@@ -159,8 +177,13 @@ async function loadProcesses() {
             return;
         }
         
-        processes = allProcesses;
+        // Mapeia dados do KanbanCardDTO para o formato esperado pelo frontend
+        processes = allProcesses.map(card => mapKanbanCardToProcess(card));
         filteredProcesses = [...processes];
+        
+        console.log('📊 Processos mapeados:', processes);
+        console.log('📊 Stages encontrados:', [...new Set(processes.map(p => p.currentStage))]);
+        
         renderKanban(filteredProcesses);
         
     } catch (error) {
@@ -172,6 +195,44 @@ async function loadProcesses() {
     } finally {
         showLoading(false);
     }
+}
+
+/**
+ * Mapeia KanbanCardDTO do backend para formato do frontend
+ * @param {Object} card - KanbanCardDTO do backend
+ */
+function mapKanbanCardToProcess(card) {
+    // O backend pode retornar currentStage diretamente ou stage.name
+    let stage = card.currentStage || 
+                card.stage?.name || 
+                card.stageName || 
+                card.stage || 
+                'aguardando_triagem';
+    
+    // Normaliza o nome do stage
+    stage = String(stage).toLowerCase().trim();
+    
+    // Mapeia para o nome esperado pelo frontend se necessário
+    const mappedStage = STAGE_MAPPING[stage] || stage;
+    
+    console.log(`🔄 Mapeando card: stage original="${card.currentStage || card.stage?.name || card.stage}", normalizado="${stage}", mapeado="${mappedStage}"`);
+    
+    const mapped = {
+        id: card.processId || card.id || card.cardId,
+        processId: card.processId || card.id || card.cardId,
+        candidateId: card.candidateId,
+        candidateName: card.candidateName,
+        vacancyTitle: card.vacancyTitle,
+        vacancyId: card.vacancyId,
+        workModel: card.workModel,
+        contractType: card.contractType,
+        managerName: card.managerName,
+        currentStage: mappedStage,
+        progress: card.progress || calculateProgress(mappedStage)
+    };
+    
+    console.log(`✅ Card mapeado:`, mapped);
+    return mapped;
 }
 
 /**
@@ -490,9 +551,21 @@ function renderKanban(processesToRender = []) {
         
         // Filtra processos desta etapa
         const stageProcesses = processesToRender.filter(p => {
-            const matches = p && p.currentStage === stageKey;
+            if (!p) return false;
+            
+            // Usa currentStage que já foi mapeado na função mapKanbanCardToProcess
+            const processStage = p.currentStage || 
+                                p.stage?.name || 
+                                p.stageName || 
+                                p.stage;
+            
+            // Compara normalizando (lowercase e trim)
+            const processStageNormalized = String(processStage || '').toLowerCase().trim();
+            const stageKeyNormalized = String(stageKey || '').toLowerCase().trim();
+            
+            const matches = processStageNormalized === stageKeyNormalized;
             if (matches) {
-                console.log(`✅ Processo ${p.processId || p.id} (${p.candidateName || 'sem nome'}) na etapa ${stageKey}`);
+                console.log(`✅ Processo ${p.id || p.processId} (${p.candidateName || 'sem nome'}) na etapa ${stageKey} (stage: ${processStage})`);
             }
             return matches;
         });
@@ -526,7 +599,9 @@ function createProcessCard(process, stage) {
     const card = document.createElement('div');
     card.className = 'kanban-card';
     card.draggable = true;
-    card.dataset.id = process.processId || process.id;
+    // Usa o ID correto do card (pode ser id, cardId, ou processId)
+    const cardId = process.id || process.cardId || process.processId;
+    card.dataset.id = cardId;
     card.dataset.stage = stage;
     
     const isLastStage = stage === 'contratacao';
@@ -553,7 +628,12 @@ function createProcessCard(process, stage) {
                        (process.candidate && process.candidate.id) || 
                        process.fk_candidate || 
                        null;
-    const processId = process.processId || process.id;
+    const processId = process.id || process.cardId || process.processId;
+    
+    // Log para debug
+    if (!candidateId) {
+        console.warn('⚠️ Processo sem candidateId:', process);
+    }
     
     card.innerHTML = `
         <div class="card-header">
@@ -650,6 +730,7 @@ async function handleCardActions(e) {
                 await rejectProcess(id);
                 break;
             case 'details':
+                console.log('🔍 Clicou em Ver Candidato, ID:', id);
                 viewCandidateDetails(id);
                 break;
         }
@@ -674,15 +755,25 @@ async function advanceProcess(id) {
             const nextStage = stageOrder[currentIndex + 1];
             
             // Tenta atualizar no backend usando o endpoint correto
+            let updatedCard;
             try {
-                await selectionClient.updateStage(id, nextStage);
+                updatedCard = await selectionClient.updateStage(id, nextStage);
+                console.log('✅ Card avançado no backend:', updatedCard);
+                
+                // Se o backend retornou o card atualizado, usa ele
+                if (updatedCard) {
+                    const mapped = mapKanbanCardToProcess(updatedCard);
+                    const index = processes.findIndex(p => (p.processId || p.id) == id);
+                    if (index >= 0) {
+                        processes[index] = mapped;
+                    }
+                }
             } catch (e) {
-                console.log('Erro ao atualizar no backend, atualizando localmente');
+                console.error('Erro ao atualizar no backend:', e);
+                // Atualiza localmente como fallback
+                process.currentStage = nextStage;
+                process.progress = calculateProgress(nextStage);
             }
-            
-            // Atualiza localmente
-            process.currentStage = nextStage;
-            process.progress = calculateProgress(nextStage);
             
             // Atualiza filteredProcesses também
             const filteredIndex = filteredProcesses.findIndex(p => (p.processId || p.id) == id);
@@ -726,20 +817,41 @@ async function moveProcessToStage(id, newStage) {
         if (oldStage === newStage) return;
         
         // Tenta atualizar no backend
+        let updatedCard;
         try {
-            await selectionClient.updateStage(id, newStage);
+            updatedCard = await selectionClient.updateStage(id, newStage);
+            console.log('✅ Card atualizado no backend:', updatedCard);
+            
+            // Se o backend retornou o card atualizado, usa ele
+            if (updatedCard) {
+                const mapped = mapKanbanCardToProcess(updatedCard);
+                const index = processes.findIndex(p => (p.processId || p.id) == id);
+                if (index >= 0) {
+                    processes[index] = mapped;
+                }
+                // Atualiza filteredProcesses também
+                const filteredIndex = filteredProcesses.findIndex(p => (p.processId || p.id) == id);
+                if (filteredIndex >= 0) {
+                    filteredProcesses[filteredIndex] = mapped;
+                }
+            } else {
+                // Fallback: atualiza localmente
+                process.currentStage = newStage;
+                process.progress = calculateProgress(newStage);
+                const filteredIndex = filteredProcesses.findIndex(p => (p.processId || p.id) == id);
+                if (filteredIndex >= 0) {
+                    filteredProcesses[filteredIndex] = process;
+                }
+            }
         } catch (e) {
-            console.log('Erro ao atualizar no backend, atualizando localmente');
-        }
-        
-        // Atualiza localmente
-        process.currentStage = newStage;
-        process.progress = calculateProgress(newStage);
-        
-        // Atualiza filteredProcesses também
-        const filteredIndex = filteredProcesses.findIndex(p => (p.processId || p.id) == id);
-        if (filteredIndex >= 0) {
-            filteredProcesses[filteredIndex] = process;
+            console.error('Erro ao atualizar no backend:', e);
+            // Atualiza localmente como fallback
+            process.currentStage = newStage;
+            process.progress = calculateProgress(newStage);
+            const filteredIndex = filteredProcesses.findIndex(p => (p.processId || p.id) == id);
+            if (filteredIndex >= 0) {
+                filteredProcesses[filteredIndex] = process;
+            }
         }
         
         renderKanban(filteredProcesses);
@@ -825,8 +937,18 @@ async function rejectProcess(id) {
  * @param {string|number} id - ID do candidato
  */
 function viewCandidateDetails(id) {
-    // Salva no localStorage para a página de detalhes
-    localStorage.setItem('selectedCandidate', id);
+    if (!id) {
+        console.error('❌ ID do candidato não fornecido');
+        showNotification('Erro: ID do candidato não encontrado', 'danger');
+        return;
+    }
+    
+    console.log('🔍 Visualizando detalhes do candidato ID:', id);
+    
+    // Salva no localStorage com a chave correta que a página de detalhes espera
+    localStorage.setItem('selectedCandidateId', String(id));
+    
+    // Redireciona para a página de detalhes
     window.location.href = `detalhes-candidato.html?id=${id}`;
 }
 
@@ -834,12 +956,25 @@ function viewCandidateDetails(id) {
  * Manipula busca de processos
  * @param {Event} e - Evento de input
  */
-function handleSearch(e) {
-    const searchTerm = e.target.value.toLowerCase().trim();
+async function handleSearch(e) {
+    const searchTerm = e.target.value.trim();
     
     if (!searchTerm) {
         filteredProcesses = [...processes];
-    } else {
+        renderKanban(filteredProcesses);
+        return;
+    }
+    
+    try {
+        // Usa o endpoint de busca do backend
+        const searchResults = await selectionClient.searchCards(searchTerm);
+        // Mapeia os resultados para o formato esperado
+        filteredProcesses = searchResults.map(card => mapKanbanCardToProcess(card));
+        renderKanban(filteredProcesses);
+    } catch (error) {
+        console.error('Erro ao buscar no backend, usando busca local:', error);
+        // Fallback para busca local
+        const searchTermLower = searchTerm.toLowerCase();
         filteredProcesses = processes.filter(p => {
             // Extrai nomes de diferentes estruturas de dados
             const candidateName = (
@@ -860,13 +995,12 @@ function handleSearch(e) {
                 ''
             ).toLowerCase();
             
-            return candidateName.includes(searchTerm) || 
-                   vacancyTitle.includes(searchTerm) || 
-                   managerName.includes(searchTerm);
+            return candidateName.includes(searchTermLower) || 
+                   vacancyTitle.includes(searchTermLower) || 
+                   managerName.includes(searchTermLower);
         });
+        renderKanban(filteredProcesses);
     }
-    
-    renderKanban(filteredProcesses);
 }
 
 /**

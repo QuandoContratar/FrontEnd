@@ -16,11 +16,17 @@ window.toggleSection = function(section) {
 import { CandidateClient } from '../../../client/client.js';
 
 async function carregarCandidato() {
-	const candidateId = localStorage.getItem('selectedCandidateId');
+	// Tenta obter o ID da URL primeiro, depois do localStorage
+	const urlParams = new URLSearchParams(window.location.search);
+	let candidateId = urlParams.get('id') || localStorage.getItem('selectedCandidateId');
+	
 	if (!candidateId) {
 		mostrarErro('Nenhum candidato selecionado.');
 		return;
 	}
+	
+	// Garante que está salvo no localStorage para compatibilidade
+	localStorage.setItem('selectedCandidateId', String(candidateId));
 	try {
 		const client = new CandidateClient();
 		// Busca dados básicos do candidato
@@ -339,7 +345,9 @@ function criarGraficoProgresso(porcentagem = 45) {
 
 // Função para download do currículo
 window.downloadResume = function() {
-	const candidateId = localStorage.getItem('selectedCandidateId');
+	const urlParams = new URLSearchParams(window.location.search);
+	const candidateId = urlParams.get('id') || localStorage.getItem('selectedCandidateId');
+	
 	if (!candidateId) {
 		alert('Erro: Candidato não identificado.');
 		return;
@@ -354,7 +362,8 @@ window.downloadResume = function() {
 // Função para excluir candidato
 window.excludeCandidate = async function() {
     const client = new CandidateClient();
-    const candidateId = localStorage.getItem('selectedCandidateId');
+    const urlParams = new URLSearchParams(window.location.search);
+    const candidateId = urlParams.get('id') || localStorage.getItem('selectedCandidateId');
 
     if (!candidateId) {
         alert('Erro: Candidato não identificado.');
