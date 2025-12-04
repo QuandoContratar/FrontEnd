@@ -352,19 +352,33 @@ window.downloadResume = function() {
 };
 
 // Função para excluir candidato
-window.excludeCandidate = function() {
-	const candidateId = localStorage.getItem('selectedCandidateId');
-	if (!candidateId) {
-		alert('Erro: Candidato não identificado.');
-		return;
-	}
-	
-	if (confirm('Tem certeza que deseja excluir este candidato? Esta ação não pode ser desfeita.')) {
-		// Aqui você pode implementar a lógica de exclusão
-		// Por exemplo, fazer uma requisição para o backend
-		alert('Funcionalidade de exclusão será implementada em breve.');
-		console.log('Excluir candidato:', candidateId);
-	}
+window.excludeCandidate = async function() {
+    const client = new CandidateClient();
+    const candidateId = localStorage.getItem('selectedCandidateId');
+
+    if (!candidateId) {
+        alert('Erro: Candidato não identificado.');
+        return;
+    }
+
+    const confirmDelete = confirm(
+        'Tem certeza que deseja excluir este candidato? Esta ação não pode ser desfeita.'
+    );
+
+    if (!confirmDelete) return;
+
+    try {
+        const deleted = await client.deleteCandidate(candidateId);
+
+        alert('Candidato excluído com sucesso!');
+        console.log('Candidato excluído:', deleted);
+
+        window.location.href = "candidatos.html";
+
+    } catch (error) {
+        console.error('Erro ao excluir candidato:', error);
+        alert('Erro ao excluir candidato.');
+    }
 };
 
 // Inicializa o gráfico quando a página carregar
