@@ -5,7 +5,6 @@
 
 document.addEventListener('DOMContentLoaded', function() {
     initializeVagaForm();
-    setupFileUpload();
     setupFormValidation();
 });
 
@@ -33,26 +32,7 @@ function initializeVagaForm() {
     form.addEventListener('submit', handleFormSubmit);
 }
 
-/**
- * Configura o upload de arquivo
- */
-function setupFileUpload() {
-    const fileArea = document.querySelector('.file-upload-area');
-    const fileInput = document.getElementById('justificativa');
-    
-    if (!fileArea || !fileInput) return;
-
-    // Drag and drop
-    fileArea.addEventListener('dragover', handleDragOver);
-    fileArea.addEventListener('dragleave', handleDragLeave);
-    fileArea.addEventListener('drop', handleDrop);
-    
-    // Click para abrir seletor
-    fileArea.addEventListener('click', () => fileInput.click());
-    
-    // Mudança no input
-    fileInput.addEventListener('change', handleFileSelect);
-}
+// Função setupFileUpload removida - justificativa agora é campo de texto
 
 /**
  * Configura validação do formulário
@@ -419,6 +399,9 @@ function saveVagaLocal(formData) {
             return;
         }
         
+        // Pega justificativa como texto
+        const justificativa = formData.get('justificativa') || document.getElementById('justificativa')?.value || '';
+        
         // Prepara dados da solicitação conforme a estrutura da tabela opening_requests
         const openingRequestData = {
             id: 'temp_' + Date.now(), // ID temporário
@@ -429,45 +412,19 @@ function saveVagaLocal(formData) {
             salario: salarioNumerico,
             localidade: localidade,
             requisitos: requisitos || '',
+            justificativa: justificativa.trim(), // Justificativa como string
             gestor_id: gestorId,
             gestor: {
                 id_user: gestorId
             },
             status: 'ENTRADA',
             createdAt: new Date().toISOString(),
-            isPending: true, // Flag para indicar que está pendente de envio
-            justificativaFile: null // Será tratado no envio
+            isPending: true // Flag para indicar que está pendente de envio
         };
         
-        // Se houver arquivo de justificativa, converte para base64 para armazenar temporariamente
-        const justificativaFile = document.getElementById('justificativa').files[0];
-        if (justificativaFile) {
-            // Converte arquivo para base64 para armazenar no localStorage
-            const fileReader = new FileReader();
-            fileReader.onload = function(e) {
-                openingRequestData.justificativaFile = {
-                    name: justificativaFile.name,
-                    type: justificativaFile.type,
-                    size: justificativaFile.size,
-                    base64: e.target.result // Arquivo em base64
-                };
-                
-                // Salva no localStorage
-                saveToLocalStorage(openingRequestData);
-                resolve(openingRequestData);
-            };
-            fileReader.onerror = function(error) {
-                console.error('Erro ao ler arquivo:', error);
-                // Salva mesmo sem o arquivo
-                saveToLocalStorage(openingRequestData);
-                resolve(openingRequestData);
-            };
-            fileReader.readAsDataURL(justificativaFile);
-        } else {
-            // Salva no localStorage sem arquivo
-            saveToLocalStorage(openingRequestData);
-            resolve(openingRequestData);
-        }
+        // Salva no localStorage
+        saveToLocalStorage(openingRequestData);
+        resolve(openingRequestData);
     });
 }
 
