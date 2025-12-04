@@ -349,19 +349,35 @@ function criarGraficoProgresso(porcentagem = 0) {
 }
 
 // Função para download do currículo
-window.downloadResume = function() {
-	const urlParams = new URLSearchParams(window.location.search);
-	const candidateId = urlParams.get('id') || localStorage.getItem('selectedCandidateId');
-	
+window.downloadResume = async function() {
+	const client = new CandidateClient();
+	const candidateId = localStorage.getItem('selectedCandidateId');
 	if (!candidateId) {
 		alert('Erro: Candidato não identificado.');
 		return;
 	}
 	
-	// Aqui você pode implementar a lógica de download
-	// Por exemplo, fazer uma requisição para o backend
-	alert('Funcionalidade de download será implementada em breve.');
-	console.log('Download do currículo do candidato:', candidateId);
+	try{
+		const arrayBuffer = await client.downloadResume(candidateId);
+		const blob = new Blob([arrayBuffer], { type: "application/pdf"});
+		const url = window.URL.createObjectURL(blob);
+
+		const a = document.createElement("a")
+		a.href = url;
+		a.download = `resume_${candidateId}.pdf`;
+		document.body.appendChild(a);
+		a.click();
+
+		a.remove();
+		window.URL.revokeObjectURL(url)
+		console.log("Download do currículo realizado.")
+
+		
+	}
+	catch(error) {
+		console.log('Erro ao fazer donwload', error);
+		alert("Erro ao fazer download.")
+	}
 };
 
 // Função para excluir candidato
