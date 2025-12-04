@@ -638,6 +638,8 @@
             async function atualizarVagas() {
                 try {
                     const vagas = await vacanciesClient.findActiveVacancies();
+                    // Armazena vagas para acesso posterior
+                    vagasCarregadas = vagas;
                     // Atualiza KPI
                     $("#kpi-vagas-abertas").text(vagas.length);
                     // Renderiza cards
@@ -646,9 +648,13 @@
                         vagasContainer.append('<p class="text-center">Nenhuma vaga encontrada.</p>');
                         return;
                     }
-                    vagas.forEach(vaga => {
+                    vagas.forEach((vaga, index) => {
+                        // Tenta encontrar o ID da vaga em diferentes formatos
+                        const vagaId = vaga.id || vaga.id_vacancy || vaga.idVacancy || '';
+                        console.log('Vaga carregada:', vaga, 'ID encontrado:', vagaId);
+                        
                         vagasContainer.append(`
-                            <div class="vaga-card">
+                            <div class="vaga-card" data-vaga-id="${vagaId}" data-vaga-index="${index}">
                                 <div class="row align-items-center">
                                     <div class="col-md-1">
                                         <div class="vaga-icon">
@@ -656,13 +662,16 @@
                                         </div>
                                     </div>
                                     <div class="col-md-6">
-                                        <div class="vaga-title">${vaga.positionJob || ''}</div>
-                                        <div class="vaga-manager">Gestor(a): ${vaga.managerName || '-'}</div>
-                                        <div class="vaga-details">Área: ${vaga.area || '-'} | Modelo: ${vaga.workModel || '-'}</div>
+                                        <div class="vaga-title">${vaga.positionJob || vaga.position_job || ''}</div>
+                                        <div class="vaga-manager">Gestor(a): ${vaga.managerName || vaga.manager?.name || '-'}</div>
+                                        <div class="vaga-details">Área: ${vaga.area || '-'} | Modelo: ${vaga.workModel || vaga.work_model || '-'}</div>
                                     </div>
                                     <div class="col-md-5 text-right">
                                         <button class="btn btn-enviar">Enviar Currículo</button>
-                                        <button class="btn btn-ver-mais">Ver Mais</button>
+                                        <button class="btn btn-ver-mais" data-vaga-id="${vagaId}" data-vaga-index="${index}">
+                                            <i class="fas fa-eye mr-1"></i>
+                                            Ver Mais
+                                        </button>
                                     </div>
                                 </div>
                             </div>
@@ -674,15 +683,203 @@
                 }
             }
 
+            // Armazena as vagas carregadas para acesso rápido
+            let vagasCarregadas = [];
+
             await atualizarVagas();
+
+            // Função para exibir detalhes da vaga em modal
+            function mostrarDetalhesVaga(vaga) {
+                // Função para escapar HTML (prevenir XSS)
+                const escapeHtml = (text) => {
+                    if (!text) return '';
+                    const div = document.createElement('div');
+                    div.textContent = text;
+                    return div.innerHTML;
+                };
+
+                // Formata salário
+                const formatarSalario = (salario) => {
+                    if (!salario) return 'Não informado';
+                    return new Intl.NumberFormat('pt-BR', { 
+                        style: 'currency', 
+                        currency: 'BRL' 
+                    }).format(Number(salario));
+                };
+
+                // Formata data
+                const formatarData = (data) => {
+                    if (!data) return 'Não informado';
+                    try {
+                        const date = new Date(data);
+                        return date.toLocaleDateString('pt-BR');
+                    } catch {
+                        return data;
+                    }
+                };
+
+                // Monta conteúdo do modal
+                const detalhes = `
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <h6 class="text-primary"><i class="fas fa-briefcase mr-2"></i>Cargo</h6>
+                            <p>${escapeHtml(vaga.positionJob || vaga.position_job || 'Não informado')}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="text-primary"><i class="fas fa-user-tie mr-2"></i>Gestor(a)</h6>
+                            <p>${escapeHtml(vaga.managerName || vaga.manager?.name || 'Não informado')}</p>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <h6 class="text-primary"><i class="fas fa-building mr-2"></i>Área</h6>
+                            <p>${escapeHtml(vaga.area || 'Não informado')}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="text-primary"><i class="fas fa-clock mr-2"></i>Período</h6>
+                            <p>${escapeHtml(vaga.period || 'Não informado')}</p>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <h6 class="text-primary"><i class="fas fa-laptop-house mr-2"></i>Modelo de Trabalho</h6>
+                            <p>${escapeHtml(vaga.workModel || vaga.work_model || 'Não informado')}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="text-primary"><i class="fas fa-file-contract mr-2"></i>Regime de Contratação</h6>
+                            <p>${escapeHtml(vaga.contractType || vaga.contract_type || 'Não informado')}</p>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <h6 class="text-primary"><i class="fas fa-dollar-sign mr-2"></i>Salário</h6>
+                            <p>${formatarSalario(vaga.salary)}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="text-primary"><i class="fas fa-map-marker-alt mr-2"></i>Localidade</h6>
+                            <p>${escapeHtml(vaga.location || 'Não informado')}</p>
+                        </div>
+                    </div>
+                    ${vaga.requirements ? `
+                    <div class="row mb-3">
+                        <div class="col-12">
+                            <h6 class="text-primary"><i class="fas fa-list-check mr-2"></i>Requisitos</h6>
+                            <p style="white-space: pre-wrap; word-wrap: break-word;">${escapeHtml(vaga.requirements)}</p>
+                        </div>
+                    </div>
+                    ` : ''}
+                    ${vaga.openingJustification || vaga.opening_justification ? `
+                    <div class="row mb-3">
+                        <div class="col-12">
+                            <h6 class="text-primary"><i class="fas fa-file-alt mr-2"></i>Justificativa de Abertura</h6>
+                            <p style="white-space: pre-wrap; word-wrap: break-word;">${escapeHtml(vaga.openingJustification || vaga.opening_justification)}</p>
+                        </div>
+                    </div>
+                    ` : ''}
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <h6 class="text-primary"><i class="fas fa-info-circle mr-2"></i>Status</h6>
+                            <p><span class="badge badge-primary">${escapeHtml(vaga.statusVacancy || vaga.status_vacancy || 'Não informado')}</span></p>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="text-primary"><i class="fas fa-calendar mr-2"></i>Data de Criação</h6>
+                            <p>${formatarData(vaga.createdAt || vaga.created_at)}</p>
+                        </div>
+                    </div>
+                `;
+
+                // Cria ou atualiza modal
+                let modal = $('#vagaDetalhesModal');
+                if (modal.length === 0) {
+                    modal = $(`
+                        <div class="modal fade" id="vagaDetalhesModal" tabindex="-1" role="dialog" aria-labelledby="vagaDetalhesModalLabel" aria-hidden="true">
+                            <div class="modal-dialog modal-lg" role="document">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title" id="vagaDetalhesModalLabel">
+                                            <i class="fas fa-briefcase mr-2"></i>Detalhes da Vaga
+                                        </h5>
+                                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                            <span aria-hidden="true">&times;</span>
+                                        </button>
+                                    </div>
+                                    <div class="modal-body" id="vagaDetalhesBody">
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Fechar</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `);
+                    $('body').append(modal);
+                }
+
+                // Preenche conteúdo e exibe modal
+                $('#vagaDetalhesBody').html(detalhes);
+                modal.modal('show');
+            }
 
             // Funcionalidade dos botões (delegação)
             vagasContainer.on('click', '.btn-enviar', function () {
                 window.location.href = 'upload-curriculos.html';
             });
 
-            vagasContainer.on('click', '.btn-ver-mais', function () {
-                alert('Abrindo detalhes da vaga...');
+            vagasContainer.on('click', '.btn-ver-mais', async function () {
+                // Tenta obter o ID de diferentes formas
+                let vagaId = $(this).data('vaga-id');
+                const vagaIndex = $(this).data('vaga-index');
+                
+                // Se não encontrou, tenta pegar do card pai
+                if (!vagaId) {
+                    vagaId = $(this).closest('.vaga-card').data('vaga-id');
+                }
+                
+                // Se ainda não encontrou, tenta pegar do atributo diretamente
+                if (!vagaId) {
+                    vagaId = $(this).attr('data-vaga-id');
+                }
+                
+                console.log('ID da vaga capturado:', vagaId);
+                console.log('Índice da vaga:', vagaIndex);
+                console.log('Elemento clicado:', this);
+                console.log('Atributos do elemento:', $(this).data());
+                
+                let vaga = null;
+                
+                // Se não tem ID mas tem índice, usa os dados já carregados
+                if ((!vagaId || vagaId === '') && vagaIndex !== undefined && vagaIndex !== null) {
+                    console.log('Usando dados da vaga já carregada (índice:', vagaIndex, ')');
+                    vaga = vagasCarregadas[vagaIndex];
+                    if (vaga) {
+                        mostrarDetalhesVaga(vaga);
+                        return;
+                    }
+                }
+                
+                if (!vagaId || vagaId === '') {
+                    console.error('Erro: ID da vaga não encontrado. Objeto vaga completo:', $(this).closest('.vaga-card').data());
+                    console.error('Vagas carregadas:', vagasCarregadas);
+                    alert('Erro: ID da vaga não encontrado. Verifique o console para mais detalhes.');
+                    return;
+                }
+                
+                try {
+                    // Busca detalhes completos da vaga
+                    console.log('Buscando detalhes da vaga com ID:', vagaId);
+                    vaga = await vacanciesClient.findById(vagaId);
+                    console.log('Detalhes da vaga recebidos:', vaga);
+                    mostrarDetalhesVaga(vaga);
+                } catch (err) {
+                    console.error('Erro ao buscar detalhes da vaga:', err);
+                    // Se falhar ao buscar por ID, tenta usar os dados já carregados
+                    if (vagaIndex !== undefined && vagaIndex !== null && vagasCarregadas[vagaIndex]) {
+                        console.log('Tentando usar dados já carregados como fallback');
+                        mostrarDetalhesVaga(vagasCarregadas[vagaIndex]);
+                    } else {
+                        alert('Erro ao carregar detalhes da vaga: ' + (err.message || 'Tente novamente.'));
+                    }
+                }
             });
 
             // Funcionalidade de busca
