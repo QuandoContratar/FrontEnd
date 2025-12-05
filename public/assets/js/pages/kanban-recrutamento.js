@@ -30,8 +30,6 @@ const STAGES = {
 
 // Mapeamento de nomes de stage do backend para os nomes esperados pelo frontend
 const STAGE_MAPPING = {
-    'triagem': 'triagem',
-    'entrevista_rh': 'entrevista_rh',
     'aguardando_triagem': 'aguardando_triagem',
     'triagem_inicial': 'triagem_inicial',
     'avaliacao_fit_cultural': 'avaliacao_fit_cultural',

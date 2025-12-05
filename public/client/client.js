@@ -574,6 +574,37 @@ export class CandidateClient extends ApiClient {
     }
 }
 
+export class DashboardClient extends ApiClient {
+    constructor() {
+        super('dashboard');
+    }
+
+    async getMetrics() {
+        return (await fetch(`${this.url}/metrics`)).json();
+    }
+
+    async getVagasMes() {
+        return (await fetch(`${this.url}/vagas-mes`)).json();
+    }
+
+    async getStatusVagas() {
+        return (await fetch(`${this.url}/status-vagas`)).json();
+    }
+
+    async getCandidatosPorVaga() {
+        return (await fetch(`${this.url}/candidatos-vaga`)).json();
+    }
+
+    async getTipoContrato() {
+        return (await fetch(`${this.url}/tipo-contrato`)).json();
+    }
+
+    async getTempoPreenchimento() {
+        return (await fetch(`${this.url}/tempo-medio`)).json();
+    }
+}
+
+
 // Client para Match de Candidatos
 export class MatchClient extends ApiClient {
     constructor() {
@@ -648,4 +679,6 @@ export class MatchClient extends ApiClient {
         if (!response.ok) throw new Error('Failed to fetch matches by status');
         return response.json();
     }
+
+    
 }
