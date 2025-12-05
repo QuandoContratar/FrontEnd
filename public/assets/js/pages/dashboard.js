@@ -1,510 +1,415 @@
-// /* ========================================
-//    DASHBOARD DE RECRUTAMENTO
-//    Gráficos e métricas para RH
-//    ======================================== */
 
-// // Set new default font family and font color to mimic Bootstrap's default styling
-// Chart.defaults.global.defaultFontFamily = 'Nunito', '-apple-system,system-ui,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif';
-// Chart.defaults.global.defaultFontColor = '#858796';
 
-// function number_format(number, decimals, dec_point, thousands_sep) {
-//     number = (number + '').replace(',', '').replace(' ', '');
-//     var n = !isFinite(+number) ? 0 : +number,
-//         prec = !isFinite(+decimals) ? 0 : Math.abs(decimals),
-//         sep = (typeof thousands_sep === 'undefined') ? ',' : thousands_sep,
-//         dec = (typeof dec_point === 'undefined') ? '.' : dec_point,
-//         s = '',
-//         toFixedFix = function(n, prec) {
-//             var k = Math.pow(10, prec);
-//             return '' + Math.round(n * k) / k;
-//         };
-//     s = (prec ? toFixedFix(n, prec) : '' + Math.round(n)).split('.');
-//     if (s[0].length > 3) {
-//         s[0] = s[0].replace(/\B(?=(?:\d{3})+(?!\d))/g, sep);
-//     }
-//     if ((s[1] || '').length < prec) {
-//         s[1] = s[1] || '';
-//         s[1] += new Array(prec - s[1].length + 1).join('0');
-//     }
-//     return s.join(dec);
-// }
-
-// // Gráfico de Vagas por Mês
-// var ctxVagasPorMes = document.getElementById("vagasPorMesChart");
-// if (ctxVagasPorMes) {
-//     var vagasPorMesChart = new Chart(ctxVagasPorMes, {
-//         type: 'line',
-//         data: {
-//             labels: ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"],
-//             datasets: [{
-//                 label: "Vagas Criadas",
-//                 lineTension: 0.3,
-//                 backgroundColor: "rgba(78, 115, 223, 0.05)",
-//                 borderColor: "rgba(78, 115, 223, 1)",
-//                 pointRadius: 3,
-//                 pointBackgroundColor: "rgba(78, 115, 223, 1)",
-//                 pointBorderColor: "rgba(78, 115, 223, 1)",
-//                 pointHoverRadius: 5,
-//                 pointHoverBackgroundColor: "rgba(78, 115, 223, 1)",
-//                 pointHoverBorderColor: "rgba(78, 115, 223, 1)",
-//                 pointHitRadius: 10,
-//                 pointBorderWidth: 2,
-//                 data: [3, 5, 4, 7, 6, 8, 5, 9, 7, 10, 8, 12],
-//             }],
-//         },
-//         options: {
-//             maintainAspectRatio: false,
-//             layout: {
-//                 padding: {
-//                     left: 10,
-//                     right: 25,
-//                     top: 25,
-//                     bottom: 0
-//                 }
-//             },
-//             scales: {
-//                 xAxes: [{
-//                     time: {
-//                         unit: 'month'
-//                     },
-//                     gridLines: {
-//                         display: false,
-//                         drawBorder: false
-//                     },
-//                     ticks: {
-//                         maxTicksLimit: 12
-//                     }
-//                 }],
-//                 yAxes: [{
-//                     ticks: {
-//                         min: 0,
-//                         max: 15,
-//                         maxTicksLimit: 5,
-//                         padding: 10,
-//                         callback: function(value, index, values) {
-//                             return number_format(value);
-//                         }
-//                     },
-//                     gridLines: {
-//                         color: "rgb(234, 236, 244)",
-//                         zeroLineColor: "rgb(234, 236, 244)",
-//                         drawBorder: false,
-//                         borderDash: [2],
-//                         zeroLineBorderDash: [2]
-//                     }
-//                 }],
-//             },
-//             legend: {
-//                 display: false
-//             },
-//             tooltips: {
-//                 backgroundColor: "rgb(255,255,255)",
-//                 bodyFontColor: "#858796",
-//                 titleMarginBottom: 10,
-//                 titleFontColor: '#6e707e',
-//                 titleFontSize: 14,
-//                 borderColor: '#dddfeb',
-//                 borderWidth: 1,
-//                 xPadding: 15,
-//                 yPadding: 15,
-//                 displayColors: false,
-//                 intersect: false,
-//                 mode: 'index',
-//                 caretPadding: 10,
-//                 callbacks: {
-//                     label: function(tooltipItem, chart) {
-//                         var datasetLabel = chart.datasets[tooltipItem.datasetIndex].label || '';
-//                         return datasetLabel + ': ' + number_format(tooltipItem.yLabel) + ' vagas';
-//                     }
-//                 }
-//             }
-//         }
-//     });
-// }
-
-// // Gráfico de Status das Vagas (Pizza)
-// var ctxStatusVagas = document.getElementById("statusVagasChart");
-// if (ctxStatusVagas) {
-//     var statusVagasChart = new Chart(ctxStatusVagas, {
-//         type: 'doughnut',
-//         data: {
-//             labels: ["Aprovadas", "Abertas", "Em Análise", "Rejeitadas"],
-//             datasets: [{
-//                 data: [12, 8, 3, 1],
-//                 backgroundColor: ['#4e73df', '#1cc88a', '#36b9cc', '#e74a3b'],
-//                 hoverBackgroundColor: ['#2e59d9', '#17a673', '#2c9faf', '#c0392b'],
-//                 hoverBorderColor: "rgba(234, 236, 244, 1)",
-//             }],
-//         },
-//         options: {
-//             maintainAspectRatio: false,
-//             tooltips: {
-//                 backgroundColor: "rgb(255,255,255)",
-//                 bodyFontColor: "#858796",
-//                 borderColor: '#dddfeb',
-//                 borderWidth: 1,
-//                 xPadding: 15,
-//                 yPadding: 15,
-//                 displayColors: false,
-//                 caretPadding: 10,
-//             },
-//             legend: {
-//                 display: false
-//             },
-//             cutoutPercentage: 80,
-//         },
-//     });
-// }
-
-// // Gráfico de Candidatos por Vaga (Barras)
-// var ctxCandidatosPorVaga = document.getElementById("candidatosPorVagaChart");
-// if (ctxCandidatosPorVaga) {
-//     var candidatosPorVagaChart = new Chart(ctxCandidatosPorVaga, {
-//         type: 'bar',
-//         data: {
-//             labels: ["Desenvolvedor Full-Stack", "Analista de RH", "Gerente de Projetos", "Designer UX/UI", "Analista de Dados", "Coordenador de Vendas"],
-//             datasets: [{
-//                 label: "Candidatos",
-//                 backgroundColor: "#4e73df",
-//                 hoverBackgroundColor: "#2e59d9",
-//                 borderColor: "#4e73df",
-//                 data: [25, 18, 12, 15, 20, 8],
-//             }],
-//         },
-//         options: {
-//             maintainAspectRatio: false,
-//             layout: {
-//                 padding: {
-//                     left: 10,
-//                     right: 25,
-//                     top: 25,
-//                     bottom: 0
-//                 }
-//             },
-//             scales: {
-//                 xAxes: [{
-//                     time: {
-//                         unit: 'month'
-//                     },
-//                     gridLines: {
-//                         display: false,
-//                         drawBorder: false
-//                     },
-//                     ticks: {
-//                         maxTicksLimit: 6,
-//                         fontSize: 10
-//                     },
-//                     maxBarThickness: 25,
-//                 }],
-//                 yAxes: [{
-//                     ticks: {
-//                         min: 0,
-//                         max: 30,
-//                         maxTicksLimit: 5,
-//                         padding: 10,
-//                         callback: function(value, index, values) {
-//                             return number_format(value);
-//                         }
-//                     },
-//                     gridLines: {
-//                         color: "rgb(234, 236, 244)",
-//                         zeroLineColor: "rgb(234, 236, 244)",
-//                         drawBorder: false,
-//                         borderDash: [2],
-//                         zeroLineBorderDash: [2]
-//                     }
-//                 }],
-//             },
-//             legend: {
-//                 display: false
-//             },
-//             tooltips: {
-//                 titleMarginBottom: 10,
-//                 titleFontColor: '#6e707e',
-//                 titleFontSize: 14,
-//                 backgroundColor: "rgb(255,255,255)",
-//                 bodyFontColor: "#858796",
-//                 borderColor: '#dddfeb',
-//                 borderWidth: 1,
-//                 xPadding: 15,
-//                 yPadding: 15,
-//                 displayColors: false,
-//                 caretPadding: 10,
-//                 callbacks: {
-//                     label: function(tooltipItem, chart) {
-//                         var datasetLabel = chart.datasets[tooltipItem.datasetIndex].label || '';
-//                         return datasetLabel + ': ' + number_format(tooltipItem.yLabel) + ' candidatos';
-//                     }
-//                 }
-//             },
-//         }
-//     });
-// }
-
-// // Gráfico de Tipo de Contrato (Pizza)
-// var ctxTipoContrato = document.getElementById("tipoContratoChart");
-// if (ctxTipoContrato) {
-//     var tipoContratoChart = new Chart(ctxTipoContrato, {
-//         type: 'doughnut',
-//         data: {
-//             labels: ["CLT", "PJ", "Estágio"],
-//             datasets: [{
-//                 data: [14, 7, 3],
-//                 backgroundColor: ['#4e73df', '#1cc88a', '#36b9cc'],
-//                 hoverBackgroundColor: ['#2e59d9', '#17a673', '#2c9faf'],
-//                 hoverBorderColor: "rgba(234, 236, 244, 1)",
-//             }],
-//         },
-//         options: {
-//             maintainAspectRatio: false,
-//             tooltips: {
-//                 backgroundColor: "rgb(255,255,255)",
-//                 bodyFontColor: "#858796",
-//                 borderColor: '#dddfeb',
-//                 borderWidth: 1,
-//                 xPadding: 15,
-//                 yPadding: 15,
-//                 displayColors: false,
-//                 caretPadding: 10,
-//             },
-//             legend: {
-//                 display: false
-//             },
-//             cutoutPercentage: 80,
-//         },
-//     });
-// }
-
-// // Gráfico de Tempo Médio de Preenchimento
-// var ctxTempoPreenchimento = document.getElementById("tempoPreenchimentoChart");
-// if (ctxTempoPreenchimento) {
-//     var tempoPreenchimentoChart = new Chart(ctxTempoPreenchimento, {
-//         type: 'bar',
-//         data: {
-//             labels: ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"],
-//             datasets: [{
-//                 label: "Tempo Médio (dias)",
-//                 backgroundColor: "#1cc88a",
-//                 hoverBackgroundColor: "#17a673",
-//                 borderColor: "#1cc88a",
-//                 data: [25, 22, 28, 20, 18, 24, 19, 21, 23, 17, 20, 16],
-//             }],
-//         },
-//         options: {
-//             maintainAspectRatio: false,
-//             layout: {
-//                 padding: {
-//                     left: 10,
-//                     right: 25,
-//                     top: 25,
-//                     bottom: 0
-//                 }
-//             },
-//             scales: {
-//                 xAxes: [{
-//                     time: {
-//                         unit: 'month'
-//                     },
-//                     gridLines: {
-//                         display: false,
-//                         drawBorder: false
-//                     },
-//                     ticks: {
-//                         maxTicksLimit: 12
-//                     },
-//                     maxBarThickness: 25,
-//                 }],
-//                 yAxes: [{
-//                     ticks: {
-//                         min: 0,
-//                         max: 35,
-//                         maxTicksLimit: 7,
-//                         padding: 10,
-//                         callback: function(value, index, values) {
-//                             return number_format(value) + ' dias';
-//                         }
-//                     },
-//                     gridLines: {
-//                         color: "rgb(234, 236, 244)",
-//                         zeroLineColor: "rgb(234, 236, 244)",
-//                         drawBorder: false,
-//                         borderDash: [2],
-//                         zeroLineBorderDash: [2]
-//                     }
-//                 }],
-//             },
-//             legend: {
-//                 display: false
-//             },
-//             tooltips: {
-//                 titleMarginBottom: 10,
-//                 titleFontColor: '#6e707e',
-//                 titleFontSize: 14,
-//                 backgroundColor: "rgb(255,255,255)",
-//                 bodyFontColor: "#858796",
-//                 borderColor: '#dddfeb',
-//                 borderWidth: 1,
-//                 xPadding: 15,
-//                 yPadding: 15,
-//                 displayColors: false,
-//                 caretPadding: 10,
-//                 callbacks: {
-//                     label: function(tooltipItem, chart) {
-//                         var datasetLabel = chart.datasets[tooltipItem.datasetIndex].label || '';
-//                         return datasetLabel + ': ' + number_format(tooltipItem.yLabel) + ' dias';
-//                     }
-//                 }
-//             },
-//         }
-//     });
-// }
-
-// // Atualizar métricas quando o período mudar
-// document.addEventListener('DOMContentLoaded', function() {
-//     const periodFilter = document.getElementById('periodFilter');
-//     if (periodFilter) {
-//         periodFilter.addEventListener('change', function() {
-//             // Aqui você pode atualizar os dados dos gráficos baseado no período selecionado
-//             console.log('Período selecionado:', this.value);
-//             // Implementar lógica de atualização dos gráficos aqui
-//         });
-//     }
-// });
+/* ========================================
+   DASHBOARD DE RECRUTAMENTO
+   Gráficos e métricas para RH
+   Integrado com API Backend Spring Boot
+   ======================================== */
 
 import { DashboardClient } from "../components/client.js";
 
+// ============================
+// CONFIGURAÇÕES GLOBAIS
+// ============================
 const dashboardClient = new DashboardClient();
 
-document.addEventListener("DOMContentLoaded", async function () {
+// Configurações globais do Chart.js
+Chart.defaults.global.defaultFontFamily = 'Nunito', '-apple-system,system-ui,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif';
+Chart.defaults.global.defaultFontColor = '#858796';
 
-    // ============================
-    // MÉTRICAS DO TOPO
-    // ============================
-    async function loadMetrics() {
-        const data = await dashboardClient.getMetrics();
-        
-        document.getElementById("totalVagas").innerText = data.totalVagas;
-        document.getElementById("totalCandidatos").innerText = data.totalCandidatos;
-        document.getElementById("vagasAbertas").innerText = data.vagasAbertas;
+// Labels dos meses em português
+const MESES_LABELS = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
 
-        const conversion = `${data.taxaConversao.toFixed(1)}%`;
-        document.getElementById("taxaConversao").innerText = conversion;
+// Cores padrão para os gráficos
+const COLORS = {
+    primary: '#4e73df',
+    primaryHover: '#2e59d9',
+    success: '#1cc88a',
+    successHover: '#17a673',
+    info: '#36b9cc',
+    infoHover: '#2c9faf',
+    warning: '#f6c23e',
+    danger: '#e74a3b'
+};
 
-        document.querySelector(".progress-bar.bg-info").style.width = conversion;
+// ============================
+// DADOS DE FALLBACK (quando API falha)
+// ============================
+const FALLBACK_DATA = {
+    metrics: {
+        totalVagas: 24,
+        totalCandidatos: 156,
+        vagasAbertas: 12,
+        taxaConversao: 68.0
+    },
+    vagasMes: [
+        { mes: 1, quantidade: 3 }, { mes: 2, quantidade: 5 }, { mes: 3, quantidade: 4 },
+        { mes: 4, quantidade: 7 }, { mes: 5, quantidade: 6 }, { mes: 6, quantidade: 8 },
+        { mes: 7, quantidade: 5 }, { mes: 8, quantidade: 9 }, { mes: 9, quantidade: 7 },
+        { mes: 10, quantidade: 10 }, { mes: 11, quantidade: 8 }, { mes: 12, quantidade: 12 }
+    ],
+    statusVagas: [
+        { status: "Aprovadas", quantidade: 12 },
+        { status: "Abertas", quantidade: 8 },
+        { status: "Em Análise", quantidade: 3 },
+        { status: "Rejeitadas", quantidade: 1 }
+    ],
+    candidatosVaga: [
+        { vaga: "Desenvolvedor Full-Stack", totalCandidatos: 25 },
+        { vaga: "Analista de RH", totalCandidatos: 18 },
+        { vaga: "Gerente de Projetos", totalCandidatos: 12 },
+        { vaga: "Designer UX/UI", totalCandidatos: 15 },
+        { vaga: "Analista de Dados", totalCandidatos: 20 }
+    ],
+    tipoContrato: [
+        { contrato: "CLT", total: 14 },
+        { contrato: "PJ", total: 7 },
+        { contrato: "Estágio", total: 3 }
+    ],
+    tempoPreenchimento: [
+        { mes: 1, dias: 25 }, { mes: 2, dias: 22 }, { mes: 3, dias: 28 },
+        { mes: 4, dias: 20 }, { mes: 5, dias: 18 }, { mes: 6, dias: 24 },
+        { mes: 7, dias: 19 }, { mes: 8, dias: 21 }, { mes: 9, dias: 23 },
+        { mes: 10, dias: 17 }, { mes: 11, dias: 20 }, { mes: 12, dias: 16 }
+    ]
+};
+
+// ============================
+// FUNÇÕES UTILITÁRIAS
+// ============================
+function numberFormat(number) {
+    return number.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+}
+
+function showLoading(elementId) {
+    const el = document.getElementById(elementId);
+    if (el) el.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+}
+
+// ============================
+// MÉTRICAS DO TOPO
+// ============================
+async function loadMetrics() {
+    showLoading('totalVagas');
+    showLoading('totalCandidatos');
+    showLoading('vagasAbertas');
+    showLoading('taxaConversao');
+
+    let data;
+    try {
+        console.log('📊 [Dashboard] Carregando métricas...');
+        data = await dashboardClient.getMetrics();
+        console.log('✅ [Dashboard] Métricas carregadas:', data);
+    } catch (error) {
+        console.warn('⚠️ [Dashboard] Usando fallback para métricas:', error.message);
+        data = FALLBACK_DATA.metrics;
     }
 
-    // ============================
-    // GRÁFICO - VAGAS POR MÊS
-    ///=============================
-    async function loadVagasPorMes() {
-        const result = await dashboardClient.getVagasMes();
+    document.getElementById("totalVagas").innerText = numberFormat(data.totalVagas);
+    document.getElementById("totalCandidatos").innerText = numberFormat(data.totalCandidatos);
+    document.getElementById("vagasAbertas").innerText = numberFormat(data.vagasAbertas);
 
-        const valores = Array(12).fill(0);
-        result.forEach(item => {
+    const conversion = data.taxaConversao.toFixed(1);
+    document.getElementById("taxaConversao").innerText = `${conversion}%`;
+
+    const progressBar = document.querySelector(".progress-bar.bg-info");
+    if (progressBar) {
+        progressBar.style.width = `${conversion}%`;
+        progressBar.setAttribute('aria-valuenow', conversion);
+    }
+}
+
+// ============================
+// GRÁFICO - VAGAS POR MÊS
+// ============================
+async function loadVagasPorMes() {
+    const canvas = document.getElementById("vagasPorMesChart");
+    if (!canvas) return;
+
+    let result;
+    try {
+        console.log('📊 [Dashboard] Carregando vagas por mês...');
+        result = await dashboardClient.getVagasMes();
+        console.log('✅ [Dashboard] Vagas por mês:', result);
+    } catch (error) {
+        console.warn('⚠️ [Dashboard] Usando fallback para vagas por mês');
+        result = FALLBACK_DATA.vagasMes;
+    }
+
+    const valores = Array(12).fill(0);
+    result.forEach(item => {
+        if (item.mes >= 1 && item.mes <= 12) {
             valores[item.mes - 1] = item.quantidade;
-        });
+        }
+    });
 
-        new Chart(document.getElementById("vagasPorMesChart"), {
-            type: 'line',
-            data: {
-                labels: ["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out","Nov","Dez"],
-                datasets: [{
-                    label: "Vagas Criadas",
-                    data: valores,
-                    borderColor: "#4e73df",
-                    backgroundColor: "rgba(78,115,223,0.05)"
+    const maxValue = Math.max(...valores, 5);
+
+    new Chart(canvas, {
+        type: 'line',
+        data: {
+            labels: MESES_LABELS,
+            datasets: [{
+                label: "Vagas Criadas",
+                lineTension: 0.3,
+                backgroundColor: "rgba(78, 115, 223, 0.05)",
+                borderColor: COLORS.primary,
+                pointRadius: 3,
+                pointBackgroundColor: COLORS.primary,
+                pointBorderColor: COLORS.primary,
+                pointHoverRadius: 5,
+                pointHoverBackgroundColor: COLORS.primary,
+                pointHitRadius: 10,
+                pointBorderWidth: 2,
+                data: valores
+            }]
+        },
+        options: {
+            maintainAspectRatio: false,
+            layout: { padding: { left: 10, right: 25, top: 25, bottom: 0 } },
+            scales: {
+                xAxes: [{ gridLines: { display: false, drawBorder: false }, ticks: { maxTicksLimit: 12 } }],
+                yAxes: [{
+                    ticks: { min: 0, max: Math.ceil(maxValue * 1.2), maxTicksLimit: 5, padding: 10 },
+                    gridLines: { color: "rgb(234, 236, 244)", zeroLineColor: "rgb(234, 236, 244)", drawBorder: false, borderDash: [2] }
                 }]
+            },
+            legend: { display: false },
+            tooltips: {
+                backgroundColor: "rgb(255,255,255)", bodyFontColor: "#858796",
+                titleFontColor: '#6e707e', borderColor: '#dddfeb', borderWidth: 1,
+                xPadding: 15, yPadding: 15, displayColors: false, mode: 'index',
+                callbacks: { label: (t, c) => `${c.datasets[t.datasetIndex].label}: ${t.yLabel} vagas` }
             }
-        });
+        }
+    });
+}
+
+// ============================
+// GRÁFICO - STATUS DAS VAGAS
+// ============================
+async function loadStatusVagas() {
+    const canvas = document.getElementById("statusVagasChart");
+    if (!canvas) return;
+
+    let result;
+    try {
+        console.log('📊 [Dashboard] Carregando status das vagas...');
+        result = await dashboardClient.getStatusVagas();
+        console.log('✅ [Dashboard] Status das vagas:', result);
+    } catch (error) {
+        console.warn('⚠️ [Dashboard] Usando fallback para status das vagas');
+        result = FALLBACK_DATA.statusVagas;
     }
 
-    // ============================
-    // GRÁFICO - STATUS DAS VAGAS
-    //=============================
-    async function loadStatusVagas() {
-        const result = await dashboardClient.getStatusVagas();
+    new Chart(canvas, {
+        type: 'doughnut',
+        data: {
+            labels: result.map(r => r.status),
+            datasets: [{
+                data: result.map(r => r.quantidade),
+                backgroundColor: [COLORS.primary, COLORS.success, COLORS.info, COLORS.danger],
+                hoverBackgroundColor: [COLORS.primaryHover, COLORS.successHover, COLORS.infoHover, '#c0392b'],
+                hoverBorderColor: "rgba(234, 236, 244, 1)"
+            }]
+        },
+        options: {
+            maintainAspectRatio: false,
+            tooltips: {
+                backgroundColor: "rgb(255,255,255)", bodyFontColor: "#858796",
+                borderColor: '#dddfeb', borderWidth: 1, xPadding: 15, yPadding: 15, displayColors: false,
+                callbacks: { label: (t, d) => `${d.labels[t.index]}: ${d.datasets[0].data[t.index]} vagas` }
+            },
+            legend: { display: false },
+            cutoutPercentage: 80
+        }
+    });
+}
 
-        const labels = result.map(r => r.status);
-        const valores = result.map(r => r.quantidade);
+// ============================
+// GRÁFICO - CANDIDATOS POR VAGA
+// ============================
+async function loadCandidatosVaga() {
+    const canvas = document.getElementById("candidatosPorVagaChart");
+    if (!canvas) return;
 
-        new Chart(document.getElementById("statusVagasChart"), {
-            type: 'doughnut',
-            data: {
-                labels,
-                datasets: [{
-                    data: valores,
-                    backgroundColor: ['#4e73df','#1cc88a','#36b9cc','#e74a3b']
-                }]
-            }
-        });
+    let result;
+    try {
+        console.log('📊 [Dashboard] Carregando candidatos por vaga...');
+        result = await dashboardClient.getCandidatosPorVaga();
+        console.log('✅ [Dashboard] Candidatos por vaga:', result);
+    } catch (error) {
+        console.warn('⚠️ [Dashboard] Usando fallback para candidatos por vaga');
+        result = FALLBACK_DATA.candidatosVaga;
     }
 
-    // ============================
-    // GRÁFICO - CANDIDATOS POR VAGA
-    //=============================
-    async function loadCandidatosVaga() {
-        const result = await dashboardClient.getCandidatosPorVaga();
+    const valores = result.map(r => r.totalCandidatos);
+    const maxValue = Math.max(...valores, 10);
 
-        new Chart(document.getElementById("candidatosPorVagaChart"), {
-            type: 'bar',
-            data: {
-                labels: result.map(r => r.vaga),
-                datasets: [{
-                    label: "Candidatos",
-                    data: result.map(r => r.totalCandidatos),
-                    backgroundColor: "#4e73df"
+    new Chart(canvas, {
+        type: 'bar',
+        data: {
+            labels: result.map(r => r.vaga),
+            datasets: [{
+                label: "Candidatos",
+                backgroundColor: COLORS.primary,
+                hoverBackgroundColor: COLORS.primaryHover,
+                data: valores
+            }]
+        },
+        options: {
+            maintainAspectRatio: false,
+            layout: { padding: { left: 10, right: 25, top: 25, bottom: 0 } },
+            scales: {
+                xAxes: [{ gridLines: { display: false, drawBorder: false }, ticks: { maxTicksLimit: 6, fontSize: 10 }, maxBarThickness: 25 }],
+                yAxes: [{
+                    ticks: { min: 0, max: Math.ceil(maxValue * 1.2), maxTicksLimit: 5, padding: 10 },
+                    gridLines: { color: "rgb(234, 236, 244)", zeroLineColor: "rgb(234, 236, 244)", drawBorder: false, borderDash: [2] }
                 }]
+            },
+            legend: { display: false },
+            tooltips: {
+                backgroundColor: "rgb(255,255,255)", bodyFontColor: "#858796",
+                titleFontColor: '#6e707e', borderColor: '#dddfeb', borderWidth: 1,
+                xPadding: 15, yPadding: 15, displayColors: false,
+                callbacks: { label: (t, c) => `${c.datasets[t.datasetIndex].label}: ${t.yLabel} candidatos` }
             }
-        });
+        }
+    });
+}
+
+// ============================
+// GRÁFICO - TIPO DE CONTRATO
+// ============================
+async function loadTipoContrato() {
+    const canvas = document.getElementById("tipoContratoChart");
+    if (!canvas) return;
+
+    let result;
+    try {
+        console.log('📊 [Dashboard] Carregando tipo de contrato...');
+        result = await dashboardClient.getTipoContrato();
+        console.log('✅ [Dashboard] Tipo de contrato:', result);
+    } catch (error) {
+        console.warn('⚠️ [Dashboard] Usando fallback para tipo de contrato');
+        result = FALLBACK_DATA.tipoContrato;
     }
 
-    // ============================
-    // GRÁFICO - TIPO DE CONTRATO
-    //=============================
-    async function loadTipoContrato() {
-        const result = await dashboardClient.getTipoContrato();
+    new Chart(canvas, {
+        type: 'doughnut',
+        data: {
+            labels: result.map(r => r.contrato),
+            datasets: [{
+                data: result.map(r => r.total),
+                backgroundColor: [COLORS.primary, COLORS.success, COLORS.info],
+                hoverBackgroundColor: [COLORS.primaryHover, COLORS.successHover, COLORS.infoHover],
+                hoverBorderColor: "rgba(234, 236, 244, 1)"
+            }]
+        },
+        options: {
+            maintainAspectRatio: false,
+            tooltips: {
+                backgroundColor: "rgb(255,255,255)", bodyFontColor: "#858796",
+                borderColor: '#dddfeb', borderWidth: 1, xPadding: 15, yPadding: 15, displayColors: false,
+                callbacks: { label: (t, d) => `${d.labels[t.index]}: ${d.datasets[0].data[t.index]} vagas` }
+            },
+            legend: { display: false },
+            cutoutPercentage: 80
+        }
+    });
+}
 
-        new Chart(document.getElementById("tipoContratoChart"), {
-            type: 'doughnut',
-            data: {
-                labels: result.map(r => r.contrato),
-                datasets: [{
-                    data: result.map(r => r.total),
-                    backgroundColor: ['#4e73df','#1cc88a','#36b9cc']
-                }]
-            }
-        });
+// ============================
+// GRÁFICO - TEMPO DE PREENCHIMENTO
+// ============================
+async function loadTempoPreenchimento() {
+    const canvas = document.getElementById("tempoPreenchimentoChart");
+    if (!canvas) return;
+
+    let result;
+    try {
+        console.log('📊 [Dashboard] Carregando tempo de preenchimento...');
+        result = await dashboardClient.getTempoPreenchimento();
+        console.log('✅ [Dashboard] Tempo de preenchimento:', result);
+    } catch (error) {
+        console.warn('⚠️ [Dashboard] Usando fallback para tempo de preenchimento');
+        result = FALLBACK_DATA.tempoPreenchimento;
     }
 
-    // ============================
-    // GRÁFICO - TEMPO DE PREENCHIMENTO
-    //=============================
-    async function loadTempoPreenchimento() {
-        const result = await dashboardClient.getTempoPreenchimento();
+    const valores = Array(12).fill(0);
+    result.forEach(item => {
+        if (item.mes >= 1 && item.mes <= 12) {
+            valores[item.mes - 1] = item.dias;
+        }
+    });
 
-        const valores = Array(12).fill(0);
-        result.forEach(item => valores[item.mes - 1] = item.dias);
+    const maxValue = Math.max(...valores, 20);
 
-        new Chart(document.getElementById("tempoPreenchimentoChart"), {
-            type: 'bar',
-            data: {
-                labels: ["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out","Nov","Dez"],
-                datasets: [{
-                    label: "Tempo Médio (Dias)",
-                    data: valores,
-                    backgroundColor: "#1cc88a"
+    new Chart(canvas, {
+        type: 'bar',
+        data: {
+            labels: MESES_LABELS,
+            datasets: [{
+                label: "Tempo Médio (dias)",
+                backgroundColor: COLORS.success,
+                hoverBackgroundColor: COLORS.successHover,
+                data: valores
+            }]
+        },
+        options: {
+            maintainAspectRatio: false,
+            layout: { padding: { left: 10, right: 25, top: 25, bottom: 0 } },
+            scales: {
+                xAxes: [{ gridLines: { display: false, drawBorder: false }, ticks: { maxTicksLimit: 12 }, maxBarThickness: 25 }],
+                yAxes: [{
+                    ticks: { min: 0, max: Math.ceil(maxValue * 1.2), maxTicksLimit: 7, padding: 10, callback: v => `${v} dias` },
+                    gridLines: { color: "rgb(234, 236, 244)", zeroLineColor: "rgb(234, 236, 244)", drawBorder: false, borderDash: [2] }
                 }]
+            },
+            legend: { display: false },
+            tooltips: {
+                backgroundColor: "rgb(255,255,255)", bodyFontColor: "#858796",
+                titleFontColor: '#6e707e', borderColor: '#dddfeb', borderWidth: 1,
+                xPadding: 15, yPadding: 15, displayColors: false,
+                callbacks: { label: (t, c) => `${c.datasets[t.datasetIndex].label}: ${t.yLabel} dias` }
             }
+        }
+    });
+}
+
+// ============================
+// INICIALIZAÇÃO
+// ============================
+async function initDashboard() {
+    console.log('🚀 [Dashboard] Iniciando carregamento...');
+
+    try {
+        await Promise.all([
+            loadMetrics(),
+            loadVagasPorMes(),
+            loadStatusVagas(),
+            loadCandidatosVaga(),
+            loadTipoContrato(),
+            loadTempoPreenchimento()
+        ]);
+        console.log('✅ [Dashboard] Todos os gráficos carregados!');
+    } catch (error) {
+        console.error('❌ [Dashboard] Erro ao carregar:', error);
+    }
+}
+
+// Filtro de período (para implementação futura)
+function setupPeriodFilter() {
+    const filter = document.getElementById('periodFilter');
+    if (filter) {
+        filter.addEventListener('change', function() {
+            console.log('📅 Período selecionado:', this.value);
+            // TODO: Recarregar dados com filtro
         });
     }
+}
 
-    // ============================
-    // EXECUTAR TUDO
-    // ============================
-    await loadMetrics();
-    await loadVagasPorMes();
-    await loadStatusVagas();
-    await loadCandidatosVaga();
-    await loadTipoContrato();
-    await loadTempoPreenchimento();
+document.addEventListener("DOMContentLoaded", async function() {
+    setupPeriodFilter();
+    await initDashboard();
 });

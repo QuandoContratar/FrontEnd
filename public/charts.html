@@ -444,30 +444,35 @@
         </div>
     </div>
 
-    <!-- Bootstrap core JavaScript-->
-    <script src="vendor/jquery/jquery.min.js"></script>
-    <script src="vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
 
-    <!-- Core plugin JavaScript-->
-    <script src="vendor/jquery-easing/jquery.easing.min.js"></script>
 
-    <!-- Custom scripts for all pages-->
-    <script src="js/sb-admin-2.min.js"></script>
+<!-- Bootstrap core JavaScript-->
+<script src="vendor/jquery/jquery.min.js"></script>
+<script src="vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
 
-    <!-- Page level plugins -->
-    <script src="vendor/chart.js/Chart.min.js"></script>
+<!-- Core plugin JavaScript-->
+<script src="vendor/jquery-easing/jquery.easing.min.js"></script>
 
-    <!-- Page level custom scripts -->
-    <script src="./assets/js/components/utils.js"></script>
-    <script src="./assets/js/components/auth.js"></script>
-    <script src="./assets/js/pages/dashboard.js"></script>
-    <script>
-      $(document).ready(function() {
-        if (window.Utils) {
-          Utils.updateUserName();
-        }
-      });
-    </script>
+<!-- Custom scripts for all pages-->
+<script src="js/sb-admin-2.min.js"></script>
+
+<!-- Chart.js -->
+<script src="vendor/chart.js/Chart.min.js"></script>
+
+<!-- Utils e Auth -->
+<script src="./assets/js/components/utils.js"></script>
+<script src="./assets/js/components/auth.js"></script>
+
+<!-- Agora dashboard.js roda de verdade -->
+<script type="module" src="./assets/js/pages/dashboard.js"></script>
+
+<script>
+  $(document).ready(function() {
+    if (window.Utils) {
+      Utils.updateUserName();
+    }
+  });
+</script>
 
 </body>
 
