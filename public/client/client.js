@@ -173,11 +173,225 @@ export class VacanciesClient extends ApiClient {
     }
 
     async findActiveVacancies() {
-    const response = await fetch(`${this.url}/activesVacancies`);
-    if (!response.ok) throw new Error('Erro ao buscar vagas ativas');
-    return response.json();
-}
+        const response = await fetch(`${this.url}/activesVacancies`);
+        if (!response.ok) throw new Error('Erro ao buscar vagas ativas');
+        return response.json();
+    }
 
+    /**
+     * Busca vagas pendentes de aprovação
+     * Estratégia: Tenta GET /vacancies/status/pendente_aprovacao primeiro (retorna com ID)
+     * Fallback: GET /vacancies/pendingVacancies (pode não ter ID)
+     */
+    async getPendingVacancies() {
+        console.log('📤 [VacanciesClient] Buscando vagas pendentes de aprovação...');
+        
+        // Estratégia 1: Endpoint que retorna entidade completa com ID
+        const statusEndpoints = [
+            'pendente_aprovacao',
+            'PENDENTE_APROVACAO', 
+            'pendente',
+            'PENDENTE'
+        ];
+        
+        for (const status of statusEndpoints) {
+            try {
+                console.log(`🔍 [VacanciesClient] Tentando /status/${status}...`);
+                const response = await fetch(`${this.url}/status/${status}`, {
+                    method: 'GET',
+                    credentials: 'include'
+                });
+                if (response.ok) {
+                    const data = await response.json();
+                    if (Array.isArray(data) && data.length > 0) {
+                        console.log(`✅ [VacanciesClient] Sucesso com /status/${status}:`, data);
+                        return data;
+                    }
+                }
+            } catch (e) {
+                console.warn(`⚠️ [VacanciesClient] Erro em /status/${status}:`, e.message);
+            }
+        }
+        
+        // Estratégia 2: Endpoint /pendingVacancies
+        try {
+            console.log('🔍 [VacanciesClient] Tentando /pendingVacancies...');
+            const response = await fetch(`${this.url}/pendingVacancies`, {
+                method: 'GET',
+                credentials: 'include'
+            });
+            if (response.ok) {
+                const data = await response.json();
+                console.log('✅ [VacanciesClient] Vagas pendentes via /pendingVacancies:', data);
+                return data;
+            }
+        } catch (e) {
+            console.warn('⚠️ [VacanciesClient] Erro em /pendingVacancies:', e.message);
+        }
+        
+        // Estratégia 3: Buscar todas e filtrar
+        try {
+            console.log('🔍 [VacanciesClient] Tentando buscar todas e filtrar...');
+            const response = await fetch(this.url, {
+                method: 'GET',
+                credentials: 'include'
+            });
+            if (response.ok) {
+                const allData = await response.json();
+                const pendentes = allData.filter(v => {
+                    const status = (v.statusVacancy || v.status_vacancy || v.status || '').toLowerCase();
+                    return status.includes('pendente') || status === 'entrada';
+                });
+                console.log('✅ [VacanciesClient] Vagas filtradas:', pendentes);
+                return pendentes;
+            }
+        } catch (e) {
+            console.error('❌ [VacanciesClient] Erro ao buscar todas:', e.message);
+        }
+        
+        console.warn('⚠️ [VacanciesClient] Nenhuma estratégia funcionou, retornando array vazio');
+        return [];
+    }
+
+    /**
+     * Aprova uma vaga (altera status para 'aberta')
+     * PATCH /vacancies/updateStatus/{id}
+     * @param {number|string} id - ID da vaga (id_vacancy)
+     */
+    async approve(id) {
+        // Validação de ID
+        if (!id || id === 'undefined' || id === 'null') {
+            console.error('❌ [VacanciesClient] ID da vaga é inválido:', id);
+            throw new Error('ID da vaga não encontrado. Verifique se o backend está retornando o id_vacancy.');
+        }
+        
+        console.log('📤 [VacanciesClient] Aprovando vaga ID:', id);
+        console.log('📤 [VacanciesClient] URL:', `${this.url}/updateStatus/${id}`);
+        
+        const response = await fetch(`${this.url}/updateStatus/${id}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include'
+        });
+        
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('❌ [VacanciesClient] Erro ao aprovar:', response.status, errorText);
+            throw new Error(`Erro ao aprovar vaga: ${response.status} - ${errorText}`);
+        }
+        
+        const result = await response.text();
+        console.log('✅ [VacanciesClient] Vaga aprovada:', result);
+        return result;
+    }
+
+    /**
+     * Rejeita uma vaga (altera status para 'rejeitada')
+     * PATCH /vacancies/{id}/status
+     * @param {number|string} id - ID da vaga (id_vacancy)
+     */
+    async reject(id) {
+        // Validação de ID
+        if (!id || id === 'undefined' || id === 'null') {
+            console.error('❌ [VacanciesClient] ID da vaga é inválido:', id);
+            throw new Error('ID da vaga não encontrado.');
+        }
+        
+        console.log('📤 [VacanciesClient] Rejeitando vaga ID:', id);
+        console.log('📤 [VacanciesClient] URL:', `${this.url}/${id}/status`);
+        
+        const response = await fetch(`${this.url}/${id}/status`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({ statusVacancy: 'rejeitada' })
+        });
+        
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('❌ [VacanciesClient] Erro ao rejeitar:', response.status, errorText);
+            throw new Error(`Erro ao rejeitar vaga: ${response.status} - ${errorText}`);
+        }
+        
+        // Tenta ler como JSON, senão como texto
+        try {
+            return await response.json();
+        } catch {
+            return await response.text();
+        }
+    }
+
+    /**
+     * Busca vagas abertas/aprovadas
+     * GET /vacancies/status/aberta
+     */
+    async getOpenVacancies() {
+        console.log('📤 [VacanciesClient] Buscando vagas abertas...');
+        const response = await fetch(`${this.url}/status/aberta`, {
+            method: 'GET',
+            credentials: 'include'
+        });
+        if (!response.ok) throw new Error('Erro ao buscar vagas abertas');
+        const data = await response.json();
+        console.log('✅ [VacanciesClient] Vagas abertas:', data);
+        return data;
+    }
+
+    /**
+     * Busca vagas aprovadas (status = 'aberta')
+     * GET /vacancies/status/aberta
+     * @returns {Promise<Array>} Lista de vagas aprovadas
+     */
+    async getApprovedVacancies() {
+        console.log('📤 [VacanciesClient] Buscando vagas APROVADAS (status=aberta)...');
+        
+        try {
+            const response = await fetch(`${this.url}/status/aberta`, {
+                method: 'GET',
+                credentials: 'include'
+            });
+            
+            if (!response.ok) {
+                console.warn('⚠️ [VacanciesClient] Erro ao buscar vagas aprovadas:', response.status);
+                return [];
+            }
+            
+            const data = await response.json();
+            console.log(`✅ [VacanciesClient] Vagas aprovadas encontradas: ${Array.isArray(data) ? data.length : 0}`);
+            return Array.isArray(data) ? data : [];
+        } catch (error) {
+            console.error('❌ [VacanciesClient] Erro ao buscar vagas aprovadas:', error);
+            return [];
+        }
+    }
+
+    /**
+     * Busca vagas rejeitadas (status = 'rejeitada')
+     * GET /vacancies/status/rejeitada
+     * @returns {Promise<Array>} Lista de vagas rejeitadas
+     */
+    async getRejectedVacancies() {
+        console.log('📤 [VacanciesClient] Buscando vagas REJEITADAS (status=rejeitada)...');
+        
+        try {
+            const response = await fetch(`${this.url}/status/rejeitada`, {
+                method: 'GET',
+                credentials: 'include'
+            });
+            
+            if (!response.ok) {
+                console.warn('⚠️ [VacanciesClient] Erro ao buscar vagas rejeitadas:', response.status);
+                return [];
+            }
+            
+            const data = await response.json();
+            console.log(`✅ [VacanciesClient] Vagas rejeitadas encontradas: ${Array.isArray(data) ? data.length : 0}`);
+            return Array.isArray(data) ? data : [];
+        } catch (error) {
+            console.error('❌ [VacanciesClient] Erro ao buscar vagas rejeitadas:', error);
+            return [];
+        }
+    }
 
     /**
      * Envia múltiplas vagas com arquivos para aprovação usando /send-massive

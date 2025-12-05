@@ -469,26 +469,30 @@
 
                         <!-- Tab: Aprovação de Vagas -->
                         <div class="tab-pane fade" id="approvals" role="tabpanel" aria-labelledby="approvals-tab">
+                            
+                            <!-- ========================================
+                                 SEÇÃO 1: VAGAS PENDENTES DE APROVAÇÃO
+                                 ======================================== -->
                             <div class="row">
-                                <!-- Card de Solicitações Pendentes -->
                                 <div class="col-xl-12 col-lg-12">
-                                    <div class="card shadow mb-4">
-                                        <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-                                            <h6 class="m-0 font-weight-bold text-primary">
-                                                <i class="fas fa-clipboard-list fa-fw"></i>
-                                                Solicitações Pendentes de Aprovação
+                                    <div class="card shadow mb-4 border-left-warning">
+                                        <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between" style="background-color: #fff3cd;">
+                                            <h6 class="m-0 font-weight-bold text-warning">
+                                                <i class="fas fa-clock fa-fw"></i>
+                                                Vagas Pendentes de Aprovação
+                                                <span class="badge badge-warning ml-2" id="pendingVacanciesCount">0</span>
                                             </h6>
                                             <div class="d-flex align-items-center">
-                                                <button class="btn btn-sm btn-primary mr-2" id="refreshApprovalsBtn" title="Recarregar">
-                                                    <i class="fas fa-sync-alt"></i>
+                                                <button class="btn btn-sm btn-warning mr-2" id="refreshApprovalsBtn" title="Recarregar Todas as Listas">
+                                                    <i class="fas fa-sync-alt"></i> Atualizar
                                                 </button>
                                                 <div class="search-container">
                                                     <div class="input-group">
                                                         <input type="text" id="searchApprovalsInput"
                                                             class="form-control bg-light border-0 small"
-                                                            placeholder="Pesquisar solicitações...">
+                                                            placeholder="Pesquisar pendentes...">
                                                         <div class="input-group-append">
-                                                            <button class="btn btn-primary" type="button">
+                                                            <button class="btn btn-warning" type="button">
                                                                 <i class="fas fa-search fa-sm"></i>
                                                             </button>
                                                         </div>
@@ -498,8 +502,8 @@
                                         </div>
                                         <div class="card-body">
                                             <div class="table-responsive">
-                                                <table class="table table-bordered" id="approvalsTable" width="100%" cellspacing="0">
-                                                    <thead>
+                                                <table class="table table-bordered table-hover" id="approvalsTable" width="100%" cellspacing="0">
+                                                    <thead class="thead-light">
                                                         <tr>
                                                             <th>Gestor</th>
                                                             <th>Cargo</th>
@@ -509,7 +513,6 @@
                                                             <th>Regime</th>
                                                             <th>Salário</th>
                                                             <th>Localidade</th>
-                                                            <th>Data</th>
                                                             <th>Status</th>
                                                             <th>Ações</th>
                                                         </tr>
@@ -523,6 +526,109 @@
                                     </div>
                                 </div>
                             </div>
+
+                            <!-- ========================================
+                                 SEÇÃO 2: VAGAS APROVADAS (ABERTAS)
+                                 ======================================== -->
+                            <div class="row">
+                                <div class="col-xl-12 col-lg-12">
+                                    <div class="card shadow mb-4 border-left-success">
+                                        <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between" style="background-color: #d4edda;">
+                                            <h6 class="m-0 font-weight-bold text-success">
+                                                <i class="fas fa-check-circle fa-fw"></i>
+                                                Vagas Aprovadas (Abertas)
+                                                <span class="badge badge-success ml-2" id="approvedVacanciesCount">0</span>
+                                            </h6>
+                                            <div class="search-container">
+                                                <div class="input-group">
+                                                    <input type="text" id="searchApprovedInput"
+                                                        class="form-control bg-light border-0 small"
+                                                        placeholder="Pesquisar aprovadas...">
+                                                    <div class="input-group-append">
+                                                        <button class="btn btn-success" type="button">
+                                                            <i class="fas fa-search fa-sm"></i>
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="card-body">
+                                            <div class="table-responsive">
+                                                <table class="table table-bordered table-hover" id="approvedVacanciesTable" width="100%" cellspacing="0">
+                                                    <thead class="thead-light">
+                                                        <tr>
+                                                            <th>ID</th>
+                                                            <th>Cargo</th>
+                                                            <th>Área</th>
+                                                            <th>Modelo</th>
+                                                            <th>Regime</th>
+                                                            <th>Salário</th>
+                                                            <th>Localidade</th>
+                                                            <th>Gestor</th>
+                                                            <th>Status</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody id="approvedVacanciesTableBody">
+                                                        <!-- Conteúdo dinâmico -->
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- ========================================
+                                 SEÇÃO 3: VAGAS REJEITADAS
+                                 ======================================== -->
+                            <div class="row">
+                                <div class="col-xl-12 col-lg-12">
+                                    <div class="card shadow mb-4 border-left-danger">
+                                        <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between" style="background-color: #f8d7da;">
+                                            <h6 class="m-0 font-weight-bold text-danger">
+                                                <i class="fas fa-times-circle fa-fw"></i>
+                                                Vagas Rejeitadas
+                                                <span class="badge badge-danger ml-2" id="rejectedVacanciesCount">0</span>
+                                            </h6>
+                                            <div class="search-container">
+                                                <div class="input-group">
+                                                    <input type="text" id="searchRejectedInput"
+                                                        class="form-control bg-light border-0 small"
+                                                        placeholder="Pesquisar rejeitadas...">
+                                                    <div class="input-group-append">
+                                                        <button class="btn btn-danger" type="button">
+                                                            <i class="fas fa-search fa-sm"></i>
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="card-body">
+                                            <div class="table-responsive">
+                                                <table class="table table-bordered table-hover" id="rejectedVacanciesTable" width="100%" cellspacing="0">
+                                                    <thead class="thead-light">
+                                                        <tr>
+                                                            <th>ID</th>
+                                                            <th>Cargo</th>
+                                                            <th>Área</th>
+                                                            <th>Modelo</th>
+                                                            <th>Regime</th>
+                                                            <th>Salário</th>
+                                                            <th>Localidade</th>
+                                                            <th>Gestor</th>
+                                                            <th>Status</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody id="rejectedVacanciesTableBody">
+                                                        <!-- Conteúdo dinâmico -->
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
                         </div>
                         <!-- End Tab: Aprovação de Vagas -->
                     </div>
