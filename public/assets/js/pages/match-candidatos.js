@@ -95,7 +95,7 @@ function renderVacancySelector() {
         vacancies.forEach(vacancy => {
             const option = document.createElement('option');
             option.value = vacancy.id;
-            option.textContent = vacancy.title || vacancy.name || `Vaga #${vacancy.id}`;
+            option.textContent = vacancy.position_job;
             vacancySelector.appendChild(option);
         });
 
