@@ -166,21 +166,12 @@
                         <li class="nav-item dropdown no-arrow">
                             <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button"
                                 data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                <span class="mr-2 d-none d-lg-inline text-gray-600 small">Henrique Szapiro</span>
+                                <span class="mr-2 d-none d-lg-inline text-gray-600 small">Carregando...</span>
                                 <img class="img-profile rounded-circle" src="./img/undraw_profile.svg">
                             </a>
                             <!-- Dropdown - User Information -->
                             <div class="dropdown-menu dropdown-menu-right shadow animated--grow-in"
                                 aria-labelledby="userDropdown">
-                                <a class="dropdown-item" href="#">
-                                    <i class="fas fa-user fa-sm fa-fw mr-2 text-gray-400"></i>
-                                    Perfil
-                                </a>
-                                <a class="dropdown-item" href="#">
-                                    <i class="fas fa-cogs fa-sm fa-fw mr-2 text-gray-400"></i>
-                                    Configurações
-                                </a>
-                                <div class="dropdown-divider"></div>
                                 <a class="dropdown-item" href="#" data-toggle="modal" data-target="#logoutModal">
                                     <i class="fas fa-sign-out-alt fa-sm fa-fw mr-2 text-gray-400"></i>
                                     Sair
@@ -397,6 +388,152 @@
                         </div>
                     </div>
 
+                    <!-- ====================================== -->
+                    <!-- NOVOS GRÁFICOS DO DASHBOARD AVANÇADO -->
+                    <!-- ====================================== -->
+
+                    <!-- Row: Candidatos por Estado + Distribuição de Match -->
+                    <div class="row">
+                        <!-- Candidatos por Estado -->
+                        <div class="col-xl-8 col-lg-7">
+                            <div class="card shadow mb-4">
+                                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                                    <h6 class="m-0 font-weight-bold text-primary">
+                                        <i class="fas fa-map-marked-alt mr-2"></i>Candidatos por Estado
+                                    </h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="chart-bar" style="height: 300px;">
+                                        <canvas id="candidatesByStateChart"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Distribuição de Match -->
+                        <div class="col-xl-4 col-lg-5">
+                            <div class="card shadow mb-4">
+                                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                                    <h6 class="m-0 font-weight-bold text-primary">
+                                        <i class="fas fa-percentage mr-2"></i>Distribuição de Match
+                                    </h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="chart-pie pt-4 pb-2">
+                                        <canvas id="matchDistributionChart"></canvas>
+                                    </div>
+                                    <div class="mt-4 text-center small" id="matchDistributionLegend">
+                                        <!-- Legenda será gerada dinamicamente -->
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Row: Top 10 Candidatos por Vaga -->
+                    <div class="row">
+                        <div class="col-lg-12 mb-4">
+                            <div class="card shadow mb-4">
+                                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                                    <h6 class="m-0 font-weight-bold text-primary">
+                                        <i class="fas fa-trophy mr-2"></i>Top 10 Candidatos por Vaga
+                                    </h6>
+                                    <div class="dropdown">
+                                        <select class="form-control form-control-sm" id="selectVagaTopCandidates" style="min-width: 250px;">
+                                            <option value="">Selecione uma vaga...</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="card-body">
+                                    <div id="topCandidatesChartContainer" class="chart-bar" style="height: 350px;">
+                                        <canvas id="topCandidatesChart"></canvas>
+                                    </div>
+                                    <div id="topCandidatesEmpty" class="text-center py-5 d-none">
+                                        <i class="fas fa-user-friends fa-3x text-gray-300 mb-3"></i>
+                                        <p class="text-gray-500">Selecione uma vaga para ver os candidatos</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Row: Pipeline por Estágio + Tempo Médio por Estágio -->
+                    <div class="row">
+                        <!-- Pipeline por Estágio -->
+                        <div class="col-xl-6 col-lg-6">
+                            <div class="card shadow mb-4">
+                                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                                    <h6 class="m-0 font-weight-bold text-primary">
+                                        <i class="fas fa-filter mr-2"></i>Pipeline por Estágio
+                                    </h6>
+                                    <select class="form-control form-control-sm" id="selectVagaPipeline" style="width: 200px;">
+                                        <option value="">Selecione uma vaga...</option>
+                                    </select>
+                                </div>
+                                <div class="card-body">
+                                    <!-- Mensagem quando nenhuma vaga selecionada -->
+                                    <div id="pipelineEmptyState" class="text-center py-5">
+                                        <i class="fas fa-hand-pointer fa-3x text-gray-300 mb-3"></i>
+                                        <p class="text-gray-500">Selecione uma vaga para visualizar o pipeline.</p>
+                                    </div>
+                                    <!-- Container do gráfico (oculto inicialmente) -->
+                                    <div id="pipelineChartContainer" class="chart-bar d-none" style="height: 300px;">
+                                        <canvas id="pipelineByStageChart"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Tempo Médio por Estágio -->
+                        <div class="col-xl-6 col-lg-6">
+                            <div class="card shadow mb-4">
+                                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                                    <h6 class="m-0 font-weight-bold text-primary">
+                                        <i class="fas fa-clock mr-2"></i>Tempo Médio por Estágio (dias)
+                                    </h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="chart-bar" style="height: 300px;">
+                                        <canvas id="avgTimeByStageChart"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Row: Performance dos Gestores -->
+                    <div class="row">
+                        <!-- Performance dos Gestores -->
+                        <div class="col-12">
+                            <div class="card shadow mb-4">
+                                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                                    <h6 class="m-0 font-weight-bold text-primary">
+                                        <i class="fas fa-user-tie mr-2"></i>Performance dos Gestores
+                                    </h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="table-responsive">
+                                        <table class="table table-bordered" id="managerPerformanceTable" width="100%" cellspacing="0">
+                                            <thead>
+                                                <tr>
+                                                    <th>Gestor</th>
+                                                    <th class="text-center">Vagas Criadas</th>
+                                                    <th class="text-center">Vagas Preenchidas</th>
+                                                    <th class="text-center">Taxa de Sucesso</th>
+                                                    <th class="text-center">Tempo Médio (dias)</th>
+                                                    <th class="text-center">Tendência</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="managerPerformanceBody">
+                                                <!-- Dados serão carregados dinamicamente -->
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                 </div>
                 <!-- /.container-fluid -->
 
@@ -438,27 +575,41 @@
                 <div class="modal-body">Selecione "Sair" abaixo se você estiver pronto para encerrar sua sessão atual.</div>
                 <div class="modal-footer">
                     <button class="btn btn-secondary" type="button" data-dismiss="modal">Cancelar</button>
-                    <a class="btn btn-primary" href="login.html">Sair</a>
+                    <button class="btn btn-primary" type="button" onclick="handleLogout()">Sair</button>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Bootstrap core JavaScript-->
-    <script src="vendor/jquery/jquery.min.js"></script>
-    <script src="vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
 
-    <!-- Core plugin JavaScript-->
-    <script src="vendor/jquery-easing/jquery.easing.min.js"></script>
 
-    <!-- Custom scripts for all pages-->
-    <script src="js/sb-admin-2.min.js"></script>
+<!-- Bootstrap core JavaScript-->
+<script src="vendor/jquery/jquery.min.js"></script>
+<script src="vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
 
-    <!-- Page level plugins -->
-    <script src="vendor/chart.js/Chart.min.js"></script>
+<!-- Core plugin JavaScript-->
+<script src="vendor/jquery-easing/jquery.easing.min.js"></script>
 
-    <!-- Page level custom scripts -->
-    <script src="./assets/js/pages/dashboard.js"></script>
+<!-- Custom scripts for all pages-->
+<script src="js/sb-admin-2.min.js"></script>
+
+<!-- Chart.js -->
+<script src="vendor/chart.js/Chart.min.js"></script>
+
+<!-- Utils e Auth -->
+<script src="./assets/js/components/utils.js"></script>
+<script src="./assets/js/components/auth.js"></script>
+
+<!-- Agora dashboard.js roda de verdade -->
+<script type="module" src="./assets/js/pages/dashboard.js"></script>
+
+<script>
+  $(document).ready(function() {
+    if (window.Utils) {
+      Utils.updateUserName();
+    }
+  });
+</script>
 
 </body>
 

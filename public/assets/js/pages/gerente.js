@@ -58,6 +58,25 @@ function setupEventListeners() {
     if (cancelBtn) {
         cancelBtn.addEventListener("click", cancelEdit);
     }
+
+    // Toggle de visibilidade da senha
+    const togglePasswordBtn = document.getElementById("togglePasswordBtn");
+    if (togglePasswordBtn) {
+        togglePasswordBtn.addEventListener("click", togglePasswordVisibility);
+    }
+
+    // Validação em tempo real do campo de senha
+    const passwordInput = document.getElementById("password");
+    if (passwordInput) {
+        passwordInput.addEventListener("input", validatePasswordField);
+        passwordInput.addEventListener("blur", validatePasswordField);
+    }
+
+    // Checkbox para alterar senha (modo edição)
+    const changePasswordCheckbox = document.getElementById("changePasswordCheckbox");
+    if (changePasswordCheckbox) {
+        changePasswordCheckbox.addEventListener("change", handleChangePasswordCheckbox);
+    }
 }
 
 /**
@@ -147,10 +166,12 @@ async function handleFormSubmit(e) {
     const name = document.getElementById("name").value.trim();
     const email = document.getElementById("email").value.trim();
     const area = document.getElementById("area").value.trim();
+    const password = document.getElementById("password").value.trim();
+    const changePasswordCheckbox = document.getElementById("changePasswordCheckbox");
 
-    // Validação
+    // Validação básica
     if (!name || !email || !area) {
-        showNotification("Preencha todos os campos!", "warning");
+        showNotification("Preencha todos os campos obrigatórios!", "warning");
         return;
     }
 
@@ -159,12 +180,59 @@ async function handleFormSubmit(e) {
         return;
     }
 
-    const gerenteData = {
-        name,
-        email,
-        area,
-        levelAccess: "MANAGER" // Nível de acesso para Gerente (enum Kotlin)
-    };
+    // Validação de senha
+    if (!editingUserId && !password) {
+        // Modo criação - senha é obrigatória
+        showNotification("A senha é obrigatória para novo cadastro!", "warning");
+        document.getElementById("password").focus();
+        return;
+    }
+
+    // Se está editando e marcou para alterar senha, valida
+    if (editingUserId && changePasswordCheckbox && changePasswordCheckbox.checked) {
+        if (!password) {
+            showNotification("Preencha a nova senha para alterar!", "warning");
+            document.getElementById("password").focus();
+            return;
+        }
+        if (password.length < 6) {
+            showNotification("A senha deve ter no mínimo 6 caracteres!", "warning");
+            document.getElementById("password").focus();
+            return;
+        }
+    }
+
+    if (password && password.length < 6) {
+        showNotification("A senha deve ter no mínimo 6 caracteres!", "warning");
+        document.getElementById("password").focus();
+        return;
+    }
+
+    // Prepara dados do gerente
+    const gerenteData = {};
+    
+    // Campos básicos sempre enviados
+    if (name && name.trim()) gerenteData.name = name.trim();
+    if (email && email.trim()) gerenteData.email = email.trim();
+    if (area && area.trim()) gerenteData.area = area.trim();
+    
+    // levelAccess só é enviado na criação
+    if (!editingUserId) {
+        gerenteData.levelAccess = "MANAGER"; // Enum apenas na criação
+    }
+    
+    // Adiciona senha apenas se:
+    // 1. É novo cadastro (sempre obrigatória)
+    // 2. Está editando E checkbox marcado (senha será atualizada)
+    if (!editingUserId) {
+        // Modo criação - senha obrigatória
+        if (password && password.trim()) {
+            gerenteData.password = password.trim();
+        }
+    } else if (changePasswordCheckbox && changePasswordCheckbox.checked && password && password.trim().length > 0) {
+        // Modo edição - se checkbox está marcado, atualiza a senha
+        gerenteData.password = password.trim();
+    }
 
     try {
         const managerId = document.getElementById("managerId")?.value;
@@ -172,8 +240,9 @@ async function handleFormSubmit(e) {
         if (managerId || editingUserId) {
             // Modo edição - atualiza o gerente existente
             const id = managerId || editingUserId;
-            await usersClient.update(id, gerenteData);
-            showNotification("Gerente atualizado com sucesso!", "success");
+            await usersClient.updateUser(id, gerenteData);
+            const message = password ? "Gerente e senha atualizados com sucesso!" : "Gerente atualizado com sucesso!";
+            showNotification(message, "success");
             cancelEdit();
         } else {
             // Modo criação - insere novo gerente
@@ -218,6 +287,10 @@ async function editGerente(id) {
         document.getElementById("name").value = gerente.name || "";
         document.getElementById("email").value = gerente.email || "";
         document.getElementById("area").value = gerente.area || "";
+        // Limpa o campo de senha ao editar (não mostra a senha atual por segurança)
+        document.getElementById("password").value = "";
+        document.getElementById("password").removeAttribute("required");
+        document.getElementById("password").disabled = true;
         
         // Armazena o ID em campo hidden se existir
         const managerIdField = document.getElementById("managerId");
@@ -226,6 +299,27 @@ async function editGerente(id) {
         }
         
         editingUserId = id;
+
+        // Mostra checkbox para alterar senha
+        const changePasswordContainer = document.getElementById("changePasswordCheckboxContainer");
+        const changePasswordCheckbox = document.getElementById("changePasswordCheckbox");
+        if (changePasswordContainer) {
+            changePasswordContainer.style.display = "block";
+        }
+        if (changePasswordCheckbox) {
+            changePasswordCheckbox.checked = false;
+        }
+
+        // Atualiza hint e help text para modo edição
+        const passwordHint = document.getElementById("passwordHint");
+        const passwordHelp = document.getElementById("passwordHelp");
+        if (passwordHint) {
+            passwordHint.textContent = "(opcional - marque para alterar)";
+        }
+        if (passwordHelp) {
+            passwordHelp.textContent = "Marque a opção acima e preencha para alterar a senha";
+            passwordHelp.style.display = "block";
+        }
 
         // Muda o título do formulário
         const formTitle = document.getElementById("formTitle");
@@ -304,6 +398,42 @@ function clearForm() {
     if (managerIdField) managerIdField.value = "";
     
     editingUserId = null;
+    
+    // Esconde checkbox de alterar senha
+    const changePasswordContainer = document.getElementById("changePasswordCheckboxContainer");
+    const changePasswordCheckbox = document.getElementById("changePasswordCheckbox");
+    if (changePasswordContainer) {
+        changePasswordContainer.style.display = "none";
+    }
+    if (changePasswordCheckbox) {
+        changePasswordCheckbox.checked = false;
+    }
+    
+    // Restaura hint e help text para modo criação
+    const passwordHint = document.getElementById("passwordHint");
+    const passwordHelp = document.getElementById("passwordHelp");
+    if (passwordHint) {
+        passwordHint.textContent = "(obrigatória para novo cadastro)";
+    }
+    if (passwordHelp) {
+        passwordHelp.textContent = "Deixe em branco para manter a senha atual (ao editar)";
+        passwordHelp.style.display = "none";
+    }
+    
+    // Restaura tipo de input para password e habilita campo
+    const passwordInput = document.getElementById("password");
+    if (passwordInput) {
+        passwordInput.type = "password";
+        passwordInput.setAttribute("required", "");
+        passwordInput.disabled = false;
+    }
+    
+    // Restaura ícone do toggle
+    const toggleIcon = document.getElementById("togglePasswordIcon");
+    if (toggleIcon) {
+        toggleIcon.classList.remove("fa-eye-slash");
+        toggleIcon.classList.add("fa-eye");
+    }
 }
 
 /**
@@ -402,6 +532,79 @@ function escapeHtml(text) {
     const div = document.createElement("div");
     div.textContent = text;
     return div.innerHTML;
+}
+
+/**
+ * Alterna visibilidade da senha
+ */
+function togglePasswordVisibility() {
+    const passwordInput = document.getElementById("password");
+    const toggleIcon = document.getElementById("togglePasswordIcon");
+    
+    if (!passwordInput || !toggleIcon) return;
+    
+    if (passwordInput.type === "password") {
+        passwordInput.type = "text";
+        toggleIcon.classList.remove("fa-eye");
+        toggleIcon.classList.add("fa-eye-slash");
+    } else {
+        passwordInput.type = "password";
+        toggleIcon.classList.remove("fa-eye-slash");
+        toggleIcon.classList.add("fa-eye");
+    }
+}
+
+/**
+ * Manipula checkbox de alterar senha
+ */
+function handleChangePasswordCheckbox() {
+    const checkbox = document.getElementById("changePasswordCheckbox");
+    const passwordInput = document.getElementById("password");
+    
+    if (!checkbox || !passwordInput) return;
+    
+    if (checkbox.checked) {
+        // Habilita campo de senha quando checkbox está marcado
+        passwordInput.disabled = false;
+        passwordInput.focus();
+        passwordInput.setAttribute("required", "");
+    } else {
+        // Desabilita e limpa campo quando checkbox está desmarcado
+        passwordInput.disabled = true;
+        passwordInput.value = "";
+        passwordInput.removeAttribute("required");
+        passwordInput.classList.remove("is-valid", "is-invalid");
+    }
+}
+
+/**
+ * Valida campo de senha em tempo real
+ */
+function validatePasswordField() {
+    const passwordInput = document.getElementById("password");
+    if (!passwordInput || passwordInput.disabled) return;
+    
+    const password = passwordInput.value.trim();
+    
+    // Remove classes de validação anteriores
+    passwordInput.classList.remove("is-valid", "is-invalid");
+    
+    // Se está em modo de edição e campo está vazio, não valida (é opcional)
+    if (editingUserId && !password) {
+        return;
+    }
+    
+    // Se está em modo de criação ou campo preenchido, valida
+    if (!editingUserId && !password) {
+        // Em modo criação, senha é obrigatória mas validação será feita no submit
+        return;
+    }
+    
+    if (password && password.length < 6) {
+        passwordInput.classList.add("is-invalid");
+    } else if (password && password.length >= 6) {
+        passwordInput.classList.add("is-valid");
+    }
 }
 
 // Exporta funções para uso global (se necessário)
