@@ -223,7 +223,7 @@ function createCandidateItem(match) {
     const vacancy = match.vacancy || {};
     
     // Calcular idade a partir da data de nascimento
-    const age = calculateAge(candidate.birthDate);
+    const age = calculateAge(candidate.birth);
     
     // Obter texto e classe do badge de match
     const matchLevel = match.matchLevel || 'BAIXO';
@@ -240,13 +240,13 @@ function createCandidateItem(match) {
         </div>
         <div class="candidate-info">
             <h3>${candidate.name || 'Nome não informado'}</h3>
-            <p>${age ? age + ' Anos' : ''} ${candidate.city ? ', ' + candidate.city : ''}</p>
-            <a href="#" class="view-more" data-candidate-id="${candidate.id}">Ver mais</a>
+            <p>${age ? age + ' Anos' : ''} ${candidate.state}</p>
+            <a href="#" class="view-more" data-candidate-id="${candidate.idCandidate}">Ver mais</a>
         </div>
         <div class="candidate-details">
-            <p><strong>Vaga:</strong> ${vacancy.title || vacancy.name || 'Não informada'}</p>
+            <p><strong>Vaga:</strong> ${vacancy.position_job}</p>
             <p><strong>Área:</strong> ${vacancy.area || 'Não informada'}</p>
-            <p><strong>Score:</strong> ${match.matchScore ? match.matchScore.toFixed(1) + '%' : 'N/A'}</p>
+            <p><strong>Score:</strong> ${match.score ? match.score.toFixed(1) + '%' : 'N/A'}</p>
         </div>
         <div class="candidate-actions">
             <button class="btn-action btn-approve ${status === 'aceito' ? 'approved' : ''}" 
