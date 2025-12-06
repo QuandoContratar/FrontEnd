@@ -170,15 +170,6 @@
                             </a>
                             <!-- Dropdown - User Information -->
                             <div class="dropdown-menu dropdown-menu-right shadow animated--grow-in" aria-labelledby="userDropdown">
-                                <a class="dropdown-item" href="#">
-                                    <i class="fas fa-user fa-sm fa-fw mr-2 text-gray-400"></i>
-                                    Perfil
-                                </a>
-                                <a class="dropdown-item" href="#">
-                                    <i class="fas fa-cogs fa-sm fa-fw mr-2 text-gray-400"></i>
-                                    Configurações
-                                </a>
-                                <div class="dropdown-divider"></div>
                                 <a class="dropdown-item" href="#" data-toggle="modal" data-target="#logoutModal">
                                     <i class="fas fa-sign-out-alt fa-sm fa-fw mr-2 text-gray-400"></i>
                                     Sair
@@ -200,9 +191,14 @@
                             <h1 class="h3 mb-0 text-gray-800">KANBAN DE RECRUTAMENTO</h1>
                             <p class="mb-0 text-gray-600">Organize o processo de recrutamento</p>
                         </div>
-                        <div class="search-bar">
-                            <i class="fas fa-search"></i>
-                            <input type="text" placeholder="Buscar candidatos...">
+                        <div class="d-flex align-items-center gap-3">
+                            <button id="btnLoadTestData" class="btn btn-sm btn-info" title="Carregar dados de teste">
+                                <i class="fas fa-database"></i> Carregar Testes
+                            </button>
+                            <div class="search-bar">
+                                <i class="fas fa-search"></i>
+                                <input type="text" placeholder="Buscar candidatos...">
+                            </div>
                         </div>
                     </div>
 
@@ -215,99 +211,29 @@
                                 <span class="count">3</span>
                             </div>
                             <div class="column-content">
-                                <!-- Card 1 -->
-                                <div class="kanban-card">
-                                    <div class="card-header">
-                                        <h4>João Silva</h4>
-                                        <span class="priority high">Alta</span>
-                                    </div>
-                                    <div class="card-content">
-                                        <p><strong>Vaga:</strong> Desenvolvedor Python</p>
-                                        <p><strong>Área:</strong> Tecnologia</p>
-                                        <p><strong>Status:</strong> Aguardando triagem</p>
-                                    </div>
-                                    <div class="card-actions">
-                                        <button class="btn-action btn-primary">Avançar</button>
-                                        <button class="btn-action btn-secondary">Detalhes</button>
-                                    </div>
-                                </div>
-
-                                <!-- Card 2 -->
-                                <div class="kanban-card">
-                                    <div class="card-header">
-                                        <h4>Maria Santos</h4>
-                                        <span class="priority medium">Média</span>
-                                    </div>
-                                    <div class="card-content">
-                                        <p><strong>Vaga:</strong> Analista de Dados</p>
-                                        <p><strong>Área:</strong> Dados</p>
-                                        <p><strong>Status:</strong> Em análise</p>
-                                    </div>
-                                    <div class="card-actions">
-                                        <button class="btn-action btn-primary">Avançar</button>
-                                        <button class="btn-action btn-secondary">Detalhes</button>
-                                    </div>
-                                </div>
-
-                                <!-- Card 3 -->
-                                <div class="kanban-card">
-                                    <div class="card-header">
-                                        <h4>Pedro Costa</h4>
-                                        <span class="priority low">Baixa</span>
-                                    </div>
-                                    <div class="card-content">
-                                        <p><strong>Vaga:</strong> Designer UX/UI</p>
-                                        <p><strong>Área:</strong> Design</p>
-                                        <p><strong>Status:</strong> Novo</p>
-                                    </div>
-                                    <div class="card-actions">
-                                        <button class="btn-action btn-primary">Avançar</button>
-                                        <button class="btn-action btn-secondary">Detalhes</button>
-                                    </div>
-                                </div>
+                                <!-- Cards serão renderizados dinamicamente pelo JavaScript -->
                             </div>
                         </div>
 
-                        <!-- Coluna 2: Entrevista RH -->
-                        <div class="kanban-column" data-stage="triagem_inicial">
+                        <!-- Coluna 2: Triagem -->
+                        <div class="kanban-column" data-stage="triagem">
                             <div class="column-header">
-                                <h3>Triagem Inicial</h3>
-                                <span class="count">2</span>
+                                <h3>Triagem</h3>
+                                <span class="count">0</span>
                             </div>
                             <div class="column-content">
-                                <!-- Card 1 -->
-                                <div class="kanban-card">
-                                    <div class="card-header">
-                                        <h4>Ana Oliveira</h4>
-                                        <span class="priority high">Alta</span>
-                                    </div>
-                                    <div class="card-content">
-                                        <p><strong>Vaga:</strong> Gerente de Projetos</p>
-                                        <p><strong>Área:</strong> Gestão</p>
-                                        <p><strong>Status:</strong> Agendada</p>
-                                    </div>
-                                    <div class="card-actions">
-                                        <button class="btn-action btn-primary">Avançar</button>
-                                        <button class="btn-action btn-secondary">Detalhes</button>
-                                    </div>
-                                </div>
+                                <!-- Cards serão renderizados dinamicamente pelo JavaScript -->
+                            </div>
+                        </div>
 
-                                <!-- Card 2 -->
-                                <div class="kanban-card">
-                                    <div class="card-header">
-                                        <h4>Carlos Lima</h4>
-                                        <span class="priority medium">Média</span>
-                                    </div>
-                                    <div class="card-content">
-                                        <p><strong>Vaga:</strong> Desenvolvedor Full-Stack</p>
-                                        <p><strong>Área:</strong> Tecnologia</p>
-                                        <p><strong>Status:</strong> Em andamento</p>
-                                    </div>
-                                    <div class="card-actions">
-                                        <button class="btn-action btn-primary">Avançar</button>
-                                        <button class="btn-action btn-secondary">Detalhes</button>
-                                    </div>
-                                </div>
+                        <!-- Coluna 3: Entrevista RH -->
+                        <div class="kanban-column" data-stage="entrevista_rh">
+                            <div class="column-header">
+                                <h3>Entrevista RH</h3>
+                                <span class="count">0</span>
+                            </div>
+                            <div class="column-content">
+                                <!-- Cards serão renderizados dinamicamente pelo JavaScript -->
                             </div>
                         </div>
 
@@ -318,22 +244,7 @@
                                 <span class="count">1</span>
                             </div>
                             <div class="column-content">
-                                <!-- Card 1 -->
-                                <div class="kanban-card">
-                                    <div class="card-header">
-                                        <h4>Lucas Ferreira</h4>
-                                        <span class="priority high">Alta</span>
-                                    </div>
-                                    <div class="card-content">
-                                        <p><strong>Vaga:</strong> Arquiteto de Software</p>
-                                        <p><strong>Área:</strong> Tecnologia</p>
-                                        <p><strong>Status:</strong> Finalizada</p>
-                                    </div>
-                                    <div class="card-actions">
-                                        <button class="btn-action btn-success">Aprovar</button>
-                                        <button class="btn-action btn-danger">Reprovar</button>
-                                    </div>
-                                </div>
+                                <!-- Cards serão renderizados dinamicamente pelo JavaScript -->
                             </div>
                         </div>
 
@@ -343,22 +254,7 @@
                                 <span class="count">1</span>
                             </div>
                             <div class="column-content">
-                                <!-- Card 1 -->
-                                <div class="kanban-card">
-                                    <div class="card-header">
-                                        <h4>Lucas Ferreira</h4>
-                                        <span class="priority high">Alta</span>
-                                    </div>
-                                    <div class="card-content">
-                                        <p><strong>Vaga:</strong> Arquiteto de Software</p>
-                                        <p><strong>Área:</strong> Tecnologia</p>
-                                        <p><strong>Status:</strong> Finalizada</p>
-                                    </div>
-                                    <div class="card-actions">
-                                        <button class="btn-action btn-success">Aprovar</button>
-                                        <button class="btn-action btn-danger">Reprovar</button>
-                                    </div>
-                                </div>
+                                <!-- Cards serão renderizados dinamicamente pelo JavaScript -->
                             </div>
                         </div>
 
@@ -368,22 +264,7 @@
                                 <span class="count">1</span>
                             </div>
                             <div class="column-content">
-                                <!-- Card 1 -->
-                                <div class="kanban-card">
-                                    <div class="card-header">
-                                        <h4>Lucas Ferreira</h4>
-                                        <span class="priority high">Alta</span>
-                                    </div>
-                                    <div class="card-content">
-                                        <p><strong>Vaga:</strong> Arquiteto de Software</p>
-                                        <p><strong>Área:</strong> Tecnologia</p>
-                                        <p><strong>Status:</strong> Finalizada</p>
-                                    </div>
-                                    <div class="card-actions">
-                                        <button class="btn-action btn-success">Aprovar</button>
-                                        <button class="btn-action btn-danger">Reprovar</button>
-                                    </div>
-                                </div>
+                                <!-- Cards serão renderizados dinamicamente pelo JavaScript -->
                             </div>
                         </div>
 
@@ -393,22 +274,7 @@
                                 <span class="count">1</span>
                             </div>
                             <div class="column-content">
-                                <!-- Card 1 -->
-                                <div class="kanban-card">
-                                    <div class="card-header">
-                                        <h4>Lucas Ferreira</h4>
-                                        <span class="priority high">Alta</span>
-                                    </div>
-                                    <div class="card-content">
-                                        <p><strong>Vaga:</strong> Arquiteto de Software</p>
-                                        <p><strong>Área:</strong> Tecnologia</p>
-                                        <p><strong>Status:</strong> Finalizada</p>
-                                    </div>
-                                    <div class="card-actions">
-                                        <button class="btn-action btn-success">Aprovar</button>
-                                        <button class="btn-action btn-danger">Reprovar</button>
-                                    </div>
-                                </div>
+                                <!-- Cards serão renderizados dinamicamente pelo JavaScript -->
                             </div>
                         </div>
 
@@ -418,22 +284,7 @@
                                 <span class="count">1</span>
                             </div>
                             <div class="column-content">
-                                <!-- Card 1 -->
-                                <div class="kanban-card">
-                                    <div class="card-header">
-                                        <h4>Lucas Ferreira</h4>
-                                        <span class="priority high">Alta</span>
-                                    </div>
-                                    <div class="card-content">
-                                        <p><strong>Vaga:</strong> Arquiteto de Software</p>
-                                        <p><strong>Área:</strong> Tecnologia</p>
-                                        <p><strong>Status:</strong> Finalizada</p>
-                                    </div>
-                                    <div class="card-actions">
-                                        <button class="btn-action btn-success">Aprovar</button>
-                                        <button class="btn-action btn-danger">Reprovar</button>
-                                    </div>
-                                </div>
+                                <!-- Cards serão renderizados dinamicamente pelo JavaScript -->
                             </div>
                         </div>
 
@@ -443,22 +294,7 @@
                                 <span class="count">1</span>
                             </div>
                             <div class="column-content">
-                                <!-- Card 1 -->
-                                <div class="kanban-card">
-                                    <div class="card-header">
-                                        <h4>Lucas Ferreira</h4>
-                                        <span class="priority high">Alta</span>
-                                    </div>
-                                    <div class="card-content">
-                                        <p><strong>Vaga:</strong> Arquiteto de Software</p>
-                                        <p><strong>Área:</strong> Tecnologia</p>
-                                        <p><strong>Status:</strong> Finalizada</p>
-                                    </div>
-                                    <div class="card-actions">
-                                        <button class="btn-action btn-success">Aprovar</button>
-                                        <button class="btn-action btn-danger">Reprovar</button>
-                                    </div>
-                                </div>
+                                <!-- Cards serão renderizados dinamicamente pelo JavaScript -->
                             </div>
                         </div>
                     </div>

@@ -3,17 +3,21 @@
    RH - Gerenciamento de Membros do RH e Aprovação de Vagas
    ======================================== */
 
-import { UsersClient, OpeningRequestClient } from '../../../client/client.js';
+import { UsersClient, OpeningRequestClient, VacanciesClient } from '../../../client/client.js';
 
 // Instâncias globais dos clientes
 const usersClient = new UsersClient();
 const openingRequestClient = new OpeningRequestClient();
+const vacanciesClient = new VacanciesClient();
 
 // Variável para controlar modo de edição
 let editingUserId = null;
 
 // Estado para aprovações
 let pendingRequests = [];
+let pendingVacancies = [];
+let approvedVacancies = [];
+let rejectedVacancies = [];
 
 // Inicialização quando o DOM estiver pronto
 document.addEventListener("DOMContentLoaded", async () => {
@@ -50,17 +54,30 @@ function setupEventListeners() {
         searchInput.addEventListener("keyup", handleSearch);
     }
 
-    // Campo de busca de aprovações
+    // Campo de busca de aprovações (pendentes)
     const searchApprovalsInput = document.getElementById("searchApprovalsInput");
     if (searchApprovalsInput) {
         searchApprovalsInput.addEventListener("keyup", handleApprovalsSearch);
     }
 
-    // Botão de recarregar aprovações
+    // Campo de busca de aprovadas
+    const searchApprovedInput = document.getElementById("searchApprovedInput");
+    if (searchApprovedInput) {
+        searchApprovedInput.addEventListener("keyup", handleApprovedSearch);
+    }
+
+    // Campo de busca de rejeitadas
+    const searchRejectedInput = document.getElementById("searchRejectedInput");
+    if (searchRejectedInput) {
+        searchRejectedInput.addEventListener("keyup", handleRejectedSearch);
+    }
+
+    // Botão de recarregar aprovações - agora recarrega TODAS as listas
     const refreshApprovalsBtn = document.getElementById("refreshApprovalsBtn");
     if (refreshApprovalsBtn) {
         refreshApprovalsBtn.addEventListener("click", async () => {
-            await loadPendingRequests();
+            console.log('🔄 [RH] Recarregando todas as listas de vagas...');
+            await loadAllVacancyLists();
         });
     }
 
@@ -100,13 +117,31 @@ function setupEventListeners() {
  * Configura listeners para as tabs
  */
 function setupTabsListeners() {
-    // Quando a tab de aprovações é ativada, carrega as solicitações pendentes
+    // Quando a tab de aprovações é ativada, carrega TODAS as listas de vagas
     const approvalsTab = document.getElementById('approvals-tab');
     if (approvalsTab) {
-        approvalsTab.addEventListener('shown.bs.tab', async () => {
-            await loadPendingRequests();
+        // Bootstrap 4 usa 'show.bs.tab' ou evento jQuery
+        $(approvalsTab).on('shown.bs.tab', async () => {
+            console.log('📋 [RH] Tab de aprovações ativada, carregando todas as listas de vagas...');
+            await loadAllVacancyLists();
         });
     }
+}
+
+/**
+ * Carrega todas as listas de vagas (pendentes, aprovadas, rejeitadas)
+ */
+async function loadAllVacancyLists() {
+    console.log('🔄 [RH] ========== CARREGANDO TODAS AS LISTAS DE VAGAS ==========');
+    
+    // Carrega as 3 listas em paralelo para maior performance
+    await Promise.all([
+        loadPendingVacancies(),
+        loadApprovedVacancies(),
+        loadRejectedVacancies()
+    ]);
+    
+    console.log('✅ [RH] ========== TODAS AS LISTAS CARREGADAS ==========');
 }
 
 /**
@@ -634,6 +669,528 @@ async function loadPendingRequests() {
 }
 
 /**
+ * Resolve o ID da vaga a partir de múltiplos campos possíveis
+ * @param {Object} vacancy - Objeto da vaga
+ * @returns {string|number|null} - ID da vaga ou null
+ */
+function resolveVacancyId(vacancy) {
+    return vacancy.id_vacancy ||
+           vacancy.idVacancy ||
+           vacancy.id ||
+           vacancy.vacancyId ||
+           vacancy.id_vaga ||
+           vacancy.vagaId ||
+           null;
+}
+
+/**
+ * Carrega vagas pendentes de aprovação (status pendente_aprovacao)
+ * GET /vacancies/pendingVacancies ou /vacancies/status/pendente_aprovacao
+ */
+async function loadPendingVacancies() {
+    try {
+        showApprovalsLoading(true);
+        
+        console.log('🔍 [RH] Buscando vagas pendentes de aprovação...');
+        
+        const data = await vacanciesClient.getPendingVacancies();
+        
+        pendingVacancies = Array.isArray(data) ? data : (data ? [data] : []);
+        console.log(`✅ [RH] Total de vagas pendentes: ${pendingVacancies.length}`);
+        
+        // Log detalhado dos IDs para debug
+        pendingVacancies.forEach((v, i) => {
+            const id = resolveVacancyId(v);
+            const cargo = v.position || v.position_job || v.positionJob || v.cargo;
+            console.log(`📋 [RH] Vaga ${i + 1}: ID=${id}, Cargo=${cargo}`, v);
+            if (!id) {
+                console.warn(`⚠️ [RH] Vaga ${i + 1} sem ID! Campos disponíveis:`, Object.keys(v));
+            }
+        });
+        
+        renderPendingVacancies(pendingVacancies);
+        updatePendingCount();
+        
+        if (pendingVacancies.length === 0) {
+            showNotification("Nenhuma vaga pendente de aprovação.", "info");
+        }
+    } catch (error) {
+        console.error("❌ [RH] Erro ao carregar vagas pendentes:", error);
+        showNotification(`Erro ao carregar vagas pendentes! ${error.message || ''}`, "danger");
+        pendingVacancies = [];
+        renderPendingVacancies([]);
+    } finally {
+        showApprovalsLoading(false);
+    }
+}
+
+/**
+ * Renderiza a lista de vagas pendentes na tabela
+ * @param {Array} vacancies - Lista de vagas
+ */
+function renderPendingVacancies(vacancies) {
+    const tableBody = document.getElementById("approvalsTableBody");
+    if (!tableBody) return;
+
+    tableBody.innerHTML = "";
+
+    if (vacancies.length === 0) {
+        tableBody.innerHTML = `
+            <tr>
+                <td colspan="11" class="text-center text-muted">
+                    <i class="fas fa-inbox fa-2x mb-2"></i>
+                    <p>Nenhuma vaga pendente de aprovação</p>
+                </td>
+            </tr>
+        `;
+        return;
+    }
+
+    vacancies.forEach((vacancy, index) => {
+        console.log(`🎨 [RH] Renderizando vaga ${index + 1}:`, vacancy);
+        
+        const tr = document.createElement("tr");
+        const vacancyId = resolveVacancyId(vacancy);
+        
+        // Aviso se ID não foi encontrado
+        if (!vacancyId) {
+            console.warn(`⚠️ [RH] Vaga ${index + 1} sem ID válido! Botão de aprovar não funcionará.`);
+        }
+        
+        tr.dataset.id = vacancyId || '';
+
+
+
+        // Extrai dados da vaga (backend retorna 'position' ao invés de 'position_job')
+        const gestorName = vacancy.manager?.name || vacancy.gestor?.name || vacancy.managerName || 'N/A';
+        const cargo = vacancy.position || vacancy.position_job || vacancy.positionJob || vacancy.cargo || 'N/A';
+        const area = vacancy.area || 'N/A';
+        const periodo = vacancy.period || vacancy.periodo || 'N/A';
+        const modelo = vacancy.workModel || vacancy.work_model || vacancy.modelo_trabalho || 'N/A';
+        const regime = vacancy.contractType || vacancy.contract_type || vacancy.regime_contratacao || 'N/A';
+        
+        // Formata salário
+        let salarioFormatado = 'N/A';
+        const salarioValue = vacancy.salary || vacancy.salario;
+        if (salarioValue) {
+            try {
+                salarioFormatado = new Intl.NumberFormat('pt-BR', { 
+                    style: 'currency', 
+                    currency: 'BRL' 
+                }).format(Number(salarioValue));
+            } catch (e) {
+                salarioFormatado = `R$ ${salarioValue}`;
+            }
+        }
+        
+        const localidade = vacancy.location || vacancy.localidade || 'N/A';
+        const status = vacancy.statusVacancy || vacancy.status_vacancy || vacancy.status || 'pendente_aprovacao';
+
+        tr.innerHTML = `
+            <td>${escapeHtml(gestorName)}</td>
+            <td>${escapeHtml(cargo)}</td>
+            <td>${escapeHtml(area)}</td>
+            <td>${escapeHtml(periodo)}</td>
+            <td>${escapeHtml(modelo)}</td>
+            <td>${escapeHtml(regime)}</td>
+            <td>${salarioFormatado}</td>
+            <td>${escapeHtml(localidade)}</td>
+            <td>${getVacancyStatusBadge(status)}</td>
+            <td>
+                <button class="btn btn-success btn-sm approve-btn" data-id="${vacancyId}" title="Aprovar Vaga">
+                    <i class="fas fa-check"></i>
+                </button>
+                <button class="btn btn-danger btn-sm reject-btn ml-1" data-id="${vacancyId}" title="Rejeitar Vaga">
+                    <i class="fas fa-times"></i>
+                </button>
+                <button class="btn btn-info btn-sm view-vacancy-btn ml-1" data-id="${vacancyId}" title="Ver Detalhes">
+                    <i class="fas fa-eye"></i>
+                </button>
+            </td>
+        `;
+
+        tableBody.appendChild(tr);
+    });
+}
+
+/**
+ * ========================================
+ * SEÇÃO: VAGAS APROVADAS (status = 'aberta')
+ * ========================================
+ */
+
+/**
+ * Carrega vagas aprovadas (status = 'aberta')
+ * GET /vacancies/status/aberta
+ */
+async function loadApprovedVacancies() {
+    try {
+        console.log('🔍 [RH] Buscando vagas APROVADAS (status=aberta)...');
+        
+        const data = await vacanciesClient.getApprovedVacancies();
+        
+        approvedVacancies = Array.isArray(data) ? data : (data ? [data] : []);
+        console.log(`✅ [RH] Total de vagas aprovadas: ${approvedVacancies.length}`);
+        
+        // Log detalhado para debug
+        approvedVacancies.forEach((v, i) => {
+            const id = resolveVacancyId(v);
+            const cargo = v.position || v.position_job || v.positionJob || v.cargo;
+            console.log(`📗 [RH] Vaga Aprovada ${i + 1}: ID=${id}, Cargo=${cargo}`);
+        });
+        
+        renderApprovedVacancies(approvedVacancies);
+        updateApprovedCount();
+        
+    } catch (error) {
+        console.error("❌ [RH] Erro ao carregar vagas aprovadas:", error);
+        approvedVacancies = [];
+        renderApprovedVacancies([]);
+    }
+}
+
+/**
+ * Renderiza a lista de vagas aprovadas na tabela
+ * @param {Array} vacancies - Lista de vagas aprovadas
+ */
+function renderApprovedVacancies(vacancies) {
+    const tableBody = document.getElementById("approvedVacanciesTableBody");
+    if (!tableBody) {
+        console.warn('⚠️ [RH] Elemento approvedVacanciesTableBody não encontrado');
+        return;
+    }
+
+    tableBody.innerHTML = "";
+
+    if (vacancies.length === 0) {
+        tableBody.innerHTML = `
+            <tr>
+                <td colspan="9" class="text-center text-muted">
+                    <i class="fas fa-check-circle fa-2x mb-2 text-success"></i>
+                    <p>Nenhuma vaga aprovada no momento</p>
+                </td>
+            </tr>
+        `;
+        return;
+    }
+
+    vacancies.forEach((vacancy, index) => {
+        const tr = document.createElement("tr");
+        const vacancyId = resolveVacancyId(vacancy);
+        tr.dataset.id = vacancyId || '';
+
+        // Extrai dados da vaga
+        const gestorName = vacancy.manager?.name || vacancy.gestor?.name || vacancy.managerName || 'N/A';
+        const cargo = vacancy.position || vacancy.position_job || vacancy.positionJob || vacancy.cargo || 'N/A';
+        const area = vacancy.area || 'N/A';
+        const modelo = vacancy.workModel || vacancy.work_model || vacancy.modelo_trabalho || 'N/A';
+        const regime = vacancy.contractType || vacancy.contract_type || vacancy.regime_contratacao || 'N/A';
+        
+        // Formata salário
+        let salarioFormatado = 'N/A';
+        const salarioValue = vacancy.salary || vacancy.salario;
+        if (salarioValue) {
+            try {
+                salarioFormatado = new Intl.NumberFormat('pt-BR', { 
+                    style: 'currency', 
+                    currency: 'BRL' 
+                }).format(Number(salarioValue));
+            } catch (e) {
+                salarioFormatado = `R$ ${salarioValue}`;
+            }
+        }
+        
+        const localidade = vacancy.location || vacancy.localidade || 'N/A';
+        const status = vacancy.statusVacancy || vacancy.status_vacancy || vacancy.status || 'aberta';
+
+        tr.innerHTML = `
+            <td><strong>${vacancyId || '-'}</strong></td>
+            <td>${escapeHtml(cargo)}</td>
+            <td>${escapeHtml(area)}</td>
+            <td>${escapeHtml(modelo)}</td>
+            <td>${escapeHtml(regime)}</td>
+            <td>${salarioFormatado}</td>
+            <td>${escapeHtml(localidade)}</td>
+            <td>${escapeHtml(gestorName)}</td>
+            <td>${getVacancyStatusBadge(status)}</td>
+        `;
+
+        tableBody.appendChild(tr);
+    });
+}
+
+/**
+ * Atualiza contador de vagas aprovadas
+ */
+function updateApprovedCount() {
+    const countBadge = document.getElementById("approvedVacanciesCount");
+    if (countBadge) {
+        countBadge.textContent = approvedVacancies.length;
+    }
+}
+
+/**
+ * ========================================
+ * SEÇÃO: VAGAS REJEITADAS (status = 'rejeitada')
+ * ========================================
+ */
+
+/**
+ * Carrega vagas rejeitadas (status = 'rejeitada')
+ * GET /vacancies/status/rejeitada
+ */
+async function loadRejectedVacancies() {
+    try {
+        console.log('🔍 [RH] Buscando vagas REJEITADAS (status=rejeitada)...');
+        
+        const data = await vacanciesClient.getRejectedVacancies();
+        
+        rejectedVacancies = Array.isArray(data) ? data : (data ? [data] : []);
+        console.log(`✅ [RH] Total de vagas rejeitadas: ${rejectedVacancies.length}`);
+        
+        // Log detalhado para debug
+        rejectedVacancies.forEach((v, i) => {
+            const id = resolveVacancyId(v);
+            const cargo = v.position || v.position_job || v.positionJob || v.cargo;
+            console.log(`📕 [RH] Vaga Rejeitada ${i + 1}: ID=${id}, Cargo=${cargo}`);
+        });
+        
+        renderRejectedVacancies(rejectedVacancies);
+        updateRejectedCount();
+        
+    } catch (error) {
+        console.error("❌ [RH] Erro ao carregar vagas rejeitadas:", error);
+        rejectedVacancies = [];
+        renderRejectedVacancies([]);
+    }
+}
+
+/**
+ * Renderiza a lista de vagas rejeitadas na tabela
+ * @param {Array} vacancies - Lista de vagas rejeitadas
+ */
+function renderRejectedVacancies(vacancies) {
+    const tableBody = document.getElementById("rejectedVacanciesTableBody");
+    if (!tableBody) {
+        console.warn('⚠️ [RH] Elemento rejectedVacanciesTableBody não encontrado');
+        return;
+    }
+
+    tableBody.innerHTML = "";
+
+    if (vacancies.length === 0) {
+        tableBody.innerHTML = `
+            <tr>
+                <td colspan="9" class="text-center text-muted">
+                    <i class="fas fa-times-circle fa-2x mb-2 text-danger"></i>
+                    <p>Nenhuma vaga rejeitada no momento</p>
+                </td>
+            </tr>
+        `;
+        return;
+    }
+
+    vacancies.forEach((vacancy, index) => {
+        const tr = document.createElement("tr");
+        const vacancyId = resolveVacancyId(vacancy);
+        tr.dataset.id = vacancyId || '';
+
+        // Extrai dados da vaga
+        const gestorName = vacancy.manager?.name || vacancy.gestor?.name || vacancy.managerName || 'N/A';
+        const cargo = vacancy.position || vacancy.position_job || vacancy.positionJob || vacancy.cargo || 'N/A';
+        const area = vacancy.area || 'N/A';
+        const modelo = vacancy.workModel || vacancy.work_model || vacancy.modelo_trabalho || 'N/A';
+        const regime = vacancy.contractType || vacancy.contract_type || vacancy.regime_contratacao || 'N/A';
+        
+        // Formata salário
+        let salarioFormatado = 'N/A';
+        const salarioValue = vacancy.salary || vacancy.salario;
+        if (salarioValue) {
+            try {
+                salarioFormatado = new Intl.NumberFormat('pt-BR', { 
+                    style: 'currency', 
+                    currency: 'BRL' 
+                }).format(Number(salarioValue));
+            } catch (e) {
+                salarioFormatado = `R$ ${salarioValue}`;
+            }
+        }
+        
+        const localidade = vacancy.location || vacancy.localidade || 'N/A';
+        const status = vacancy.statusVacancy || vacancy.status_vacancy || vacancy.status || 'rejeitada';
+
+        tr.innerHTML = `
+            <td><strong>${vacancyId || '-'}</strong></td>
+            <td>${escapeHtml(cargo)}</td>
+            <td>${escapeHtml(area)}</td>
+            <td>${escapeHtml(modelo)}</td>
+            <td>${escapeHtml(regime)}</td>
+            <td>${salarioFormatado}</td>
+            <td>${escapeHtml(localidade)}</td>
+            <td>${escapeHtml(gestorName)}</td>
+            <td>${getVacancyStatusBadge(status)}</td>
+        `;
+
+        tableBody.appendChild(tr);
+    });
+}
+
+/**
+ * Atualiza contador de vagas rejeitadas
+ */
+function updateRejectedCount() {
+    const countBadge = document.getElementById("rejectedVacanciesCount");
+    if (countBadge) {
+        countBadge.textContent = rejectedVacancies.length;
+    }
+}
+
+/**
+ * ========================================
+ * SEÇÃO: FUNÇÕES DE BUSCA
+ * ========================================
+ */
+
+/**
+ * Manipula busca na tabela de vagas aprovadas
+ * @param {Event} e - Evento de keyup
+ */
+function handleApprovedSearch(e) {
+    const searchTerm = e.target.value.toLowerCase();
+    const rows = document.querySelectorAll("#approvedVacanciesTableBody tr");
+
+    rows.forEach(row => {
+        const text = row.textContent.toLowerCase();
+        row.style.display = text.includes(searchTerm) ? "" : "none";
+    });
+}
+
+/**
+ * Manipula busca na tabela de vagas rejeitadas
+ * @param {Event} e - Evento de keyup
+ */
+function handleRejectedSearch(e) {
+    const searchTerm = e.target.value.toLowerCase();
+    const rows = document.querySelectorAll("#rejectedVacanciesTableBody tr");
+
+    rows.forEach(row => {
+        const text = row.textContent.toLowerCase();
+        row.style.display = text.includes(searchTerm) ? "" : "none";
+    });
+}
+
+/**
+ * Retorna badge de status para vagas
+ * @param {string} status - Status da vaga
+ */
+function getVacancyStatusBadge(status) {
+    const statusMap = {
+        'pendente_aprovacao': { class: 'badge-warning', text: 'Pendente' },
+        'aberta': { class: 'badge-success', text: 'Aberta' },
+        'fechada': { class: 'badge-secondary', text: 'Fechada' },
+        'cancelada': { class: 'badge-danger', text: 'Cancelada' },
+        'rejeitada': { class: 'badge-danger', text: 'Rejeitada' }
+    };
+
+    const statusLower = String(status || '').toLowerCase();
+    const statusInfo = statusMap[statusLower] || { class: 'badge-secondary', text: status || 'N/A' };
+    return `<span class="badge ${statusInfo.class}">${statusInfo.text}</span>`;
+}
+
+/**
+ * Visualiza detalhes de uma vaga
+ * @param {string|number} id - ID da vaga
+ */
+function viewVacancyDetails(id) {
+    const vacancy = pendingVacancies.find(v => {
+        const vId = resolveVacancyId(v);
+        return vId == id;
+    });
+    
+    if (!vacancy) {
+        showNotification("Vaga não encontrada!", "warning");
+        return;
+    }
+
+    // Resolve o ID novamente para garantir
+    const vacancyId = resolveVacancyId(vacancy);
+
+    // Formata salário
+    let salarioFormatado = 'N/A';
+    const salarioValue = vacancy.salary || vacancy.salario;
+    if (salarioValue) {
+        try {
+            salarioFormatado = new Intl.NumberFormat('pt-BR', { 
+                style: 'currency', 
+                currency: 'BRL' 
+            }).format(Number(salarioValue));
+        } catch (e) {
+            salarioFormatado = `R$ ${salarioValue}`;
+        }
+    }
+
+    const detalhes = `
+        <strong>ID da Vaga:</strong> ${vacancyId || 'N/A'}<br>
+        <strong>Gestor:</strong> ${vacancy.manager?.name || vacancy.gestor?.name || vacancy.managerName || 'N/A'}<br>
+        <strong>Cargo:</strong> ${vacancy.position || vacancy.position_job || vacancy.positionJob || 'N/A'}<br>
+        <strong>Área:</strong> ${vacancy.area || 'N/A'}<br>
+        <strong>Período:</strong> ${vacancy.period || vacancy.periodo || 'N/A'}<br>
+        <strong>Modelo de Trabalho:</strong> ${vacancy.workModel || vacancy.work_model || 'N/A'}<br>
+        <strong>Regime de Contratação:</strong> ${vacancy.contractType || vacancy.contract_type || 'N/A'}<br>
+        <strong>Salário:</strong> ${salarioFormatado}<br>
+        <strong>Localidade:</strong> ${vacancy.location || vacancy.localidade || 'N/A'}<br>
+        <strong>Requisitos:</strong> ${vacancy.requirements || vacancy.requisitos || 'N/A'}<br>
+        <strong>Justificativa:</strong> ${vacancy.openingJustification || vacancy.opening_justification || 'N/A'}<br>
+        <strong>Status:</strong> ${vacancy.statusVacancy || vacancy.status_vacancy || vacancy.status || 'N/A'}
+    `;
+
+    // Remove modal anterior se existir
+    const existingModal = document.getElementById('vacancyDetailsModal');
+    if (existingModal) {
+        existingModal.remove();
+    }
+
+    // Botão de aprovar só aparece se tiver ID válido
+    const approveButton = vacancyId 
+        ? `<button type="button" class="btn btn-success" onclick="document.getElementById('vacancyDetailsModal').remove(); approveVacancy('${vacancyId}');">
+               <i class="fas fa-check"></i> Aprovar
+           </button>`
+        : `<button type="button" class="btn btn-secondary" disabled title="ID da vaga não disponível">
+               <i class="fas fa-check"></i> Aprovar (ID indisponível)
+           </button>`;
+
+    const modal = document.createElement('div');
+    modal.className = 'modal fade';
+    modal.id = 'vacancyDetailsModal';
+    modal.innerHTML = `
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Detalhes da Vaga</h5>
+                    <button type="button" class="close" data-dismiss="modal">
+                        <span>&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    ${detalhes}
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Fechar</button>
+                    ${approveButton}
+                </div>
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(modal);
+    $(modal).modal('show');
+    
+    $(modal).on('hidden.bs.modal', function() {
+        this.remove();
+    });
+}
+
+/**
  * Renderiza a lista de solicitações pendentes na tabela
  * @param {Array} requests - Lista de solicitações
  */
@@ -781,8 +1338,26 @@ async function handleApprovalsActions(e) {
     if (!target) return;
 
     const id = target.dataset.id;
+    console.log('🔘 [RH] Botão clicado, ID:', id, 'Classes:', target.className);
 
-    if (target.classList.contains("btn-approve")) {
+    // Novos botões para vagas
+    if (target.classList.contains("approve-btn")) {
+        if (!id || id === 'undefined' || id === '') {
+            showNotification('Erro: Esta vaga não possui ID. Verifique se o backend está retornando o campo id_vacancy.', 'danger');
+            return;
+        }
+        await approveVacancy(id);
+    } else if (target.classList.contains("reject-btn")) {
+        if (!id || id === 'undefined' || id === '') {
+            showNotification('Erro: Esta vaga não possui ID. Verifique se o backend está retornando o campo id_vacancy.', 'danger');
+            return;
+        }
+        await rejectVacancy(id);
+    } else if (target.classList.contains("view-vacancy-btn")) {
+        viewVacancyDetails(id);
+    }
+    // Botões antigos para opening-requests (compatibilidade)
+    else if (target.classList.contains("btn-approve")) {
         await approveRequest(id);
     } else if (target.classList.contains("btn-reject")) {
         await rejectRequest(id);
@@ -792,7 +1367,7 @@ async function handleApprovalsActions(e) {
 }
 
 /**
- * Aprova uma solicitação (altera status para APROVADA)
+ * Aprova uma solicitação (altera status para APROVADA) - LEGADO
  * @param {string|number} id - ID da solicitação
  */
 async function approveRequest(id) {
@@ -804,14 +1379,84 @@ async function approveRequest(id) {
         console.log('✅ [RH] Aprovando solicitação ID:', id);
         await openingRequestClient.updateStatus(id, 'APROVADA');
         showNotification("Solicitação aprovada com sucesso!", "success");
-        // Aguarda um pouco antes de recarregar para garantir que o backend processou
         setTimeout(async () => {
             await loadPendingRequests();
         }, 500);
     } catch (error) {
         console.error("❌ [RH] Erro ao aprovar solicitação:", error);
-        console.error("❌ [RH] ID da solicitação:", id);
         showNotification(`Erro ao aprovar solicitação! ${error.message || ''}`, "danger");
+    }
+}
+
+/**
+ * Aprova uma vaga (altera status para 'aberta')
+ * PATCH /vacancies/updateStatus/{id}
+ * @param {string|number} id - ID da vaga (id_vacancy)
+ */
+async function approveVacancy(id) {
+    // Validação de ID
+    if (!id || id === 'undefined' || id === 'null' || id === '') {
+        console.error('❌ [RH] Tentativa de aprovar vaga sem ID válido:', id);
+        showNotification('Erro: ID da vaga não encontrado. O backend pode não estar retornando o campo id_vacancy.', 'danger');
+        return;
+    }
+    
+    if (!confirm("Tem certeza que deseja aprovar esta vaga?")) {
+        return;
+    }
+
+    try {
+        console.log('✅ [RH] Aprovando vaga ID:', id);
+        console.log('✅ [RH] Chamando PATCH /vacancies/updateStatus/' + id);
+        
+        const result = await vacanciesClient.approve(id);
+        console.log('✅ [RH] Resultado da aprovação:', result);
+        showNotification(result || "Vaga aprovada com sucesso!", "success");
+        
+        // Recarrega TODAS as listas de vagas (pendentes, aprovadas, rejeitadas)
+        setTimeout(async () => {
+            console.log('🔄 [RH] Recarregando todas as listas após aprovação...');
+            await loadAllVacancyLists();
+        }, 500);
+    } catch (error) {
+        console.error("❌ [RH] Erro ao aprovar vaga:", error);
+        showNotification(`Erro ao aprovar vaga! ${error.message || ''}`, "danger");
+    }
+}
+
+/**
+ * Rejeita uma vaga (altera status para 'rejeitada')
+ * PATCH /vacancies/{id}/status com body {"statusVacancy": "rejeitada"}
+ * @param {string|number} id - ID da vaga (id_vacancy)
+ */
+async function rejectVacancy(id) {
+    // Validação de ID
+    if (!id || id === 'undefined' || id === 'null' || id === '') {
+        console.error('❌ [RH] Tentativa de rejeitar vaga sem ID válido:', id);
+        showNotification('Erro: ID da vaga não encontrado. O backend pode não estar retornando o campo id_vacancy.', 'danger');
+        return;
+    }
+    
+    if (!confirm("Tem certeza que deseja REJEITAR esta vaga? Esta ação não pode ser desfeita.")) {
+        return;
+    }
+
+    try {
+        console.log('🚫 [RH] Rejeitando vaga ID:', id);
+        console.log('🚫 [RH] Chamando PATCH /vacancies/' + id + '/status');
+        
+        const result = await vacanciesClient.reject(id);
+        console.log('🚫 [RH] Resultado da rejeição:', result);
+        showNotification(result || "Vaga rejeitada com sucesso!", "success");
+        
+        // Recarrega TODAS as listas de vagas (pendentes, aprovadas, rejeitadas)
+        setTimeout(async () => {
+            console.log('🔄 [RH] Recarregando todas as listas após rejeição...');
+            await loadAllVacancyLists();
+        }, 500);
+    } catch (error) {
+        console.error("❌ [RH] Erro ao rejeitar vaga:", error);
+        showNotification(`Erro ao rejeitar vaga! ${error.message || ''}`, "danger");
     }
 }
 
@@ -923,12 +1568,22 @@ function handleApprovalsSearch(e) {
 /**
  * Atualiza contador de solicitações pendentes no badge
  */
+/**
+ * Atualiza contador de solicitações/vagas pendentes no badge (tab principal e seção)
+ */
 function updatePendingCount() {
+    // Badge da tab "Aprovação de Vagas"
     const pendingCountBadge = document.getElementById('pendingCount');
     if (pendingCountBadge) {
-        const count = pendingRequests.length;
+        const count = pendingVacancies.length || pendingRequests.length;
         pendingCountBadge.textContent = count;
         pendingCountBadge.style.display = count > 0 ? 'inline-block' : 'none';
+    }
+    
+    // Badge da seção de vagas pendentes
+    const pendingVacanciesCountBadge = document.getElementById('pendingVacanciesCount');
+    if (pendingVacanciesCountBadge) {
+        pendingVacanciesCountBadge.textContent = pendingVacancies.length;
     }
 }
 
@@ -1049,6 +1704,12 @@ window.deleteRHMember = deleteRHMember;
 window.editRHMember = editRHMember;
 window.cancelEdit = cancelEdit;
 window.loadPendingRequests = loadPendingRequests; // Para teste manual
+window.loadPendingVacancies = loadPendingVacancies; // Para teste manual
+window.loadApprovedVacancies = loadApprovedVacancies; // Para teste manual
+window.loadRejectedVacancies = loadRejectedVacancies; // Para teste manual
+window.loadAllVacancyLists = loadAllVacancyLists; // Para teste manual - carrega todas as listas
+window.approveVacancy = approveVacancy; // Para uso no modal de detalhes
+window.rejectVacancy = rejectVacancy; // Para uso no modal de detalhes
 window.testApprovalsAPI = testApprovalsAPI; // Função de teste
 
 /**

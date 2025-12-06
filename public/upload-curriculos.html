@@ -415,15 +415,6 @@
                             <!-- Dropdown - User Information -->
                             <div class="dropdown-menu dropdown-menu-right shadow animated--grow-in"
                                 aria-labelledby="userDropdown">
-                                <a class="dropdown-item" href="#">
-                                    <i class="fas fa-user fa-sm fa-fw mr-2 text-gray-400"></i>
-                                    Perfil
-                                </a>
-                                <a class="dropdown-item" href="#">
-                                    <i class="fas fa-cogs fa-sm fa-fw mr-2 text-gray-400"></i>
-                                    Configurações
-                                </a>
-                                <div class="dropdown-divider"></div>
                                 <a class="dropdown-item" href="#" data-toggle="modal" data-target="#logoutModal">
                                     <i class="fas fa-sign-out-alt fa-sm fa-fw mr-2 text-gray-400"></i>
                                     Sair
@@ -453,7 +444,7 @@
                     </div>
 
                     <!-- Stats Row -->
-                    <div class="row mb-4">
+                    <!-- <div class="row mb-4">
                         <div class="col-xl-3 col-md-6 mb-4">
                             <div class="upload-stats">
                                 <div class="stat-item">
@@ -486,7 +477,7 @@
                                 </div>
                             </div>
                         </div>
-                    </div>
+                    </div> -->
 
                     <!-- Content Row -->
                     <div class="row">
@@ -853,22 +844,6 @@
 
         // ------------------------------------------------------------------------------------------------------
 
-    const baseUrl = 'https://szjnh7goni.execute-api.us-east-1.amazonaws.com/api/quando-contratar-resumes/';
-
-
-    // Lista de MIME types permitidos
-    const allowedMimeTypes = [
-        "application/pdf",
-        "image/jpeg",
-        "image/jpg",
-        "image/png",
-        "application/msword",
-        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-        "application/rtf",
-        "text/plain",
-        "application/vnd.oasis.opendocument.text"
-    ];
-
     // Função para upload de um arquivo individual
     async function uploadSingleFile(file) {
         const allowedMimeTypes = [
@@ -882,7 +857,7 @@
             "text/plain",
             "application/vnd.oasis.opendocument.text"
         ];
-        const baseUrl = 'https://szjnh7goni.execute-api.us-east-1.amazonaws.com/api/quando-contratar-resumes/';
+        const baseUrl = 'https://x7cmx55txd.execute-api.us-east-1.amazonaws.com/prd/files/quando-contratar-resumes/';
         const fileName = file.name;
         const mimeType = file.type;
         if (!allowedMimeTypes.includes(mimeType)) {

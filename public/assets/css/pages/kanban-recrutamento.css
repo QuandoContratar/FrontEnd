@@ -207,6 +207,66 @@
     transform: translateY(-1px);
 }
 
+/* Drag and Drop Styles */
+.kanban-card.dragging {
+    opacity: 0.5;
+    transform: rotate(5deg);
+    cursor: grabbing;
+}
+
+.kanban-column.drag-over {
+    background: #e0e7ff;
+    border: 2px dashed #7c3aed;
+}
+
+.kanban-column.drag-over .column-header {
+    border-bottom-color: #7c3aed;
+}
+
+/* Progress Badge */
+.progress-badge {
+    background: #7c3aed;
+    color: white;
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+/* Badge Success */
+.badge-success {
+    background: #10b981;
+    color: white;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+/* Empty State */
+.column-content:empty::before {
+    content: "Nenhum candidato nesta etapa";
+    display: block;
+    text-align: center;
+    color: #9ca3af;
+    font-size: 14px;
+    padding: 20px;
+    font-style: italic;
+}
+
+/* Loading State */
+.kanban-card.loading {
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+/* Button Disabled State */
+.btn-action:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
     .kanban-board {

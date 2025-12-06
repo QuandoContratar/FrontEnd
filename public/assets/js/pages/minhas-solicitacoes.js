@@ -249,7 +249,12 @@ async function sendPendingRequests() {
                 console.log('✅ Dados preparados para criar vaga:', vacancyData);
                 console.log('✅ gestor_id garantido (número inteiro):', gestorId, typeof gestorId);
                 
-                // Verifica se há arquivo de justificativa
+                // Adiciona justificativa como string se existir
+                if (request.justificativa) {
+                    vacancyData.openingJustification = request.justificativa;
+                }
+                
+                // Verifica se há arquivo de justificativa (legado - mantido para compatibilidade)
                 const hasFile = request.justificativaFile && request.justificativaFile.base64;
                 
                 if (hasFile) {
@@ -266,7 +271,7 @@ async function sendPendingRequests() {
                     await vacanciesClient.sendMassive([vacancyData], [file]);
                     console.log('✅ Vaga enviada com arquivo para aprovação via sendMassive');
                 } else {
-                    console.log('✅ Nenhum arquivo encontrado, usando insert + sendToApproval');
+                    console.log('✅ Usando insert + sendToApproval (justificativa como string)');
                     console.log('✅ Usando vacanciesClient.insert (endpoint: /vacancies)');
                     
                     // Cria a vaga usando o endpoint /vacancies (NÃO /opening-requests)
@@ -621,7 +626,12 @@ async function sendSinglePendingRequest(requestId) {
         console.log('✅ Enviando solicitação com gestor_id (número inteiro):', gestorId, typeof gestorId);
         console.log('✅ Dados completos para criar vaga:', vacancyData);
         
-        // Verifica se há arquivo de justificativa
+                // Adiciona justificativa como string se existir
+        if (request.justificativa) {
+            vacancyData.openingJustification = request.justificativa;
+        }
+        
+        // Verifica se há arquivo de justificativa (legado - mantido para compatibilidade)
         const hasFile = request.justificativaFile && request.justificativaFile.base64;
         
         if (hasFile) {
@@ -866,8 +876,13 @@ async function handleMassApproval() {
                     gestor: gestorId
                 };
                 
-                // Verifica se há arquivo de justificativa
-                const hasFile = request.justificativaFile && request.justificativaFile.base64;
+                // Adiciona justificativa como string se existir
+        if (request.justificativa) {
+            vacancyData.openingJustification = request.justificativa;
+        }
+        
+        // Verifica se há arquivo de justificativa (legado - mantido para compatibilidade)
+        const hasFile = request.justificativaFile && request.justificativaFile.base64;
                 
                 if (hasFile) {
                     // Converte base64 para File
