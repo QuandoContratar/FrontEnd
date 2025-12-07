@@ -95,7 +95,7 @@ function renderVacancySelector() {
         vacancies.forEach(vacancy => {
             const option = document.createElement('option');
             option.value = vacancy.id;
-            option.textContent = vacancy.title || vacancy.name || `Vaga #${vacancy.id}`;
+            option.textContent = vacancy.positionJob || vacancy.title || vacancy.area || `Vaga #${vacancy.id}`;
             vacancySelector.appendChild(option);
         });
 
@@ -154,9 +154,8 @@ function handleSearch(e) {
         filteredMatches = [...matches];
     } else {
         filteredMatches = matches.filter(match => {
-            const candidate = match.candidate || {};
-            const vacancy = match.vacancy || {};
-            const searchText = `${candidate.name || ''} ${candidate.email || ''} ${vacancy.title || ''} ${vacancy.area || ''}`.toLowerCase();
+            // Novo DTO: campos planos (candidateName, vacancyJob, etc.)
+            const searchText = `${match.candidateName || ''} ${match.vacancyJob || ''} ${match.vacancyArea || ''}`.toLowerCase();
             return searchText.includes(searchTerm);
         });
     }
@@ -217,21 +216,22 @@ function renderCandidates() {
 function createCandidateItem(match) {
     const item = document.createElement('div');
     item.className = 'candidate-item';
-    item.dataset.matchId = match.id;
+    item.dataset.matchId = match.matchId; // Novo DTO: matchId em vez de id
 
-    const candidate = match.candidate || {};
-    const vacancy = match.vacancy || {};
-    
-    // Calcular idade a partir da data de nascimento
-    const age = calculateAge(candidate.birthDate);
+    // Novo DTO: campos planos (não mais objetos aninhados)
+    const candidateName = match.candidateName || 'Nome não informado';
+    const candidateId = match.candidateId;
+    const vacancyJob = match.vacancyJob || 'Não informada';
+    const vacancyArea = match.vacancyArea || 'Não informada';
+    const score = match.score;
+    const matchLevel = match.matchLevel || 'BAIXO';
+    const status = match.status || 'pendente';
     
     // Obter texto e classe do badge de match
-    const matchLevel = match.matchLevel || 'BAIXO';
     const matchBadgeText = getMatchBadgeText(matchLevel);
     const matchBadgeClass = getMatchBadgeClass(matchLevel);
     
     // Verificar status do match
-    const status = match.status || 'pendente';
     const isProcessed = status === 'aceito' || status === 'rejeitado';
 
     item.innerHTML = `
@@ -239,24 +239,24 @@ function createCandidateItem(match) {
             <i class="fas fa-user"></i>
         </div>
         <div class="candidate-info">
-            <h3>${candidate.name || 'Nome não informado'}</h3>
-            <p>${age ? age + ' Anos' : ''} ${candidate.city ? ', ' + candidate.city : ''}</p>
-            <a href="#" class="view-more" data-candidate-id="${candidate.id}">Ver mais</a>
+            <h3>${candidateName}</h3>
+            <p>${match.candidateCity ? match.candidateCity : ''}</p>
+            <a href="#" class="view-more" data-candidate-id="${candidateId}">Ver mais</a>
         </div>
         <div class="candidate-details">
-            <p><strong>Vaga:</strong> ${vacancy.title || vacancy.name || 'Não informada'}</p>
-            <p><strong>Área:</strong> ${vacancy.area || 'Não informada'}</p>
-            <p><strong>Score:</strong> ${match.matchScore ? match.matchScore.toFixed(1) + '%' : 'N/A'}</p>
+            <p><strong>Vaga:</strong> ${vacancyJob}</p>
+            <p><strong>Área:</strong> ${vacancyArea}</p>
+            <p><strong>Score:</strong> ${score != null ? score.toFixed(1) + '%' : 'N/A'}</p>
         </div>
         <div class="candidate-actions">
             <button class="btn-action btn-approve ${status === 'aceito' ? 'approved' : ''}" 
-                    data-match-id="${match.id}" 
+                    data-match-id="${match.matchId}" 
                     title="Aprovar"
                     ${isProcessed ? 'disabled' : ''}>
                 <i class="fas fa-check"></i>
             </button>
             <button class="btn-action btn-reject ${status === 'rejeitado' ? 'rejected' : ''}" 
-                    data-match-id="${match.id}" 
+                    data-match-id="${match.matchId}" 
                     title="Rejeitar"
                     ${isProcessed ? 'disabled' : ''}>
                 <i class="fas fa-times"></i>
@@ -333,7 +333,8 @@ function applyFilter(filterType) {
             break;
         case 'pendentes':
         case 'pending':
-            filteredMatches = matches.filter(m => m.status === 'pendente');
+            // Considera pendente: status === 'pendente', status null ou undefined
+            filteredMatches = matches.filter(m => !m.status || m.status === 'pendente');
             break;
         case 'aprovados':
         case 'approved':
@@ -368,11 +369,19 @@ function applyFilter(filterType) {
  * Aprova candidato
  */
 async function approveCandidate(matchId) {
+    // Validação do matchId
+    if (!matchId || matchId === 'undefined' || matchId === 'null') {
+        console.error('❌ [approveCandidate] matchId inválido:', matchId);
+        showMessage('Erro: ID do match não encontrado', 'error');
+        return;
+    }
+    
     try {
+        console.log('📤 [approveCandidate] Aprovando match ID:', matchId);
         await matchClient.accept(matchId);
         
-        // Atualizar estado local
-        const match = matches.find(m => m.id == matchId);
+        // Atualizar estado local - usar matchId para encontrar
+        const match = matches.find(m => m.matchId == matchId);
         if (match) {
             match.status = 'aceito';
         }
@@ -391,11 +400,19 @@ async function approveCandidate(matchId) {
  * Rejeita candidato
  */
 async function rejectCandidate(matchId) {
+    // Validação do matchId
+    if (!matchId || matchId === 'undefined' || matchId === 'null') {
+        console.error('❌ [rejectCandidate] matchId inválido:', matchId);
+        showMessage('Erro: ID do match não encontrado', 'error');
+        return;
+    }
+    
     try {
+        console.log('📤 [rejectCandidate] Rejeitando match ID:', matchId);
         await matchClient.reject(matchId);
         
-        // Atualizar estado local
-        const match = matches.find(m => m.id == matchId);
+        // Atualizar estado local - usar matchId para encontrar
+        const match = matches.find(m => m.matchId == matchId);
         if (match) {
             match.status = 'rejeitado';
         }
@@ -471,7 +488,8 @@ function updateStatistics() {
     const total = matches.length;
     const approved = matches.filter(m => m.status === 'aceito').length;
     const rejected = matches.filter(m => m.status === 'rejeitado').length;
-    const pending = matches.filter(m => m.status === 'pendente').length;
+    // Considera pendente: status === 'pendente', status null ou undefined
+    const pending = matches.filter(m => !m.status || m.status === 'pendente').length;
 
     // Atualizar elementos de estatísticas se existirem
     const statsTotal = document.querySelector('.stats-total');

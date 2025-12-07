@@ -1,8 +1,3 @@
--- ============================================================
--- SCRIPT SQL - DADOS DE TESTE PARA DASHBOARD "QUANDO CONTRATAR"
--- Gerado em: 05/12/2024
--- Objetivo: Popular banco com dados realistas para testar gráficos
--- ============================================================
 -- ========================================
 -- SCRIPT DE CRIAÇÃO DO BANCO DE DADOS
 -- Sistema: Quando Contratar
@@ -89,6 +84,30 @@ CREATE TABLE opening_requests (
     INDEX idx_status (status)
 );
 
+CREATE TABLE candidate_profile (
+    id_profile INT AUTO_INCREMENT PRIMARY KEY,
+    fk_candidate INT NOT NULL,
+    raw_json JSON NOT NULL,
+
+    total_experience_years DECIMAL(4,1),
+    main_seniority ENUM('JUNIOR','PLENO','SENIOR','LEAD'),
+    main_stack VARCHAR(100),
+    main_role VARCHAR(100),
+
+    city VARCHAR(100),
+    state CHAR(2),
+    remote_preference VARCHAR(20),
+
+    hard_skills TEXT,
+    soft_skills TEXT,
+
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+
+    FOREIGN KEY (fk_candidate) REFERENCES candidate(id_candidate) ON DELETE CASCADE
+);
+
+
 -- ========================================
 -- KANBAN – ESTÁGIOS
 -- ========================================
@@ -133,12 +152,12 @@ CREATE TABLE selection_process (
     `id_selection` INT AUTO_INCREMENT PRIMARY KEY,
     `progress` DECIMAL(5, 2) DEFAULT 0.00,
     `current_stage` ENUM (
-        'aguardando_triagem', 
-        'triagem_inicial', 
+        'aguardando_triagem',
+        'triagem_inicial',
         'avaliacao_fit_cultural',
-        'teste_tecnico', 
-        'entrevista_tecnica', 
-        'entrevista_final', 
+        'teste_tecnico',
+        'entrevista_tecnica',
+        'entrevista_final',
         'proposta_fechamento',
         'contratacao'
     ) DEFAULT 'aguardando_triagem',
@@ -198,8 +217,8 @@ INSERT INTO vacancies (position_job, period, work_model, requirements, contract_
 
 -- Solicitações de abertura de vaga (exemplos)
 -- IMPORTANTE: gestor_id deve referenciar um id_user válido
-INSERT INTO opening_requests 
-(cargo, periodo, modelo_trabalho, regime_contratacao, salario, localidade, requisitos, justificativa_path, gestor_id, status) 
+INSERT INTO opening_requests
+(cargo, periodo, modelo_trabalho, regime_contratacao, salario, localidade, requisitos, justificativa_path, gestor_id, status)
 VALUES
 ('Engenheiro de Software', 'Full-time', 'remoto', 'CLT', 12000.00, 'São Paulo', 'Experiência com Java, Spring Boot e Docker', '/docs/justificativas/justificativa1.pdf', 1, 'ENTRADA'),
 ('Analista de Suporte', 'Part-time', 'presencial', 'PJ', 4000.00, 'Rio de Janeiro', 'Conhecimento em Linux e Redes', '/docs/justificativas/justificativa2.pdf', 1, 'ENTRADA'),
@@ -223,6 +242,310 @@ INSERT INTO candidate_match (fk_candidate, fk_vacancy, score, match_level) VALUE
 (4, 2, 65.20, 'MEDIO'),
 (5, 1, 88.70, 'ALTO');
 
+INSERT INTO candidate_profile
+(fk_candidate, raw_json, total_experience_years, main_seniority, main_stack, main_role,
+ city, state, remote_preference, hard_skills, soft_skills)
+VALUES
+(
+ 1,
+ '{
+   "name": "João da Silva",
+   "email": "joao@gmail.com",
+   "phone": "119999999",
+   "location": { "city": "São Paulo", "state": "SP", "workFormat": "remoto" },
+   "education": [
+     { "institution": "USP", "course": "Ciência da Computação", "level": "superior", "startYear": 2018, "endYear": 2022 }
+   ],
+   "experiences": [
+     {
+       "company": "XPTO Tech",
+       "role": "Desenvolvedor Backend",
+       "startDate": "2020-06",
+       "endDate": "2022-12",
+       "responsibilities": ["Java", "Spring Boot", "APIs"],
+       "technologies": ["Java", "Spring", "MySQL"]
+     }
+   ],
+   "skills": ["Java", "Spring Boot", "SQL"],
+   "softSkills": ["comunicação", "proatividade"],
+   "totalExperienceYears": 3.5,
+   "seniority": "pleno"
+ }',
+ 3.5,
+ 'PLENO',
+ 'java',
+ 'Desenvolvedor Backend',
+ 'São Paulo',
+ 'SP',
+ 'REMOTO',
+ 'Java,Spring Boot,SQL',
+ 'comunicação,proatividade'
+);
+
+INSERT INTO candidate_profile
+(fk_candidate, raw_json, total_experience_years, main_seniority, main_stack, main_role,
+ city, state, remote_preference, hard_skills, soft_skills)
+VALUES
+(
+ 2,
+ '{
+   "name": "Maria Oliveira",
+   "email": "maria@gmail.com",
+   "phone": "219999999",
+   "location": { "city": "Rio de Janeiro", "state": "RJ", "workFormat": "presencial" },
+   "education": [
+     { "institution": "UFRJ", "course": "Engenharia de Software", "level": "superior", "startYear": 2017, "endYear": 2021 }
+   ],
+   "experiences": [
+     {
+       "company": "DataCorp",
+       "role": "Analista de Dados",
+       "startDate": "2021-01",
+       "endDate": null,
+       "responsibilities": ["Power BI", "Python", "ETL"],
+       "technologies": ["Python", "SQL", "Power BI"]
+     }
+   ],
+   "skills": ["Python", "SQL", "Power BI"],
+   "softSkills": ["organização", "trabalho em equipe"],
+   "totalExperienceYears": 2.0,
+   "seniority": "junior"
+ }',
+ 2.0,
+ 'JUNIOR',
+ 'python',
+ 'Analista de Dados',
+ 'Rio de Janeiro',
+ 'RJ',
+ 'PRESENCIAL',
+ 'Python,SQL,Power BI',
+ 'organização,trabalho em equipe'
+);
+
+INSERT INTO candidate_profile
+(fk_candidate, raw_json, total_experience_years, main_seniority, main_stack, main_role,
+ city, state, remote_preference, hard_skills, soft_skills)
+VALUES
+(
+ 3,
+ '{
+   "name": "Carlos Souza",
+   "email": "carlos@gmail.com",
+   "phone": "319999999",
+   "location": { "city": "Belo Horizonte", "state": "MG", "workFormat": "hibrido" },
+   "education": [
+     { "institution": "PUC Minas", "course": "Sistemas de Informação", "level": "superior", "startYear": 2016, "endYear": 2020 }
+   ],
+   "experiences": [
+     {
+       "company": "CloudOps",
+       "role": "DevOps Engineer",
+       "startDate": "2020-01",
+       "endDate": null,
+       "responsibilities": ["CI/CD", "Docker", "AWS"],
+       "technologies": ["Linux", "Docker", "AWS"]
+     }
+   ],
+   "skills": ["Linux", "Docker", "AWS"],
+   "softSkills": ["proatividade", "liderança"],
+   "totalExperienceYears": 4.0,
+   "seniority": "pleno"
+ }',
+ 4.0,
+ 'PLENO',
+ 'docker',
+ 'DevOps Engineer',
+ 'Belo Horizonte',
+ 'MG',
+ 'HIBRIDO',
+ 'Linux,Docker,AWS',
+ 'proatividade,liderança'
+);
+
+INSERT INTO candidate_profile
+(fk_candidate, raw_json, total_experience_years, main_seniority, main_stack, main_role,
+ city, state, remote_preference, hard_skills, soft_skills)
+VALUES
+(
+ 4,
+ '{
+   "name": "Ana Lima",
+   "email": "ana@gmail.com",
+   "phone": "479999999",
+   "location": { "city": "Florianópolis", "state": "SC", "workFormat": "hibrido" },
+   "education": [
+     { "institution": "UFSC", "course": "Design", "level": "superior", "startYear": 2015, "endYear": 2019 }
+   ],
+   "experiences": [
+     {
+       "company": "DesignPro",
+       "role": "UX Designer",
+       "startDate": "2019-02",
+       "endDate": null,
+       "responsibilities": ["Wireframes", "User Research"],
+       "technologies": ["Figma", "Miro"]
+     }
+   ],
+   "skills": ["Figma", "Design System"],
+   "softSkills": ["comunicação", "empatia"],
+   "totalExperienceYears": 3.0,
+   "seniority": "junior"
+ }',
+ 3.0,
+ 'JUNIOR',
+ 'figma',
+ 'UX Designer',
+ 'Florianópolis',
+ 'SC',
+ 'HIBRIDO',
+ 'Figma,Design System',
+ 'comunicação,empatia'
+);
+
+INSERT INTO candidate_profile
+(fk_candidate, raw_json, total_experience_years, main_seniority, main_stack, main_role,
+ city, state, remote_preference, hard_skills, soft_skills)
+VALUES
+(
+ 5,
+ '{
+   "name": "Lucas Pereira",
+   "email": "lucas@gmail.com",
+   "phone": "419999999",
+   "location": { "city": "Curitiba", "state": "PR", "workFormat": "presencial" },
+   "education": [
+     { "institution": "UNICURITIBA", "course": "TCI", "level": "tecnico", "startYear": 2018, "endYear": 2020 }
+   ],
+   "experiences": [
+     {
+       "company": "NetSupport",
+       "role": "Suporte Técnico",
+       "startDate": "2020-01",
+       "endDate": null,
+       "responsibilities": ["Atendimento", "Redes"],
+       "technologies": ["Windows", "Redes"]
+     }
+   ],
+   "skills": ["Windows", "Redes"],
+   "softSkills": ["organização"],
+   "totalExperienceYears": 2.5,
+   "seniority": "junior"
+ }',
+ 2.5,
+ 'JUNIOR',
+ 'windows',
+ 'Suporte Técnico',
+ 'Curitiba',
+ 'PR',
+ 'PRESENCIAL',
+ 'Windows,Redes',
+ 'organização'
+);
+
+INSERT INTO vacancies
+(position_job, period, work_model, requirements, contract_type, salary, location, opening_justification, area, fk_manager, status_vacancy)
+VALUES
+(
+ 'Desenvolvedor Backend Pleno',
+ 'Integral',
+ 'remoto',
+ 'Requisitos:
+  - 3+ anos de experiência com Java e Spring Boot
+  - Familiaridade com SQL e APIs REST
+  - Diferencial: Docker, AWS
+  - Senioridade: Pleno',
+ 'CLT',
+ 8500,
+ 'São Paulo',
+ 'Expansão da equipe backend',
+ 'TI',
+ 1,
+ 'aberta'
+);
+
+INSERT INTO vacancies
+(position_job, period, work_model, requirements, contract_type, salary, location, opening_justification, area, fk_manager, status_vacancy)
+VALUES
+(
+ 'Analista de Dados Júnior',
+ 'Integral',
+ 'presencial',
+ 'Requisitos:
+  - 1+ ano de experiência com Python e SQL
+  - Power BI é obrigatório
+  - Diferencial: ETL
+  - Localização RJ',
+ 'CLT',
+ 4500,
+ 'Rio de Janeiro',
+ 'Crescimento da área de dados',
+ 'Tecnologia',
+ 1,
+ 'aberta'
+);
+
+INSERT INTO vacancies
+(position_job, period, work_model, requirements, contract_type, salary, location, opening_justification, area, fk_manager, status_vacancy)
+VALUES
+(
+ 'DevOps Engineer Pleno',
+ 'Integral',
+ 'híbrido',
+ 'Requisitos:
+  - Experiência com Linux, Docker e AWS
+  - CI/CD obrigatório
+  - Senioridade Pleno ou Senior
+  - Diferencial: Kubernetes',
+ 'PJ',
+ 12000,
+ 'Belo Horizonte',
+ 'Nova operação de automação',
+ 'TI',
+ 4,
+ 'aberta'
+);
+
+INSERT INTO vacancies
+(position_job, period, work_model, requirements, contract_type, salary, location, opening_justification, area, fk_manager, status_vacancy)
+VALUES
+(
+ 'UX/UI Designer Júnior',
+ 'Integral',
+ 'híbrido',
+ 'Requisitos:
+  - Conhecimento em Figma e criação de Design Systems
+  - Senioridade Júnior
+  - Diferencial: Pesquisa com usuários',
+ 'CLT',
+ 4000,
+ 'Florianópolis',
+ 'Nova squad de produto',
+ 'Produto',
+ 4,
+ 'aberta'
+);
+
+INSERT INTO vacancies
+(position_job, period, work_model, requirements, contract_type, salary, location, opening_justification, area, fk_manager, status_vacancy)
+VALUES
+(
+ 'Técnico de Infraestrutura',
+ 'Integral',
+ 'presencial',
+ 'Requisitos:
+  - Experiência com Redes e Windows
+  - Atendimento ao usuário
+  - Diferencial: Certificação CCNA',
+ 'CLT',
+ 3500,
+ 'Curitiba',
+ 'Suporte à operação interna',
+ 'Infraestrutura',
+ 1,
+ 'aberta'
+);
+
+
 -- ========================================
 -- CONSULTAS DE VERIFICAÇÃO
 -- ========================================
@@ -237,7 +560,7 @@ SELECT '=== VAGAS ===' AS info;
 SELECT * FROM vacancies;
 
 SELECT '=== SOLICITAÇÕES DE ABERTURA ===' AS info;
-SELECT 
+SELECT
     o.id,
     o.cargo,
     o.periodo,
@@ -253,7 +576,7 @@ LEFT JOIN user u ON o.gestor_id = u.id_user
 ORDER BY o.created_at DESC;
 
 
-SELECT 
+SELECT
     kc.id_card,
     c.name AS candidate_name,
     v.position_job,
@@ -293,7 +616,7 @@ update vacancies set fk_manager = 1 where id_vacancy = 6;
 
 update vacancies set status_vacancy = 'aberta' where id_vacancy = 6;
 
-INSERT INTO opening_requests 
+INSERT INTO opening_requests
 (cargo, periodo, modelo_trabalho, regime_contratacao, salario, localidade, requisitos, gestor_id, status)
 VALUES
 ('Dev Backend Junior', 'Full-time', 'remoto', 'CLT', 6500, 'São Paulo', 'Java, Spring Boot', 1, 'ENTRADA'),
@@ -301,7 +624,7 @@ VALUES
 ('Assistente de RH', 'Part-time', 'híbrido', 'CLT', 3000, 'Curitiba', 'Atendimento, Organização', 1, 'ENTRADA');
 
 
-INSERT INTO opening_requests 
+INSERT INTO opening_requests
 (cargo, periodo, modelo_trabalho, regime_contratacao, salario, localidade, requisitos, gestor_id, status)
 VALUES
 ('Product Manager', 'Full-time', 'remoto', 'CLT', 12000, 'São Paulo', 'Scrum, Jira, UX', 1, 'ABERTA'),
@@ -310,21 +633,21 @@ VALUES
 ('Dev Front-end', 'Full-time', 'híbrido', 'PJ', 9000, 'Campinas', 'React, JS, HTML/CSS', 4, 'ABERTA');
 
 
-INSERT INTO opening_requests 
+INSERT INTO opening_requests
 (cargo, periodo, modelo_trabalho, regime_contratacao, salario, localidade, requisitos, gestor_id, status)
 VALUES
 ('Designer UI/UX', 'Full-time', 'remoto', 'CLT', 7500, 'São Paulo', 'Figma, Design System', 1, 'APROVADA'),
 ('DevOps Engineer', 'Full-time', 'remoto', 'CLT', 14000, 'São Paulo', 'AWS, CI/CD, Kubernetes', 1, 'APROVADA');
 
 
-INSERT INTO opening_requests 
+INSERT INTO opening_requests
 (cargo, periodo, modelo_trabalho, regime_contratacao, salario, localidade, requisitos, gestor_id, status)
 VALUES
 ('Assistente Administrativo', 'Full-time', 'presencial', 'CLT', 2500, 'São Paulo', 'Organização, Excel básico', 1, 'REJEITADA'),
 ('Scrum Master', 'Full-time', 'remoto', 'PJ', 11000, 'Rio de Janeiro', 'Scrum, Agile Coaching', 1, 'REJEITADA');
 
 
-INSERT INTO opening_requests 
+INSERT INTO opening_requests
 (cargo, periodo, modelo_trabalho, regime_contratacao, salario, localidade, requisitos, gestor_id, status)
 VALUES
 ('Auxiliar de Logística', 'Full-time', 'presencial', 'CLT', 2400, 'Curitiba', 'Expedição, Organização', 1, 'CANCELADA'),
@@ -332,7 +655,7 @@ VALUES
 
 select * from opening_requests;
 
-INSERT INTO vacancies 
+INSERT INTO vacancies
 (position_job, area, period, work_model, contract_type, salary, location, requirements, fk_manager, status_vacancy)
 VALUES
 ('Analista de Sistemas', 'TI', 'Integral', 'Remoto', 'CLT', 5500, 'São Paulo', 'SQL, API, SCRUM', 1, 'pendente_aprovacao'),
@@ -348,7 +671,7 @@ INSERT INTO user (name, email, password, area, level_access) VALUES
 ('João Admin', 'joao.admin@qc.com', '123', 'TI', 'ADMIN'),
 ('Mariana Gestora', 'mariana.gestora@qc.com', '123', 'Produto', 'MANAGER');
 
-INSERT INTO vacancies 
+INSERT INTO vacancies
 (position_job, period, work_model, requirements, contract_type, salary, location, opening_justification, area, fk_manager, status_vacancy)
 VALUES
 ('Desenvolvedor Back-end Jr', 'Integral', 'remoto', 'Java, Spring, SQL', 'CLT', 6500, 'São Paulo', 'Expansão da equipe', 'TI', 1, 'aberta'),
@@ -433,7 +756,6 @@ VALUES
 (8,2,2,'MEDIO'),
 (9,3,4,'ALTO'),
 (10,3,5,'DESTAQUE');
-
 
 
 
