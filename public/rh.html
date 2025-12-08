@@ -137,26 +137,26 @@
             <hr class="sidebar-divider">
 
             <!-- Heading -->
-            <div class="sidebar-heading">
+            <div class="sidebar-heading" data-admin-only>
                 Cadastros
             </div>
 
             <!-- Nav Item - Administradores -->
-            <li class="nav-item">
+            <li class="nav-item" data-admin-only>
                 <a class="nav-link" href="adm.html">
                     <i class="fas fa-fw fa-user-shield"></i>
                     <span>Administradores</span></a>
             </li>
 
             <!-- Nav Item - Gerentes -->
-            <li class="nav-item">
+            <li class="nav-item" data-admin-only>
                 <a class="nav-link" href="gerente.html">
                     <i class="fas fa-fw fa-user-tie"></i>
                     <span>Gerentes</span></a>
             </li>
 
             <!-- Nav Item - RH -->
-            <li class="nav-item active">
+            <li class="nav-item active" data-admin-only>
                 <a class="nav-link" href="rh.html">
                     <i class="fas fa-fw fa-users"></i>
                     <span>RH</span></a>
@@ -352,7 +352,7 @@
                                 </div>
                                 <!-- Card Body -->
                                 <div class="card-body">
-                                    <form id="rhForm">
+                                    <form id="rhForm" data-admin-only>
                                         <div class="row">
                                             <div class="col-md-4 mb-3">
                                                 <label for="name" class="form-label">Nome Completo</label>
@@ -396,7 +396,7 @@
                                                 </small>
                                             </div>
                                             <div class="col-md-1 mb-3 d-flex align-items-end">
-                                                <button type="submit" class="btn btn-primary w-100" id="addRHBtn">
+                                                <button type="submit" class="btn btn-primary w-100" id="addRHBtn" data-admin-only>
                                                     <i class="fas fa-save"></i>
                                                 </button>
                                             </div>

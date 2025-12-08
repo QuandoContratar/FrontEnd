@@ -39,102 +39,58 @@
   // Hide dashboard links for managers (run on pages with sidebars)
   Permissions.applySidebarRules = function() {
     try {
-      const role = Permissions.getRole();
-      if (!role) return;
-      
-      // Para gestores: ocultar links de cadastro de usuários e dashboard
-      if (Permissions.isManager()) {
-        // Ocultar links de cadastro de usuários
-        document.querySelectorAll('.sidebar .nav-link').forEach(a => {
-          try {
-            const href = a.getAttribute('href') || '';
-            const text = a.textContent || '';
-            
-            // Ocultar links de cadastro de usuários
-            if (href.includes('adm.html') || href.includes('gerente.html') || href.includes('rh.html')) {
-              const navItem = a.closest('.nav-item');
-              if (navItem) navItem.style.display = 'none';
-            }
-            
-            // Ocultar apenas link de gráficos (charts.html) para gestores, mas manter home.html
-            if (href.includes('charts.html') || (/gráficos/i.test(text) && !href.includes('home.html'))) {
-              const navItem = a.closest('.nav-item');
-              if (navItem) navItem.style.display = 'none';
-            }
-          } catch(e){}
-        });
-        
-        // Ocultar heading "Cadastros" se todos os links foram ocultados
-        setTimeout(() => {
-          const cadastrosHeading = Array.from(document.querySelectorAll('.sidebar-heading')).find(h => 
-            h.textContent.trim().includes('Cadastros')
-          );
-          if (cadastrosHeading) {
-            // Encontrar todos os nav-items após o heading até o próximo divider ou heading
-            let nextElement = cadastrosHeading.nextElementSibling;
-            let hasVisibleLinks = false;
-            while (nextElement && !nextElement.classList.contains('sidebar-divider') && !nextElement.classList.contains('sidebar-heading')) {
-              if (nextElement.classList.contains('nav-item') && nextElement.style.display !== 'none') {
-                hasVisibleLinks = true;
-                break;
-              }
-              nextElement = nextElement.nextElementSibling;
-            }
-            
-            if (!hasVisibleLinks) {
-              cadastrosHeading.style.display = 'none';
-              // Ocultar também o divider antes do heading se existir
-              const dividerBefore = cadastrosHeading.previousElementSibling;
-              if (dividerBefore && dividerBefore.classList.contains('sidebar-divider')) {
-                dividerBefore.style.display = 'none';
-              }
-            }
+      // Former behavior hid `home.html` for managers; per update, Home must be
+      // visible to everyone. Keep only dashboard/shortcut removals if needed.
+      if (!Permissions.isManager()) return;
+      // hide links that explicitly mention 'Dashboard' (but keep Home)
+      document.querySelectorAll('.sidebar .nav-link').forEach(a => {
+        try {
+          const text = a.textContent || '';
+          if (/dashboard/i.test(text)) {
+            // never hide the actual Home link even if its text contains 'Dashboard'
+            const hrefAttr = a.getAttribute && a.getAttribute('href');
+            const href = String(hrefAttr || '').trim();
+            if (/home(\.html)?$/.test(href)) return;
+            a.style.display = 'none';
           }
-          
-          // Ocultar heading "Relatórios" se o link de gráficos foi ocultado
-          const relatoriosHeading = Array.from(document.querySelectorAll('.sidebar-heading')).find(h => 
-            h.textContent.trim().includes('Relatórios')
-          );
-          if (relatoriosHeading) {
-            let nextElement = relatoriosHeading.nextElementSibling;
-            let hasVisibleLinks = false;
-            while (nextElement && !nextElement.classList.contains('sidebar-divider') && !nextElement.classList.contains('sidebar-heading')) {
-              if (nextElement.classList.contains('nav-item') && nextElement.style.display !== 'none') {
-                hasVisibleLinks = true;
-                break;
-              }
-              nextElement = nextElement.nextElementSibling;
-            }
-            
-            if (!hasVisibleLinks) {
-              relatoriosHeading.style.display = 'none';
-              const dividerBefore = relatoriosHeading.previousElementSibling;
-              if (dividerBefore && dividerBefore.classList.contains('sidebar-divider')) {
-                dividerBefore.style.display = 'none';
-              }
-            }
-          }
-        }, 100);
-      }
-      
-      // Para RH: ocultar apenas links de administradores e gerentes
-      if (Permissions.isHR()) {
-        document.querySelectorAll('.sidebar .nav-link').forEach(a => {
-          try {
-            const href = a.getAttribute('href') || '';
-            if (href.includes('adm.html') || href.includes('gerente.html')) {
-              const navItem = a.closest('.nav-item');
-              if (navItem) navItem.style.display = 'none';
-            }
-          } catch(e){}
-        });
-      }
-      
-      // hide any topbar or other dashboard shortcut
+        } catch(e){}
+      });
+      // hide any topbar or other dashboard shortcut (if annotated)
       document.querySelectorAll('[data-dashboard-link]').forEach(el => el.style.display = 'none');
     } catch (e) {
       console.error('Permissions.applySidebarRules error', e);
     }
+  };
+
+  // Hide sidebar headings (like "Cadastros") when all their following nav-items
+  // are hidden by permissions. This avoids showing empty section headings.
+  Permissions.cleanupSidebarHeadings = function() {
+    try {
+      document.querySelectorAll('.sidebar .sidebar-heading').forEach(heading => {
+        // Walk siblings until next .sidebar-heading or end
+        let el = heading.nextElementSibling;
+        let anyVisible = false;
+        while (el && !el.classList.contains('sidebar-heading')) {
+          try {
+            // Only consider actual navigation items as making the section non-empty.
+            // Skip dividers (<hr>) and other layout elements which are often visible
+            // but shouldn't count toward keeping the heading.
+            const isNavItem = el.matches && (el.matches('.nav-item') || el.matches('li') || el.matches('.nav-item *'));
+            const containsNavLink = el.querySelector && el.querySelector('.nav-link');
+            if (isNavItem || containsNavLink) {
+              const style = window.getComputedStyle(el);
+              if (style.display !== 'none' && style.visibility !== 'hidden') {
+                anyVisible = true;
+                break;
+              }
+            }
+            // otherwise ignore this element (hr, comment, spacer, etc.)
+          } catch(e){ }
+          el = el.nextElementSibling;
+        }
+        heading.style.display = anyVisible ? '' : 'none';
+      });
+    } catch(e){ console.error('Permissions.cleanupSidebarHeadings error', e); }
   };
 
   // Hide admin add controls from non-admins
@@ -144,6 +100,26 @@
         // Buttons or containers that add users/admins usually have ids like addAdminBtn or adminForm
         document.querySelectorAll('#addAdminBtn, #adminForm, .admin-only, [data-admin-only]').forEach(el => {
           el.style.display = 'none';
+        });
+
+        // Some pages didn't mark the nav-items as data-admin-only. To be defensive,
+        // hide any sidebar links that point to admin management pages so the
+        // "Cadastros" heading collapses correctly for non-admins.
+        const adminHrefs = ['adm.html', 'gerente.html', 'rh.html'];
+        adminHrefs.forEach(href => {
+          // hide links inside sidebar nav
+          document.querySelectorAll('.sidebar a.nav-link[href$="' + href + '"]').forEach(a => {
+            const li = a.closest('.nav-item') || a.parentElement;
+            if (li) li.style.display = 'none';
+            else a.style.display = 'none';
+          });
+
+          // hide any other anchors linking directly to those pages
+          document.querySelectorAll('a[href$="' + href + '"]').forEach(a => {
+            const el = a.closest('li') || a;
+            if (el) el.style.display = 'none';
+            else a.style.display = 'none';
+          });
         });
       }
     } catch(e){ console.error('Permissions.applyAdminRules error', e); }
@@ -175,22 +151,51 @@
   document.addEventListener('DOMContentLoaded', () => {
     try {
       // Aguardar Utils estar disponível
-      const checkUtils = () => {
-        if (window.Utils && typeof window.Utils.normalizeLevelAccess === 'function') {
-          Permissions.applySidebarRules();
-          Permissions.applyAdminRules();
-          Permissions.applyKanbanRules();
-          // update topbar username (Utils already does this in some pages)
-        } else {
-          // Tentar novamente após um pequeno delay
-          setTimeout(checkUtils, 100);
-        }
+      const runAll = () => {
+        // Global hides (links that should not appear for anyone)
+        Permissions.applyGlobalHides && Permissions.applyGlobalHides();
+        Permissions.applySidebarRules();
+        Permissions.applyAdminRules();
+        Permissions.applyKanbanRules();
+        // hide empty sidebar headings after rules applied
+        Permissions.cleanupSidebarHeadings();
       };
-      checkUtils();
+
+      // If Utils is present (used by getRole normalization), wait a short moment
+      // to ensure it has initialized. But always run cleanup after a short delay
+      // in case Utils isn't available.
+      if (window.Utils && typeof window.Utils.normalizeLevelAccess === 'function') {
+        setTimeout(runAll, 20);
+      } else {
+        // run quickly and also retry once to catch late Utils initialization
+        runAll();
+        setTimeout(runAll, 150);
+      }
     } catch(e){
       console.error('Permissions DOMContentLoaded error', e);
     }
   });
+
+  // Hide links that should be hidden for everyone (global removal)
+  Permissions.applyGlobalHides = function() {
+    try {
+      // Example: remove 'Tabelas' link everywhere
+      const globalHrefs = ['tables.html'];
+      globalHrefs.forEach(href => {
+        document.querySelectorAll('.sidebar a.nav-link[href$="' + href + '"]').forEach(a => {
+          const li = a.closest('.nav-item') || a.parentElement;
+          if (li) li.style.display = 'none';
+          else a.style.display = 'none';
+        });
+        // also hide any other anchor occurrences
+        document.querySelectorAll('a[href$="' + href + '"]').forEach(a => {
+          const el = a.closest('li') || a;
+          if (el) el.style.display = 'none';
+          else a.style.display = 'none';
+        });
+      });
+    } catch(e){ console.error('Permissions.applyGlobalHides error', e); }
+  };
 
   window.Permissions = Permissions;
 })(window);
