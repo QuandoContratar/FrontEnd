@@ -222,7 +222,7 @@ async function sendPendingRequests() {
                 
                 // Prepara dados para criar a vaga (formato VacancyOpeningDTO)
                 // O backend precisa de uma referência persistida ao User
-                // Vamos enviar apenas o ID do gestor e deixar o backend buscar o User do banco
+                // Envia fk_manager com o ID do gestor para criar a aprovação da vaga
                 const vacancyData = {
                     position_job: request.cargo,
                     period: request.periodo,
@@ -232,7 +232,8 @@ async function sendPendingRequests() {
                     location: request.localidade,
                     requirements: request.requisitos || '',
                     area: request.area || 'Tecnologia',
-                    gestor: gestorId // Apenas o ID como número - o backend deve buscar o User
+                    gestor: gestorId, // Mantido para compatibilidade
+                    fk_manager: gestorId // Campo fk_manager obrigatório para criar a aprovação da vaga
                 };
                 
                 console.log('✅ contractType mapeado:', contractType, '(original:', request.regimeContratacao, ')');
@@ -598,7 +599,7 @@ async function sendSinglePendingRequest(requestId) {
         
         // Prepara dados para criar a vaga (formato VacancyOpeningDTO)
         // O backend precisa de uma referência persistida ao User
-        // Vamos enviar apenas o ID do gestor e deixar o backend buscar o User do banco
+        // Envia fk_manager com o ID do gestor para criar a aprovação da vaga
         const vacancyData = {
             position_job: request.cargo,
             period: request.periodo,
@@ -608,7 +609,8 @@ async function sendSinglePendingRequest(requestId) {
             location: request.localidade,
             requirements: request.requisitos || '',
             area: request.area || 'Tecnologia',
-            gestor: gestorId // Apenas o ID como número - o backend deve buscar o User
+            gestor: gestorId, // Mantido para compatibilidade
+            fk_manager: gestorId // Campo fk_manager obrigatório para criar a aprovação da vaga
         };
         
         console.log('✅ contractType mapeado:', contractType, '(original:', request.regimeContratacao, ')');
@@ -864,6 +866,7 @@ async function handleMassApproval() {
                 const workModel = workModelMap[request.modeloTrabalho?.toLowerCase()] || request.modeloTrabalho || 'presencial';
                 
                 // Prepara dados para criar a vaga
+                // Envia fk_manager com o ID do gestor para criar a aprovação da vaga
                 const vacancyData = {
                     position_job: request.cargo,
                     period: request.periodo,
@@ -873,7 +876,8 @@ async function handleMassApproval() {
                     location: request.localidade,
                     requirements: request.requisitos || '',
                     area: request.area || 'Tecnologia',
-                    gestor: gestorId
+                    gestor: gestorId, // Mantido para compatibilidade
+                    fk_manager: gestorId // Campo fk_manager obrigatório para criar a aprovação da vaga
                 };
                 
                 // Adiciona justificativa como string se existir

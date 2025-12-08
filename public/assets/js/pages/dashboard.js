@@ -1067,7 +1067,25 @@ function setupPeriodFilter() {
     }
 }
 
-document.addEventListener("DOMContentLoaded", async function() {
+// Função para verificar permissão e inicializar dashboard
+async function checkPermissionAndInit() {
+    // Todos os usuários podem acessar o dashboard (charts.html), mas com diferentes visualizações
+    // A lógica de filtragem de dados será feita no backend ou na renderização dos gráficos
     setupPeriodFilter();
     await initDashboard();
+}
+
+document.addEventListener("DOMContentLoaded", async function() {
+    // Aguardar Utils estar disponível antes de verificar permissões
+    const waitForUtils = () => {
+        if (window.Utils && typeof window.Utils.normalizeLevelAccess === 'function') {
+            checkPermissionAndInit();
+        } else {
+            // Tentar novamente após um pequeno delay
+            setTimeout(waitForUtils, 50);
+        }
+    };
+    
+    // Iniciar verificação
+    waitForUtils();
 });

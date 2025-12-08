@@ -11,9 +11,44 @@ const usersClient = new UsersClient();
 // Variável para controlar modo de edição
 let editingUserId = null;
 
+// Verificar se o usuário é admin (apenas admin pode criar/editar/excluir admins)
+let isAdmin = false;
+
 // Inicialização quando o DOM estiver pronto
 document.addEventListener("DOMContentLoaded", async () => {
-    await initAdminPage();
+    // Verificar permissão do usuário - apenas ADMIN pode gerenciar admins
+    const waitForUtils = () => {
+        if (window.Utils && typeof window.Utils.normalizeLevelAccess === 'function') {
+            try {
+                const userLoggedStr = localStorage.getItem('userLogged') || localStorage.getItem('currentUser');
+                if (userLoggedStr) {
+                    const user = JSON.parse(userLoggedStr);
+                    const userLevel = window.Utils.normalizeLevelAccess(user.levelAccess || user.level_access);
+                    isAdmin = userLevel === 'ADMIN';
+                    
+                    if (!isAdmin) {
+                        // Bloquear acesso de não-admins
+                        const UtilsRef = window.Utils || Utils;
+                        if (UtilsRef && typeof UtilsRef.showMessage === 'function') {
+                            UtilsRef.showMessage('Apenas administradores podem gerenciar administradores.', 'error');
+                        } else {
+                            alert('Apenas administradores podem gerenciar administradores.');
+                        }
+                        setTimeout(() => {
+                            window.location.href = 'home.html';
+                        }, 2000);
+                        return;
+                    }
+                }
+            } catch (error) {
+                console.error('Erro ao verificar permissão:', error);
+            }
+            initAdminPage();
+        } else {
+            setTimeout(waitForUtils, 50);
+        }
+    };
+    waitForUtils();
 });
 
 /**
@@ -149,6 +184,12 @@ function renderAdmins(admins) {
  */
 async function handleFormSubmit(e) {
     e.preventDefault();
+
+    // Verificar se é admin antes de permitir criar/editar
+    if (!isAdmin) {
+        showNotification("Apenas administradores podem criar ou editar administradores!", "error");
+        return;
+    }
 
     const name = document.getElementById("name").value.trim();
     const email = document.getElementById("email").value.trim();
@@ -315,6 +356,12 @@ async function handleTableActions(e) {
  * @param {string|number} id - ID do administrador
  */
 async function editAdmin(id) {
+    // Verificar se é admin antes de permitir editar
+    if (!isAdmin) {
+        showNotification("Apenas administradores podem editar administradores!", "error");
+        return;
+    }
+
     try {
         const admin = await usersClient.findById(id);
 
@@ -372,6 +419,12 @@ async function editAdmin(id) {
  * @param {string|number} id - ID do administrador
  */
 async function deleteAdmin(id) {
+    // Verificar se é admin antes de permitir excluir
+    if (!isAdmin) {
+        showNotification("Apenas administradores podem excluir administradores!", "error");
+        return;
+    }
+
     if (!confirm("Tem certeza que deseja excluir este administrador?")) {
         return;
     }

@@ -192,6 +192,71 @@ class Utils {
         window.location.href = 'login.html';
     }
 
+    /**
+     * Mapeia levelAccess numérico ou string para nome legível
+     * Suporta: '1'/'ADMIN', '2'/'HR', '3'/'MANAGER'
+     */
+    static getLevelAccessName(levelAccess) {
+        if (!levelAccess) return null;
+        
+        const levelStr = String(levelAccess).toUpperCase();
+        
+        // Mapeamento: numérico -> nome legível
+        const levelMap = {
+            '1': 'Administrador',
+            '2': 'RH',
+            '3': 'Gestor',
+            'ADMIN': 'Administrador',
+            'HR': 'RH',
+            'MANAGER': 'Gestor'
+        };
+        
+        return levelMap[levelStr] || levelAccess;
+    }
+
+    /**
+     * Converte levelAccess para formato padronizado (ADMIN, HR, MANAGER)
+     * Aceita valores numéricos ('1', '2', '3') ou strings ('ADMIN', 'HR', 'MANAGER')
+     */
+    static normalizeLevelAccess(levelAccess) {
+        if (!levelAccess) return null;
+        
+        const levelStr = String(levelAccess).toUpperCase();
+        
+        const normalizeMap = {
+            '1': 'ADMIN',
+            '2': 'HR',
+            '3': 'MANAGER',
+            'ADMIN': 'ADMIN',
+            'HR': 'HR',
+            'MANAGER': 'MANAGER'
+        };
+        
+        return normalizeMap[levelStr] || levelAccess;
+    }
+
+    /**
+     * Verifica se o usuário tem permissão baseado no levelAccess
+     * @param {string|number} userLevelAccess - LevelAccess do usuário
+     * @param {string|number|Array} requiredLevels - Nível(s) requerido(s)
+     */
+    static hasPermission(userLevelAccess, requiredLevels) {
+        if (!userLevelAccess) return false;
+        
+        const normalizedUser = this.normalizeLevelAccess(userLevelAccess);
+        
+        // Se requiredLevels é array, verifica se o usuário tem algum dos níveis
+        if (Array.isArray(requiredLevels)) {
+            return requiredLevels.some(level => {
+                const normalizedRequired = this.normalizeLevelAccess(level);
+                return normalizedUser === normalizedRequired;
+            });
+        }
+        
+        const normalizedRequired = this.normalizeLevelAccess(requiredLevels);
+        return normalizedUser === normalizedRequired;
+    }
+
     // Função para atualizar nome do usuário na topbar
     static updateUserName() {
         try {
@@ -236,15 +301,13 @@ class Utils {
                             newText = `${user.name} | ${parts[1].trim()}`;
                         }
                     } else {
-                        // Se não tem cargo, tenta determinar pelo levelAccess ou area
-                        if (user.levelAccess) {
-                            const levelMap = {
-                                'ADMIN': 'Administrador',
-                                'HR': 'RH',
-                                'MANAGER': 'Gestor'
-                            };
-                            const role = levelMap[user.levelAccess] || user.levelAccess;
-                            newText = `${user.name} | ${role}`;
+                        // Usa o utilitário de mapeamento de levelAccess
+                        const levelAccess = user.levelAccess || user.level_access;
+                        if (levelAccess) {
+                            const role = this.getLevelAccessName(levelAccess);
+                            if (role) {
+                                newText = `${user.name} | ${role}`;
+                            }
                         } else if (user.area) {
                             newText = `${user.name} | ${user.area}`;
                         }
