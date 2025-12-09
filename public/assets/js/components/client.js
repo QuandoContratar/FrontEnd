@@ -219,4 +219,78 @@ export class DashboardClient extends ApiClient {
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         return response.json();
     }
+
+    // ========================================
+    // NOVOS ENDPOINTS - Insights Avançados
+    // ========================================
+
+    /**
+     * Busca Hard Skills mais comuns
+     * Endpoint: GET /dashboard/skills/hard
+     */
+    async getHardSkills() {
+        const response = await fetch(`${this.url}/skills/hard`, {
+            method: 'GET',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include'
+        });
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        return response.json();
+    }
+
+    /**
+     * Busca Soft Skills mais comuns
+     * Endpoint: GET /dashboard/skills/soft
+     */
+    async getSoftSkills() {
+        const response = await fetch(`${this.url}/skills/soft`, {
+            method: 'GET',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include'
+        });
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        return response.json();
+    }
+
+    /**
+     * Busca recomendação de vagas para um candidato
+     * Endpoint: GET /dashboard/recommendation/{candidateId}
+     */
+    async getVacancyRecommendation(candidateId) {
+        const response = await fetch(`${this.url}/recommendation/${candidateId}`, {
+            method: 'GET',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include'
+        });
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        return response.json();
+    }
+
+    /**
+     * Busca tempo até primeiro contato do RH
+     * Endpoint: GET /dashboard/first-contact
+     */
+    async getFirstContactTime() {
+        const response = await fetch(`${this.url}/first-contact`, {
+            method: 'GET',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include'
+        });
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        return response.json();
+    }
+
+    /**
+     * Busca lista de candidatos para select
+     * Endpoint: GET /candidates
+     */
+    async getCandidatesList() {
+        const response = await fetch(`${this.baseUrl}/candidates`, {
+            method: 'GET',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include'
+        });
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        return response.json();
+    }
 }

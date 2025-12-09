@@ -313,15 +313,15 @@
                                     <div class="chart-pie pt-4 pb-2">
                                         <canvas id="statusVagasChart"></canvas>
                                     </div>
-                                    <div class="mt-4 text-center small">
+                                    <div class="mt-4 text-center small" id="statusVagasLegend">
                                         <span class="mr-2">
-                                            <i class="fas fa-circle text-primary"></i> Aprovadas
+                                            <i class="fas fa-circle text-success"></i> Abertas / Aprovadas
                                         </span>
                                         <span class="mr-2">
-                                            <i class="fas fa-circle text-success"></i> Abertas
+                                            <i class="fas fa-circle text-warning"></i> Pendente aprovação
                                         </span>
                                         <span class="mr-2">
-                                            <i class="fas fa-circle text-info"></i> Em Análise
+                                            <i class="fas fa-circle text-danger"></i> Rejeitadas
                                         </span>
                                     </div>
                                 </div>
@@ -528,6 +528,169 @@
                                                 <!-- Dados serão carregados dinamicamente -->
                                             </tbody>
                                         </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ====================================== -->
+                    <!-- NOVOS GRÁFICOS - INSIGHTS AVANÇADOS -->
+                    <!-- ====================================== -->
+
+                    <!-- Divider com título de seção -->
+                    <div class="d-sm-flex align-items-center justify-content-between mb-4 mt-4">
+                        <h1 class="h4 mb-0 text-gray-800">
+                            <i class="fas fa-lightbulb text-warning mr-2"></i>Insights de Skills
+                        </h1>
+                    </div>
+
+                    <!-- Row: Hard Skills + Soft Skills -->
+                    <div class="row">
+                        <!-- Hard Skills Heatmap/Cloud -->
+                        <div class="col-xl-6 col-lg-6">
+                            <div class="card shadow mb-4">
+                                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                                    <h6 class="m-0 font-weight-bold text-primary">
+                                        <i class="fas fa-code mr-2"></i>Hard Skills Mais Comuns
+                                    </h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="chart-bar">
+                                        <canvas id="hardSkillsChart"></canvas>
+                                    </div>
+                                    <div class="mt-3" id="hardSkillsCloud">
+                                        <!-- Tag cloud será renderizada via JS -->
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Soft Skills Cloud -->
+                        <div class="col-xl-6 col-lg-6">
+                            <div class="card shadow mb-4">
+                                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                                    <h6 class="m-0 font-weight-bold text-success">
+                                        <i class="fas fa-comments mr-2"></i>Soft Skills Mais Comuns
+                                    </h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="chart-bar">
+                                        <canvas id="softSkillsChart"></canvas>
+                                    </div>
+                                    <div class="mt-3" id="softSkillsCloud">
+                                        <!-- Tag cloud será renderizada via JS -->
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Divider com título de seção -->
+                    <div class="d-sm-flex align-items-center justify-content-between mb-4 mt-4">
+                        <h1 class="h4 mb-0 text-gray-800">
+                            <i class="fas fa-users text-info mr-2"></i>Insights de Candidatos
+                        </h1>
+                    </div>
+
+                    <!-- Row: Mapa Geográfico + Recomendação de Vagas -->
+                    <div class="row">
+                        <!-- Mapa de Candidatos por Estado -->
+                        <div class="col-xl-8 col-lg-7">
+                            <div class="card shadow mb-4">
+                                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                                    <h6 class="m-0 font-weight-bold text-primary">
+                                        <i class="fas fa-map-marked-alt mr-2"></i>Distribuição Geográfica dos Candidatos
+                                    </h6>
+                                </div>
+                                <div class="card-body">
+                                    <div id="brazilMapContainer" style="min-height: 400px; position: relative;">
+                                        <!-- Mapa será renderizado via JS -->
+                                        <div id="brazilMapFallback">
+                                            <canvas id="candidatesByStateBarChart" height="300"></canvas>
+                                        </div>
+                                    </div>
+                                    <div class="mt-3 text-center small" id="stateMapLegend">
+                                        <span class="mr-2"><i class="fas fa-square" style="color: #4e73df;"></i> Maior concentração</span>
+                                        <span class="mr-2"><i class="fas fa-square" style="color: #36b9cc;"></i> Média concentração</span>
+                                        <span class="mr-2"><i class="fas fa-square" style="color: #1cc88a;"></i> Menor concentração</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Recomendação de Vagas para Candidato -->
+                        <div class="col-xl-4 col-lg-5">
+                            <div class="card shadow mb-4">
+                                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                                    <h6 class="m-0 font-weight-bold text-info">
+                                        <i class="fas fa-star mr-2"></i>Recomendação de Vagas
+                                    </h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="form-group">
+                                        <label for="candidateRecommendationSelect">Selecione um Candidato:</label>
+                                        <select class="form-control form-control-sm" id="candidateRecommendationSelect">
+                                            <option value="">Selecione...</option>
+                                        </select>
+                                    </div>
+                                    <div class="table-responsive mt-3">
+                                        <table class="table table-sm table-bordered" id="vacancyRecommendationTable">
+                                            <thead class="thead-light">
+                                                <tr>
+                                                    <th>Vaga</th>
+                                                    <th class="text-center">Score</th>
+                                                    <th class="text-center">Match</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="vacancyRecommendationBody">
+                                                <tr>
+                                                    <td colspan="3" class="text-center text-muted">
+                                                        <small>Selecione um candidato para ver as recomendações</small>
+                                                    </td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Divider com título de seção -->
+                    <div class="d-sm-flex align-items-center justify-content-between mb-4 mt-4">
+                        <h1 class="h4 mb-0 text-gray-800">
+                            <i class="fas fa-headset text-danger mr-2"></i>Insights de RH
+                        </h1>
+                    </div>
+
+                    <!-- Row: Tempo até Primeiro Contato -->
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="card shadow mb-4">
+                                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                                    <h6 class="m-0 font-weight-bold text-danger">
+                                        <i class="fas fa-clock mr-2"></i>Tempo até Primeiro Contato do RH
+                                    </h6>
+                                    <div class="d-flex align-items-center">
+                                        <span class="mr-2 small text-muted">Média:</span>
+                                        <span class="badge badge-info" id="avgFirstContactDays">-- dias</span>
+                                    </div>
+                                </div>
+                                <div class="card-body">
+                                    <div class="chart-area">
+                                        <canvas id="firstContactChart"></canvas>
+                                    </div>
+                                    <div class="mt-3 text-center small">
+                                        <span class="mr-3">
+                                            <i class="fas fa-circle text-success"></i> Até 3 dias (Ótimo)
+                                        </span>
+                                        <span class="mr-3">
+                                            <i class="fas fa-circle text-warning"></i> 4-7 dias (Aceitável)
+                                        </span>
+                                        <span class="mr-3">
+                                            <i class="fas fa-circle text-danger"></i> +7 dias (Crítico)
+                                        </span>
                                     </div>
                                 </div>
                             </div>

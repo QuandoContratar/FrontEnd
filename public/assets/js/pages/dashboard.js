@@ -938,6 +938,548 @@ async function loadAvgTimeByStage() {
     console.log('✅ [Dashboard] Gráfico tempo médio por estágio criado com sucesso!');
 }
 
+// ========================================
+// NOVOS GRÁFICOS - INSIGHTS AVANÇADOS
+// ========================================
+
+// ============================
+// GRÁFICO - HARD SKILLS (Barras Horizontais + Cloud)
+// ============================
+let hardSkillsChartInstance = null;
+
+async function loadHardSkills() {
+    const canvas = document.getElementById("hardSkillsChart");
+    const cloudContainer = document.getElementById("hardSkillsCloud");
+    if (!canvas) return;
+
+    let result;
+    try {
+        console.log('📊 [Dashboard] Carregando Hard Skills...');
+        result = await dashboardClient.getHardSkills();
+        console.log('✅ [Dashboard] Hard Skills:', result);
+    } catch (error) {
+        console.warn('⚠️ [Dashboard] Usando fallback para Hard Skills');
+        result = [
+            { skill: "Java", total: 45 },
+            { skill: "Python", total: 38 },
+            { skill: "SQL", total: 35 },
+            { skill: "JavaScript", total: 32 },
+            { skill: "React", total: 28 },
+            { skill: "Spring Boot", total: 25 },
+            { skill: "AWS", total: 22 },
+            { skill: "Docker", total: 18 },
+            { skill: "Git", total: 15 },
+            { skill: "Kubernetes", total: 12 }
+        ];
+    }
+
+    // Destruir gráfico anterior
+    if (hardSkillsChartInstance) {
+        hardSkillsChartInstance.destroy();
+        hardSkillsChartInstance = null;
+    }
+
+    // Ordenar por total (descendente) e pegar top 10
+    const sortedData = result.sort((a, b) => (b.total || 0) - (a.total || 0)).slice(0, 10);
+    const labels = sortedData.map(r => r.skill || r.name);
+    const valores = sortedData.map(r => r.total || r.count || 0);
+    const maxValue = Math.max(...valores, 10);
+
+    // Gerar cores em gradiente
+    const bgColors = valores.map((_, i) => {
+        const opacity = 1 - (i * 0.07);
+        return `rgba(78, 115, 223, ${opacity})`;
+    });
+
+    hardSkillsChartInstance = new Chart(canvas, {
+        type: 'horizontalBar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: "Candidatos",
+                backgroundColor: bgColors,
+                hoverBackgroundColor: COLORS.primaryHover,
+                data: valores
+            }]
+        },
+        options: {
+            maintainAspectRatio: false,
+            layout: { padding: { left: 10, right: 25, top: 10, bottom: 0 } },
+            scales: {
+                xAxes: [{
+                    ticks: { min: 0, max: Math.ceil(maxValue * 1.1), maxTicksLimit: 5 },
+                    gridLines: { color: "rgb(234, 236, 244)", zeroLineColor: "rgb(234, 236, 244)", drawBorder: false }
+                }],
+                yAxes: [{ gridLines: { display: false }, barPercentage: 0.6 }]
+            },
+            legend: { display: false },
+            tooltips: {
+                backgroundColor: "rgb(255,255,255)", bodyFontColor: "#858796",
+                titleFontColor: '#6e707e', borderColor: '#dddfeb', borderWidth: 1,
+                xPadding: 15, yPadding: 15, displayColors: false,
+                callbacks: { label: (t, c) => `${t.xLabel} candidatos com esta skill` }
+            }
+        }
+    });
+
+    // Renderizar Tag Cloud
+    if (cloudContainer) {
+        renderSkillCloud(cloudContainer, sortedData, 'primary');
+    }
+}
+
+// ============================
+// GRÁFICO - SOFT SKILLS (Barras Horizontais + Cloud)
+// ============================
+let softSkillsChartInstance = null;
+
+async function loadSoftSkills() {
+    const canvas = document.getElementById("softSkillsChart");
+    const cloudContainer = document.getElementById("softSkillsCloud");
+    if (!canvas) return;
+
+    let result;
+    try {
+        console.log('📊 [Dashboard] Carregando Soft Skills...');
+        result = await dashboardClient.getSoftSkills();
+        console.log('✅ [Dashboard] Soft Skills:', result);
+    } catch (error) {
+        console.warn('⚠️ [Dashboard] Usando fallback para Soft Skills');
+        result = [
+            { softSkill: "Comunicação", total: 42 },
+            { softSkill: "Trabalho em equipe", total: 38 },
+            { softSkill: "Proatividade", total: 35 },
+            { softSkill: "Liderança", total: 28 },
+            { softSkill: "Resolução de problemas", total: 25 },
+            { softSkill: "Adaptabilidade", total: 22 },
+            { softSkill: "Criatividade", total: 18 },
+            { softSkill: "Organização", total: 15 },
+            { softSkill: "Empatia", total: 12 },
+            { softSkill: "Pensamento crítico", total: 10 }
+        ];
+    }
+
+    // Destruir gráfico anterior
+    if (softSkillsChartInstance) {
+        softSkillsChartInstance.destroy();
+        softSkillsChartInstance = null;
+    }
+
+    // Ordenar por total (descendente) e pegar top 10
+    const sortedData = result.sort((a, b) => (b.total || 0) - (a.total || 0)).slice(0, 10);
+    const labels = sortedData.map(r => r.softSkill || r.skill || r.name);
+    const valores = sortedData.map(r => r.total || r.count || 0);
+    const maxValue = Math.max(...valores, 10);
+
+    // Gerar cores em gradiente verde
+    const bgColors = valores.map((_, i) => {
+        const opacity = 1 - (i * 0.07);
+        return `rgba(28, 200, 138, ${opacity})`;
+    });
+
+    softSkillsChartInstance = new Chart(canvas, {
+        type: 'horizontalBar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: "Candidatos",
+                backgroundColor: bgColors,
+                hoverBackgroundColor: COLORS.successHover,
+                data: valores
+            }]
+        },
+        options: {
+            maintainAspectRatio: false,
+            layout: { padding: { left: 10, right: 25, top: 10, bottom: 0 } },
+            scales: {
+                xAxes: [{
+                    ticks: { min: 0, max: Math.ceil(maxValue * 1.1), maxTicksLimit: 5 },
+                    gridLines: { color: "rgb(234, 236, 244)", zeroLineColor: "rgb(234, 236, 244)", drawBorder: false }
+                }],
+                yAxes: [{ gridLines: { display: false }, barPercentage: 0.6 }]
+            },
+            legend: { display: false },
+            tooltips: {
+                backgroundColor: "rgb(255,255,255)", bodyFontColor: "#858796",
+                titleFontColor: '#6e707e', borderColor: '#dddfeb', borderWidth: 1,
+                xPadding: 15, yPadding: 15, displayColors: false,
+                callbacks: { label: (t, c) => `${t.xLabel} candidatos com esta skill` }
+            }
+        }
+    });
+
+    // Renderizar Tag Cloud
+    if (cloudContainer) {
+        renderSkillCloud(cloudContainer, sortedData.map(s => ({ skill: s.softSkill || s.skill, total: s.total })), 'success');
+    }
+}
+
+/**
+ * Renderiza uma tag cloud de skills
+ * @param {HTMLElement} container - Container para renderizar
+ * @param {Array} data - Array de { skill, total }
+ * @param {string} colorType - 'primary', 'success', 'info', etc
+ */
+function renderSkillCloud(container, data, colorType = 'primary') {
+    if (!container || !data || data.length === 0) return;
+
+    const maxTotal = Math.max(...data.map(d => d.total || 0));
+    const minTotal = Math.min(...data.map(d => d.total || 0));
+    
+    // Calcular tamanho relativo (12px a 24px)
+    const getSize = (total) => {
+        if (maxTotal === minTotal) return 16;
+        return 12 + ((total - minTotal) / (maxTotal - minTotal)) * 12;
+    };
+
+    const colorMap = {
+        primary: ['#4e73df', '#2e59d9', '#1e3a8a'],
+        success: ['#1cc88a', '#17a673', '#0d6e4f'],
+        info: ['#36b9cc', '#2c9faf', '#1a5f6a'],
+        warning: ['#f6c23e', '#dda20a', '#b38600'],
+        danger: ['#e74a3b', '#c0392b', '#8b2500']
+    };
+
+    const colors = colorMap[colorType] || colorMap.primary;
+
+    container.innerHTML = data.map((item, index) => {
+        const size = getSize(item.total);
+        const colorIndex = Math.min(Math.floor(index / 4), colors.length - 1);
+        const skill = item.skill || item.softSkill || item.name;
+        
+        return `<span class="skill-tag" style="
+            display: inline-block;
+            padding: 4px 10px;
+            margin: 3px;
+            font-size: ${size}px;
+            font-weight: ${size > 18 ? '600' : '400'};
+            color: ${colors[colorIndex]};
+            background: ${colors[colorIndex]}15;
+            border-radius: 15px;
+            cursor: default;
+            transition: all 0.2s;
+        " title="${item.total} candidatos">${skill}</span>`;
+    }).join('');
+}
+
+// ============================
+// GRÁFICO - CANDIDATOS POR ESTADO (Barras + Fallback para mapa)
+// ============================
+let candidatesByStateBarChartInstance = null;
+
+async function loadCandidatesByStateAdvanced() {
+    const canvas = document.getElementById("candidatesByStateBarChart");
+    if (!canvas) return;
+
+    let result;
+    try {
+        console.log('📊 [Dashboard] Carregando candidatos por estado (avançado)...');
+        result = await dashboardClient.getCandidatesByState();
+        console.log('✅ [Dashboard] Candidatos por estado:', result);
+    } catch (error) {
+        console.warn('⚠️ [Dashboard] Usando fallback para candidatos por estado');
+        result = [
+            { state: "SP", total: 45 },
+            { state: "RJ", total: 28 },
+            { state: "MG", total: 18 },
+            { state: "RS", total: 12 },
+            { state: "PR", total: 10 },
+            { state: "BA", total: 8 },
+            { state: "SC", total: 7 },
+            { state: "PE", total: 6 },
+            { state: "GO", total: 5 },
+            { state: "DF", total: 4 }
+        ];
+    }
+
+    // Destruir gráfico anterior
+    if (candidatesByStateBarChartInstance) {
+        candidatesByStateBarChartInstance.destroy();
+        candidatesByStateBarChartInstance = null;
+    }
+
+    // Ordenar por total (descendente)
+    const sortedData = result.sort((a, b) => (b.total || 0) - (a.total || 0));
+    const labels = sortedData.map(r => r.state || r.estado);
+    const valores = sortedData.map(r => r.total || r.count || 0);
+    const maxValue = Math.max(...valores, 10);
+
+    // Cores em gradiente baseado no valor
+    const bgColors = valores.map((val, i) => {
+        const ratio = val / maxValue;
+        if (ratio > 0.7) return COLORS.primary;
+        if (ratio > 0.4) return COLORS.info;
+        return COLORS.success;
+    });
+
+    candidatesByStateBarChartInstance = new Chart(canvas, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: "Candidatos",
+                backgroundColor: bgColors,
+                hoverBackgroundColor: COLORS.primaryHover,
+                data: valores
+            }]
+        },
+        options: {
+            maintainAspectRatio: false,
+            layout: { padding: { left: 10, right: 25, top: 25, bottom: 0 } },
+            scales: {
+                xAxes: [{ gridLines: { display: false, drawBorder: false }, maxBarThickness: 40 }],
+                yAxes: [{
+                    ticks: { min: 0, max: Math.ceil(maxValue * 1.2), maxTicksLimit: 5, padding: 10 },
+                    gridLines: { color: "rgb(234, 236, 244)", zeroLineColor: "rgb(234, 236, 244)", drawBorder: false, borderDash: [2] }
+                }]
+            },
+            legend: { display: false },
+            tooltips: {
+                backgroundColor: "rgb(255,255,255)", bodyFontColor: "#858796",
+                titleFontColor: '#6e707e', borderColor: '#dddfeb', borderWidth: 1,
+                xPadding: 15, yPadding: 15, displayColors: false,
+                callbacks: { label: (t, c) => `${t.yLabel} candidatos em ${t.xLabel}` }
+            }
+        }
+    });
+}
+
+// ============================
+// RECOMENDAÇÃO DE VAGAS PARA CANDIDATO
+// ============================
+async function setupCandidateRecommendationSelect() {
+    const select = document.getElementById('candidateRecommendationSelect');
+    if (!select) return;
+
+    try {
+        console.log('📊 [Dashboard] Carregando lista de candidatos para recomendação...');
+        const candidates = await dashboardClient.getCandidatesList();
+        console.log('📊 [Dashboard] Candidatos recebidos:', candidates);
+        
+        // Log da estrutura do primeiro candidato para debug
+        if (Array.isArray(candidates) && candidates.length > 0) {
+            console.log('📊 [Dashboard] Estrutura do candidato:', Object.keys(candidates[0]), candidates[0]);
+        }
+        
+        select.innerHTML = '<option value="">Selecione um candidato...</option>';
+        
+        if (Array.isArray(candidates)) {
+            let addedCount = 0;
+            candidates.forEach(c => {
+                // Campo correto é idCandidate (vindo do backend)
+                const id = c.idCandidate || c.id_candidate || c.candidateId || c.id;
+                const name = c.name || c.nome || c.candidateName || `Candidato ${id}`;
+                
+                // Só adiciona se tiver ID válido
+                if (id !== undefined && id !== null && id !== '') {
+                    select.innerHTML += `<option value="${id}">${name}</option>`;
+                    addedCount++;
+                    if (addedCount >= 50) return; // Limita a 50 candidatos
+                } else {
+                    console.warn('⚠️ [Dashboard] Candidato sem ID válido:', c);
+                }
+            });
+            console.log(`📊 [Dashboard] ${addedCount} candidatos adicionados ao select`);
+        }
+
+        select.addEventListener('change', async function() {
+            const candidateId = this.value;
+            if (candidateId && candidateId !== 'undefined' && candidateId !== '') {
+                await loadVacancyRecommendation(candidateId);
+            } else {
+                clearRecommendationTable();
+            }
+        });
+    } catch (error) {
+        console.warn('⚠️ [Dashboard] Erro ao carregar candidatos:', error);
+        select.innerHTML = '<option value="">Erro ao carregar candidatos</option>';
+    }
+}
+
+async function loadVacancyRecommendation(candidateId) {
+    const tbody = document.getElementById('vacancyRecommendationBody');
+    if (!tbody) return;
+
+    // Validação do candidateId
+    if (!candidateId || candidateId === 'undefined' || candidateId === 'null' || candidateId === '') {
+        console.error('❌ [Dashboard] candidateId inválido:', candidateId);
+        tbody.innerHTML = '<tr><td colspan="3" class="text-center text-warning">Selecione um candidato válido</td></tr>';
+        return;
+    }
+
+    tbody.innerHTML = '<tr><td colspan="3" class="text-center"><i class="fas fa-spinner fa-spin"></i> Carregando...</td></tr>';
+
+    let result;
+    try {
+        console.log('📊 [Dashboard] Carregando recomendações para candidato:', candidateId);
+        result = await dashboardClient.getVacancyRecommendation(candidateId);
+        console.log('✅ [Dashboard] Recomendações:', result);
+    } catch (error) {
+        console.error('❌ [Dashboard] Erro ao carregar recomendações:', error);
+        tbody.innerHTML = '<tr><td colspan="3" class="text-center text-danger">Erro ao carregar recomendações</td></tr>';
+        return;
+    }
+
+    if (!result || result.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="3" class="text-center text-muted">Nenhuma recomendação encontrada</td></tr>';
+        return;
+    }
+
+    tbody.innerHTML = '';
+    result.slice(0, 5).forEach(rec => {
+        const position = rec.position || rec.vaga || rec.job || 'Vaga não informada';
+        const score = rec.score != null ? rec.score.toFixed(1) : 'N/A';
+        const matchLevel = rec.matchLevel || rec.match_level || 'BAIXO';
+        
+        // Badge de match
+        let badgeClass, badgeText;
+        switch (matchLevel.toUpperCase()) {
+            case 'DESTAQUE':
+                badgeClass = 'badge-primary';
+                badgeText = '⭐ Destaque';
+                break;
+            case 'ALTO':
+                badgeClass = 'badge-success';
+                badgeText = 'Alto';
+                break;
+            case 'MEDIO':
+                badgeClass = 'badge-warning';
+                badgeText = 'Médio';
+                break;
+            default:
+                badgeClass = 'badge-secondary';
+                badgeText = 'Baixo';
+        }
+
+        tbody.innerHTML += `
+            <tr>
+                <td><small>${position}</small></td>
+                <td class="text-center"><strong>${score}%</strong></td>
+                <td class="text-center"><span class="badge ${badgeClass}">${badgeText}</span></td>
+            </tr>
+        `;
+    });
+}
+
+function clearRecommendationTable() {
+    const tbody = document.getElementById('vacancyRecommendationBody');
+    if (tbody) {
+        tbody.innerHTML = '<tr><td colspan="3" class="text-center text-muted"><small>Selecione um candidato para ver as recomendações</small></td></tr>';
+    }
+}
+
+// ============================
+// GRÁFICO - TEMPO ATÉ PRIMEIRO CONTATO
+// ============================
+let firstContactChartInstance = null;
+
+async function loadFirstContactTime() {
+    const canvas = document.getElementById("firstContactChart");
+    const avgBadge = document.getElementById("avgFirstContactDays");
+    if (!canvas) return;
+
+    let result;
+    try {
+        console.log('📊 [Dashboard] Carregando tempo até primeiro contato...');
+        result = await dashboardClient.getFirstContactTime();
+        console.log('✅ [Dashboard] Tempo primeiro contato:', result);
+    } catch (error) {
+        console.warn('⚠️ [Dashboard] Usando fallback para tempo primeiro contato');
+        result = [
+            { candidateId: 1, candidateName: "João Silva", daysUntilContact: 2 },
+            { candidateId: 2, candidateName: "Maria Santos", daysUntilContact: 3 },
+            { candidateId: 3, candidateName: "Pedro Lima", daysUntilContact: 1 },
+            { candidateId: 4, candidateName: "Ana Costa", daysUntilContact: 5 },
+            { candidateId: 5, candidateName: "Carlos Oliveira", daysUntilContact: 4 },
+            { candidateId: 6, candidateName: "Fernanda Souza", daysUntilContact: 2 },
+            { candidateId: 7, candidateName: "Roberto Alves", daysUntilContact: 8 },
+            { candidateId: 8, candidateName: "Juliana Pereira", daysUntilContact: 3 },
+            { candidateId: 9, candidateName: "Marcelo Dias", daysUntilContact: 6 },
+            { candidateId: 10, candidateName: "Camila Rocha", daysUntilContact: 1 }
+        ];
+    }
+
+    // Destruir gráfico anterior
+    if (firstContactChartInstance) {
+        firstContactChartInstance.destroy();
+        firstContactChartInstance = null;
+    }
+
+    if (!result || result.length === 0) {
+        canvas.parentElement.innerHTML = '<p class="text-center text-muted">Sem dados disponíveis</p>';
+        return;
+    }
+
+    // Calcular média
+    const totalDays = result.reduce((sum, r) => sum + (r.daysUntilContact || 0), 0);
+    const avgDays = (totalDays / result.length).toFixed(1);
+    
+    if (avgBadge) {
+        avgBadge.textContent = `${avgDays} dias`;
+        // Cor baseada na média
+        avgBadge.className = 'badge';
+        if (avgDays <= 3) avgBadge.classList.add('badge-success');
+        else if (avgDays <= 7) avgBadge.classList.add('badge-warning');
+        else avgBadge.classList.add('badge-danger');
+    }
+
+    // Preparar dados (últimos 15 candidatos)
+    const recentData = result.slice(0, 15);
+    const labels = recentData.map(r => r.candidateName || `Cand. ${r.candidateId}`);
+    const valores = recentData.map(r => r.daysUntilContact || 0);
+
+    // Cores baseadas no tempo
+    const bgColors = valores.map(days => {
+        if (days <= 3) return COLORS.success;
+        if (days <= 7) return COLORS.warning;
+        return COLORS.danger;
+    });
+
+    firstContactChartInstance = new Chart(canvas, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: "Dias até contato",
+                backgroundColor: bgColors,
+                hoverBackgroundColor: bgColors.map(c => c === COLORS.success ? COLORS.successHover : 
+                    c === COLORS.warning ? '#dda20a' : '#c0392b'),
+                data: valores,
+                barPercentage: 0.7
+            }]
+        },
+        options: {
+            maintainAspectRatio: false,
+            layout: { padding: { left: 10, right: 25, top: 25, bottom: 0 } },
+            scales: {
+                xAxes: [{ 
+                    gridLines: { display: false, drawBorder: false }, 
+                    ticks: { fontSize: 10, maxRotation: 45, minRotation: 45 } 
+                }],
+                yAxes: [{
+                    ticks: { min: 0, maxTicksLimit: 5, padding: 10,
+                        callback: (value) => value + ' dias'
+                    },
+                    gridLines: { color: "rgb(234, 236, 244)", zeroLineColor: "rgb(234, 236, 244)", drawBorder: false, borderDash: [2] }
+                }]
+            },
+            legend: { display: false },
+            tooltips: {
+                backgroundColor: "rgb(255,255,255)", bodyFontColor: "#858796",
+                titleFontColor: '#6e707e', borderColor: '#dddfeb', borderWidth: 1,
+                xPadding: 15, yPadding: 15, displayColors: false,
+                callbacks: { 
+                    label: (t, c) => {
+                        const days = t.yLabel;
+                        let status = days <= 3 ? '(Ótimo)' : days <= 7 ? '(Aceitável)' : '(Crítico)';
+                        return `${days} dias ${status}`;
+                    }
+                }
+            }
+        }
+    });
+}
+
 // ============================
 // TABELA - PERFORMANCE DOS GESTORES
 // Nota: O backend deve filtrar apenas usuários com level_access = 'MANAGER'
@@ -950,24 +1492,33 @@ async function loadManagerPerformance() {
     try {
         console.log('📊 [Dashboard] Carregando performance dos gestores (apenas MANAGER)...');
         result = await dashboardClient.getManagerPerformance();
-        console.log('✅ [Dashboard] Performance dos gestores:', result);
+        console.log('✅ [Dashboard] Performance dos gestores (raw):', result);
         
-        // Filtro extra no frontend caso o backend não filtre corretamente
-        // (remover se o backend já retornar apenas MANAGERS)
-        if (result && result.length > 0 && result[0].levelAccess) {
-            result = result.filter(m => 
-                (m.levelAccess || m.level_access || '').toUpperCase() === 'MANAGER'
-            );
-            console.log('📊 [Dashboard] Após filtro MANAGER:', result);
+        // FILTRO OBRIGATÓRIO: Apenas gestores com level_access = 'MANAGER'
+        // Isso garante que RH e ADMIN não apareçam na tabela
+        if (result && Array.isArray(result) && result.length > 0) {
+            const originalCount = result.length;
+            result = result.filter(m => {
+                // Verifica vários campos possíveis onde o level_access pode estar
+                const level = (m.levelAccess || m.level_access || m.accessLevel || m.role || '').toUpperCase().trim();
+                const isManager = level === 'MANAGER' || level === 'GESTOR';
+                
+                if (!isManager) {
+                    console.log(`🚫 [Dashboard] Excluindo ${m.managerName || m.nome}: level=${level}`);
+                }
+                
+                return isManager;
+            });
+            console.log(`📊 [Dashboard] Filtro MANAGER: ${originalCount} → ${result.length} gestores`);
         }
     } catch (error) {
         console.warn('⚠️ [Dashboard] Usando fallback para performance dos gestores');
         result = [
-            { managerId: 1, managerName: 'João Silva', totalVacancies: 12, approvedVacancies: 10, rejectedVacancies: 2, avgTimeDays: 25 },
-            { managerId: 2, managerName: 'Maria Santos', totalVacancies: 8, approvedVacancies: 7, rejectedVacancies: 1, avgTimeDays: 22 },
-            { managerId: 3, managerName: 'Carlos Oliveira', totalVacancies: 15, approvedVacancies: 11, rejectedVacancies: 4, avgTimeDays: 30 },
-            { managerId: 4, managerName: 'Ana Costa', totalVacancies: 6, approvedVacancies: 6, rejectedVacancies: 0, avgTimeDays: 18 },
-            { managerId: 5, managerName: 'Roberto Lima', totalVacancies: 10, approvedVacancies: 6, rejectedVacancies: 4, avgTimeDays: 35 }
+            { managerId: 1, managerName: 'João Silva', totalVacancies: 12, approvedVacancies: 10, rejectedVacancies: 2, avgTimeDays: 25, levelAccess: 'MANAGER' },
+            { managerId: 2, managerName: 'Maria Santos', totalVacancies: 8, approvedVacancies: 7, rejectedVacancies: 1, avgTimeDays: 22, levelAccess: 'MANAGER' },
+            { managerId: 3, managerName: 'Carlos Oliveira', totalVacancies: 15, approvedVacancies: 11, rejectedVacancies: 4, avgTimeDays: 30, levelAccess: 'MANAGER' },
+            { managerId: 4, managerName: 'Ana Costa', totalVacancies: 6, approvedVacancies: 6, rejectedVacancies: 0, avgTimeDays: 18, levelAccess: 'MANAGER' },
+            { managerId: 5, managerName: 'Roberto Lima', totalVacancies: 10, approvedVacancies: 6, rejectedVacancies: 4, avgTimeDays: 35, levelAccess: 'MANAGER' }
         ];
     }
 
@@ -1030,7 +1581,7 @@ async function initDashboard() {
     console.log('🚀 [Dashboard] Iniciando carregamento...');
 
     try {
-        // Gráficos existentes
+        // Gráficos existentes - Primeira batch
         await Promise.all([
             loadMetrics(),
             loadVagasPorMes(),
@@ -1040,7 +1591,7 @@ async function initDashboard() {
             loadTempoPreenchimento()
         ]);
 
-        // Novos gráficos
+        // Gráficos intermediários
         await Promise.all([
             loadCandidatesByState(),
             loadMatchDistribution(),
@@ -1050,11 +1601,21 @@ async function initDashboard() {
             loadManagerPerformance()
         ]);
 
+        // NOVOS GRÁFICOS - Insights Avançados
+        await Promise.all([
+            loadHardSkills(),
+            loadSoftSkills(),
+            loadCandidatesByStateAdvanced(),
+            setupCandidateRecommendationSelect(),
+            loadFirstContactTime()
+        ]);
+
         console.log('✅ [Dashboard] Todos os gráficos carregados!');
     } catch (error) {
         console.error('❌ [Dashboard] Erro ao carregar:', error);
     }
 }
+
 
 // Filtro de período (para implementação futura)
 function setupPeriodFilter() {
