@@ -246,7 +246,7 @@ function renderRHMembers(members) {
     if (members.length === 0) {
         tableBody.innerHTML = `
             <tr>
-                <td colspan="4" class="text-center text-muted">
+                <td colspan="3" class="text-center text-muted">
                     <i class="fas fa-inbox fa-2x mb-2"></i>
                     <p>Nenhum membro do RH cadastrado</p>
                 </td>
@@ -262,7 +262,6 @@ function renderRHMembers(members) {
         tr.innerHTML = `
             <td>${escapeHtml(member.name || "")}</td>
             <td>${escapeHtml(member.email || "")}</td>
-            <td>${escapeHtml(member.area || "")}</td>
             <td>
                 <button class="btn btn-info btn-sm btn-edit" data-id="${member.id_user || member.id}" title="Editar">
                     <i class="fas fa-edit"></i>
@@ -292,12 +291,11 @@ async function handleFormSubmit(e) {
 
     const name = document.getElementById("name").value.trim();
     const email = document.getElementById("email").value.trim();
-    const area = document.getElementById("area").value.trim();
     const password = document.getElementById("password").value.trim();
     const changePasswordCheckbox = document.getElementById("changePasswordCheckbox");
 
     // Validação básica
-    if (!name || !email || !area) {
+    if (!name || !email) {
         showNotification("Preencha todos os campos obrigatórios!", "warning");
         return;
     }
@@ -341,7 +339,6 @@ async function handleFormSubmit(e) {
     // Campos básicos sempre enviados
     if (name && name.trim()) rhData.name = name.trim();
     if (email && email.trim()) rhData.email = email.trim();
-    if (area && area.trim()) rhData.area = area.trim();
     
     // levelAccess só é enviado na criação
     // IMPORTANTE: RH só pode criar gestores (MANAGER), não pode criar ADMIN, HR ou MANAGER
@@ -453,7 +450,7 @@ async function editRHMember(id) {
 
         document.getElementById("name").value = member.name || "";
         document.getElementById("email").value = member.email || "";
-        document.getElementById("area").value = member.area || "";
+        // `area` field removed from the form; nothing to populate here
         // Limpa o campo de senha ao editar (não mostra a senha atual por segurança)
         document.getElementById("password").value = "";
         document.getElementById("password").removeAttribute("required");
@@ -879,7 +876,8 @@ function renderPendingVacancies(vacancies) {
         // Extrai dados da vaga (backend retorna 'position' ao invés de 'position_job')
         const gestorName = vacancy.manager?.name || vacancy.gestor?.name || vacancy.managerName || 'N/A';
         const cargo = vacancy.position || vacancy.position_job || vacancy.positionJob || vacancy.cargo || 'N/A';
-        const area = vacancy.area || 'N/A';
+        // Área fixada para aprovações: sempre 'TI'
+        const area = 'TI';
         const periodo = vacancy.period || vacancy.periodo || 'N/A';
         const modelo = vacancy.workModel || vacancy.work_model || vacancy.modelo_trabalho || 'N/A';
         const regime = vacancy.contractType || vacancy.contract_type || vacancy.regime_contratacao || 'N/A';
@@ -997,7 +995,8 @@ function renderApprovedVacancies(vacancies) {
         // Extrai dados da vaga
         const gestorName = vacancy.manager?.name || vacancy.gestor?.name || vacancy.managerName || 'N/A';
         const cargo = vacancy.position || vacancy.position_job || vacancy.positionJob || vacancy.cargo || 'N/A';
-        const area = vacancy.area || 'N/A';
+        // Área fixada para vagas aprovadas: sempre 'TI'
+        const area = 'TI';
         const modelo = vacancy.workModel || vacancy.work_model || vacancy.modelo_trabalho || 'N/A';
         const regime = vacancy.contractType || vacancy.contract_type || vacancy.regime_contratacao || 'N/A';
         
@@ -1113,7 +1112,8 @@ function renderRejectedVacancies(vacancies) {
         // Extrai dados da vaga
         const gestorName = vacancy.manager?.name || vacancy.gestor?.name || vacancy.managerName || 'N/A';
         const cargo = vacancy.position || vacancy.position_job || vacancy.positionJob || vacancy.cargo || 'N/A';
-        const area = vacancy.area || 'N/A';
+        // Área fixada para vagas rejeitadas: sempre 'TI'
+        const area = 'TI';
         const modelo = vacancy.workModel || vacancy.work_model || vacancy.modelo_trabalho || 'N/A';
         const regime = vacancy.contractType || vacancy.contract_type || vacancy.regime_contratacao || 'N/A';
         
@@ -1248,7 +1248,7 @@ function viewVacancyDetails(id) {
         <strong>ID da Vaga:</strong> ${vacancyId || 'N/A'}<br>
         <strong>Gestor:</strong> ${vacancy.manager?.name || vacancy.gestor?.name || vacancy.managerName || 'N/A'}<br>
         <strong>Cargo:</strong> ${vacancy.position || vacancy.position_job || vacancy.positionJob || 'N/A'}<br>
-        <strong>Área:</strong> ${vacancy.area || 'N/A'}<br>
+        ${vacancy.area && String(vacancy.area).toUpperCase() !== 'N/A' ? `<strong>Área:</strong> ${vacancy.area}<br>` : ''}
         <strong>Período:</strong> ${vacancy.period || vacancy.periodo || 'N/A'}<br>
         <strong>Modelo de Trabalho:</strong> ${vacancy.workModel || vacancy.work_model || 'N/A'}<br>
         <strong>Regime de Contratação:</strong> ${vacancy.contractType || vacancy.contract_type || 'N/A'}<br>
@@ -1346,9 +1346,8 @@ function renderPendingRequests(requests) {
                      request.positionJob ||
                      'N/A';
         
-        const area = request.vacancy?.area || 
-                   request.area || 
-                   'N/A';
+        // Área fixada para solicitações/approvals: sempre 'TI'
+        const area = 'TI';
         
         const periodo = request.periodo || 
                        request.vacancy?.period || 
@@ -1623,7 +1622,7 @@ function viewRequestDetails(id) {
     const detalhes = `
         <strong>Gestor:</strong> ${request.gestor?.name || request.manager?.name || 'N/A'}<br>
         <strong>Cargo:</strong> ${request.cargo || request.vacancy?.position_job || 'N/A'}<br>
-        <strong>Área:</strong> ${request.vacancy?.area || request.area || 'N/A'}<br>
+        ${request.vacancy?.area || request.area ? `<strong>Área:</strong> ${request.vacancy?.area || request.area}<br>` : ''}
         <strong>Período:</strong> ${request.periodo || request.vacancy?.period || 'N/A'}<br>
         <strong>Modelo de Trabalho:</strong> ${request.modelo_trabalho || request.vacancy?.work_model || 'N/A'}<br>
         <strong>Regime de Contratação:</strong> ${request.regime_contratacao || request.vacancy?.contract_type || 'N/A'}<br>

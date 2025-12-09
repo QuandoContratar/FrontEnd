@@ -464,7 +464,7 @@ function createVacancyItem(vacancy) {
             <div class="vacancy-details">
                 <p><strong>Gestor:</strong> ${escapeHtml(managerName)}</p>
                 <p><strong>Vaga:</strong> ${escapeHtml(position)}</p>
-                <p><strong>Área:</strong> ${escapeHtml(area)}</p>
+                ${area && String(area).toUpperCase() !== 'N/A' ? `<p><strong>Área:</strong> ${escapeHtml(area)}</p>` : ''}
                 ${createdDate ? `<p class="text-muted small"><i class="fas fa-calendar"></i> ${createdDate}</p>` : ''}
             </div>
             ${statusBadge}
