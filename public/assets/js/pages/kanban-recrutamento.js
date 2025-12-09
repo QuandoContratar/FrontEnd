@@ -29,15 +29,59 @@ const STAGES = {
 };
 
 // Mapeamento de nomes de stage do backend para os nomes esperados pelo frontend
+// Inclui variações comuns que o backend pode retornar
 const STAGE_MAPPING = {
+    // Aguardando Triagem
     'aguardando_triagem': 'aguardando_triagem',
+    'aguardando triagem': 'aguardando_triagem',
+    'aguardandotriagem': 'aguardando_triagem',
+    'waiting_screening': 'aguardando_triagem',
+    'pendente': 'aguardando_triagem',
+    // Triagem
+    'triagem': 'triagem',
+    'screening': 'triagem',
+    // Triagem Inicial
     'triagem_inicial': 'triagem_inicial',
+    'triagem inicial': 'triagem_inicial',
+    'triageminicial': 'triagem_inicial',
+    'initial_screening': 'triagem_inicial',
+    // Fit Cultural
     'avaliacao_fit_cultural': 'avaliacao_fit_cultural',
+    'avaliacao fit cultural': 'avaliacao_fit_cultural',
+    'avaliacaofitcultural': 'avaliacao_fit_cultural',
+    'fit_cultural': 'avaliacao_fit_cultural',
+    'cultural_fit': 'avaliacao_fit_cultural',
+    // Teste Técnico
     'teste_tecnico': 'teste_tecnico',
+    'teste tecnico': 'teste_tecnico',
+    'testetecnico': 'teste_tecnico',
+    'technical_test': 'teste_tecnico',
+    // Entrevista Técnica
     'entrevista_tecnica': 'entrevista_tecnica',
+    'entrevista tecnica': 'entrevista_tecnica',
+    'entrevistatecnica': 'entrevista_tecnica',
+    'technical_interview': 'entrevista_tecnica',
+    // Entrevista RH
+    'entrevista_rh': 'entrevista_rh',
+    'entrevista rh': 'entrevista_rh',
+    'entrevistarh': 'entrevista_rh',
+    'hr_interview': 'entrevista_rh',
+    // Entrevista Final
     'entrevista_final': 'entrevista_final',
+    'entrevista final': 'entrevista_final',
+    'entrevistafinal': 'entrevista_final',
+    'final_interview': 'entrevista_final',
+    // Proposta
     'proposta_fechamento': 'proposta_fechamento',
-    'contratacao': 'contratacao'
+    'proposta fechamento': 'proposta_fechamento',
+    'propostafechamento': 'proposta_fechamento',
+    'proposta': 'proposta_fechamento',
+    'offer': 'proposta_fechamento',
+    // Contratação
+    'contratacao': 'contratacao',
+    'contratação': 'contratacao',
+    'hired': 'contratacao',
+    'hiring': 'contratacao'
 };
 
 // Flag para forçar dados de teste (útil para desenvolvimento)
@@ -97,10 +141,114 @@ document.addEventListener('DOMContentLoaded', async () => {
  * Inicializa o Kanban
  */
 async function initKanban() {
+    console.log('🚀 [Kanban] Inicializando...');
+    
+    // Verificar se veio da tela de Match (indica que um novo card foi criado)
+    const urlParams = new URLSearchParams(window.location.search);
+    const fromMatch = urlParams.get('focusStage') !== null;
+    
+    if (fromMatch) {
+        console.log('🎯 [Kanban] Vindo da tela de Match - forçando carregamento da API');
+    }
+    
     setupColumnDataAttributes();
     setupEventListeners();
     setupDragAndDrop();
+    
+    // Carrega processos da API
     await loadProcesses();
+    
+    // Verificar se veio da tela de Match com foco em uma coluna específica
+    handleFocusStageFromURL();
+}
+
+/**
+ * Verifica parâmetros de URL para foco em coluna específica
+ * Usado quando usuário vem da tela de Match após aprovar um candidato
+ */
+function handleFocusStageFromURL() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const focusStage = urlParams.get('focusStage');
+    
+    if (focusStage) {
+        console.log('🎯 [Kanban] Foco solicitado na coluna:', focusStage);
+        
+        // Pequeno delay para garantir que a página está renderizada
+        setTimeout(() => {
+            focusOnColumn(focusStage);
+            
+            // Limpar o parâmetro da URL sem recarregar a página
+            const newURL = window.location.pathname;
+            window.history.replaceState({}, document.title, newURL);
+        }, 500);
+    }
+}
+
+/**
+ * Foca em uma coluna específica do Kanban
+ * @param {string} stage - O stage da coluna (ex: 'aguardando_triagem')
+ */
+function focusOnColumn(stage) {
+    // Tentar encontrar pelo ID primeiro
+    let column = document.getElementById(`col-${stage}`);
+    
+    // Se não encontrar pelo ID, buscar pelo data-stage
+    if (!column) {
+        column = document.querySelector(`.kanban-column[data-stage="${stage}"]`);
+    }
+    
+    if (column) {
+        // Scroll suave até a coluna
+        column.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
+        
+        // Adicionar highlight temporário na coluna
+        column.classList.add('column-highlight');
+        
+        // Mostrar notificação
+        showNotification('Candidato aprovado! Card adicionado na coluna "Aguardando Triagem"', 'success');
+        
+        // Remover highlight após 3 segundos
+        setTimeout(() => {
+            column.classList.remove('column-highlight');
+        }, 3000);
+    } else {
+        console.warn('⚠️ [Kanban] Coluna não encontrada:', stage);
+    }
+}
+
+/**
+ * Mostra notificação na página do Kanban
+ * @param {string} message - Mensagem a ser exibida
+ * @param {string} type - Tipo da notificação (success, info, warning, error)
+ */
+function showNotification(message, type = 'info') {
+    // Remove notificação anterior se existir
+    const existingNotification = document.querySelector('.kanban-notification');
+    if (existingNotification) {
+        existingNotification.remove();
+    }
+    
+    const notification = document.createElement('div');
+    notification.className = `kanban-notification notification-${type}`;
+    notification.innerHTML = `
+        <i class="fas ${type === 'success' ? 'fa-check-circle' : 'fa-info-circle'}"></i>
+        <span>${message}</span>
+        <button class="notification-close" onclick="this.parentElement.remove()">
+            <i class="fas fa-times"></i>
+        </button>
+    `;
+    
+    // Inserir no início do container principal
+    const container = document.querySelector('.container-fluid');
+    if (container) {
+        container.insertBefore(notification, container.firstChild);
+        
+        // Auto-remover após 5 segundos
+        setTimeout(() => {
+            notification.classList.add('notification-fade-out');
+            setTimeout(() => notification.remove(), 300);
+        }, 5000);
+    }
 }
 
 /**
@@ -181,8 +329,14 @@ function setupDragAndDrop() {
  * Carrega processos seletivos do backend
  */
 async function loadProcesses() {
-    // Se a flag estiver ativa, força o carregamento dos dados mock
-    if (FORCE_MOCK_DATA) {
+    console.log('📥 [loadProcesses] Iniciando carregamento de processos...');
+    
+    // Verifica se veio da tela de Match (não deve usar mock)
+    const urlParams = new URLSearchParams(window.location.search);
+    const fromMatch = urlParams.get('focusStage') !== null;
+    
+    // Se a flag estiver ativa E não veio do Match, força o carregamento dos dados mock
+    if (FORCE_MOCK_DATA && !fromMatch) {
         console.log('🔧 Modo de teste ativado - carregando dados mock');
         loadMockData();
         return;
@@ -196,8 +350,10 @@ async function loadProcesses() {
         let apiError = false;
         
         try {
+            console.log('📤 [loadProcesses] Chamando API: selectionClient.findAllKanban()');
             allProcesses = await selectionClient.findAllKanban();
-            console.log('✅ Processos carregados da API:', allProcesses.length);
+            console.log('✅ [loadProcesses] Processos carregados da API:', allProcesses?.length || 0);
+            console.log('📋 [loadProcesses] Dados brutos da API:', JSON.stringify(allProcesses, null, 2));
         } catch (error) {
             console.warn('⚠️ Erro ao buscar todos os processos, tentando por etapa:', error);
             apiError = true;
@@ -206,39 +362,62 @@ async function loadProcesses() {
             const stageKeys = Object.keys(STAGES);
             for (const stage of stageKeys) {
                 try {
+                    console.log(`📤 [loadProcesses] Tentando buscar estágio: ${stage}`);
                     const stageProcesses = await selectionClient.listByStage(stage);
                     if (Array.isArray(stageProcesses)) {
+                        console.log(`✅ [loadProcesses] Estágio ${stage}: ${stageProcesses.length} processos`);
                         allProcesses.push(...stageProcesses);
                     }
                 } catch (e) {
-                    console.log(`Nenhum processo em ${stage}`);
+                    console.log(`ℹ️ [loadProcesses] Nenhum processo em ${stage}`);
                 }
             }
         }
         
         // Garante que temos um array válido
         if (!Array.isArray(allProcesses)) {
+            console.warn('⚠️ [loadProcesses] allProcesses não é um array, convertendo para array vazio');
             allProcesses = [];
         }
         
-        // Se não há processos e houve erro na API, ou se não há processos, carrega dados mock
-        if ((apiError && allProcesses.length === 0) || allProcesses.length === 0) {
+        console.log(`📊 [loadProcesses] Total de processos encontrados: ${allProcesses.length}`);
+        
+        // Se não há processos e NÃO veio do Match, carrega dados mock para demonstração
+        if (allProcesses.length === 0 && !fromMatch) {
             console.log('📦 Nenhum processo encontrado. Carregando dados de teste...');
             loadMockData();
             return;
         }
         
+        // Se veio do Match e não encontrou processos, mostra kanban vazio (o card deve estar lá!)
+        if (allProcesses.length === 0 && fromMatch) {
+            console.warn('⚠️ [loadProcesses] Veio do Match mas nenhum processo encontrado na API!');
+            console.warn('⚠️ Verifique se o backend criou o card corretamente no endpoint POST /match/{matchId}/accept');
+            processes = [];
+            filteredProcesses = [];
+            renderKanban([]);
+            return;
+        }
+        
         // Mapeia dados do KanbanCardDTO para o formato esperado pelo frontend
+        console.log('🔄 [loadProcesses] Mapeando processos...');
         processes = allProcesses.map(card => mapKanbanCardToProcess(card));
         filteredProcesses = [...processes];
         
-        console.log('📊 Processos mapeados:', processes);
-        console.log('📊 Stages encontrados:', [...new Set(processes.map(p => p.currentStage))]);
+        console.log('📊 [loadProcesses] Processos mapeados:', processes.length);
+        console.log('📊 [loadProcesses] Stages encontrados:', [...new Set(processes.map(p => p.currentStage))]);
+        
+        // Log específico para aguardando_triagem
+        const aguardandoTriagem = processes.filter(p => p.currentStage === 'aguardando_triagem');
+        console.log(`🎯 [loadProcesses] Processos em "aguardando_triagem": ${aguardandoTriagem.length}`);
+        if (aguardandoTriagem.length > 0) {
+            console.log('🎯 [loadProcesses] Cards em aguardando_triagem:', aguardandoTriagem.map(p => p.candidateName));
+        }
         
         renderKanban(filteredProcesses);
         
     } catch (error) {
-        console.error('Erro ao carregar processos:', error);
+        console.error('❌ [loadProcesses] Erro ao carregar processos:', error);
         console.log('📦 Carregando dados de teste devido ao erro...');
         
         // Carrega dados mock para demonstração
@@ -253,32 +432,44 @@ async function loadProcesses() {
  * @param {Object} card - KanbanCardDTO do backend
  */
 function mapKanbanCardToProcess(card) {
-    // O backend pode retornar currentStage diretamente ou stage.name
-    let stage = card.currentStage || 
-                card.stage?.name || 
-                card.stageName || 
-                card.stage || 
-                'aguardando_triagem';
+    console.log('🔄 [mapKanbanCardToProcess] Card recebido do backend:', JSON.stringify(card, null, 2));
     
-    // Normaliza o nome do stage
-    stage = String(stage).toLowerCase().trim();
+    // O backend pode retornar currentStage diretamente ou stage.name
+    let rawStage = card.currentStage || 
+                   card.stage?.name || 
+                   card.stageName || 
+                   card.stage || 
+                   card.current_stage ||
+                   'aguardando_triagem';
+    
+    // Normaliza o nome do stage: lowercase, trim, remove espaços extras
+    let stage = String(rawStage)
+        .toLowerCase()
+        .trim()
+        .replace(/\s+/g, '_')  // Substitui espaços por underscore
+        .replace(/-/g, '_');   // Substitui hífen por underscore
     
     // Mapeia para o nome esperado pelo frontend se necessário
     const mappedStage = STAGE_MAPPING[stage] || stage;
     
-    console.log(`🔄 Mapeando card: stage original="${card.currentStage || card.stage?.name || card.stage}", normalizado="${stage}", mapeado="${mappedStage}"`);
+    console.log(`🔄 Mapeando card: stage original="${rawStage}", normalizado="${stage}", mapeado="${mappedStage}"`);
+    
+    // Verifica se o stage mapeado existe no STAGES
+    if (!STAGES[mappedStage]) {
+        console.warn(`⚠️ Stage "${mappedStage}" não encontrado em STAGES! Usando "aguardando_triagem" como fallback.`);
+    }
     
     const mapped = {
-        id: card.processId || card.id || card.cardId,
-        processId: card.processId || card.id || card.cardId,
-        candidateId: card.candidateId,
-        candidateName: card.candidateName,
-        vacancyTitle: card.vacancyTitle,
-        vacancyId: card.vacancyId,
-        workModel: card.workModel,
-        contractType: card.contractType,
-        managerName: card.managerName,
-        currentStage: mappedStage,
+        id: card.processId || card.id || card.cardId || card.selectionProcessId,
+        processId: card.processId || card.id || card.cardId || card.selectionProcessId,
+        candidateId: card.candidateId || card.candidate_id || card.fk_candidate,
+        candidateName: card.candidateName || card.candidate_name || card.candidate?.name || 'Candidato',
+        vacancyTitle: card.vacancyTitle || card.vacancy_title || card.vacancyJob || card.vacancy?.position_job || 'Vaga não especificada',
+        vacancyId: card.vacancyId || card.vacancy_id || card.fk_vacancy,
+        workModel: card.workModel || card.work_model || 'N/A',
+        contractType: card.contractType || card.contract_type || 'N/A',
+        managerName: card.managerName || card.manager_name || 'N/A',
+        currentStage: STAGES[mappedStage] ? mappedStage : 'aguardando_triagem',
         progress: card.progress || calculateProgress(mappedStage)
     };
     
@@ -1108,49 +1299,6 @@ function showLoading(show) {
             `;
         }
     });
-}
-
-/**
- * Exibe notificação
- * @param {string} message - Mensagem
- * @param {string} type - Tipo (success, danger, warning, info)
- */
-function showNotification(message, type = 'info') {
-    document.querySelectorAll('.kanban-notification').forEach(el => el.remove());
-    
-    const colors = {
-        success: '#28a745',
-        danger: '#dc3545',
-        warning: '#ffc107',
-        info: '#17a2b8'
-    };
-    
-    const notification = document.createElement('div');
-    notification.className = 'kanban-notification';
-    notification.style.cssText = `
-        position: fixed;
-        top: 20px;
-        right: 20px;
-        padding: 15px 25px;
-        border-radius: 6px;
-        color: white;
-        font-weight: 500;
-        z-index: 10000;
-        background-color: ${colors[type] || colors.info};
-        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-        max-width: 400px;
-    `;
-    notification.innerHTML = `
-        ${message}
-        <button onclick="this.parentElement.remove()" style="background:none;border:none;color:white;margin-left:15px;cursor:pointer;font-size:18px;">
-            &times;
-        </button>
-    `;
-    
-    document.body.appendChild(notification);
-    setTimeout(() => {
-        if (notification.parentNode) notification.remove();
-    }, 4000);
 }
 
 /**

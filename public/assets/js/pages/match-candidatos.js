@@ -125,16 +125,98 @@ async function handleVacancyFilterChange(e) {
 }
 
 /**
- * Carrega todos os matches
+ * Filtra apenas matches pendentes (não processados)
+ * Um match é considerado pendente se:
+ * - status === 'pendente' ou status é null/undefined
+ * - NÃO foi convertido em SelectionProcess/KanbanCard (hasSelectionProcess === false)
+ * 
+ * REGRAS DO SISTEMA:
+ * - Se o match foi aprovado → vira SelectionProcess + KanbanCard → NÃO aparece no Match
+ * - Se o match foi rejeitado → vira SelectionProcess → NÃO aparece no Match
+ * - Se o candidato já tem SelectionProcess (qualquer estágio) → NÃO aparece no Match
+ */
+function filterPendingMatches(matchList) {
+    if (!Array.isArray(matchList)) {
+        console.warn('⚠️ [filterPendingMatches] Lista de matches não é um array:', matchList);
+        return [];
+    }
+    
+    const filtered = matchList.filter(match => {
+        // Critério 1: Verificar se já tem SelectionProcess
+        // Se hasSelectionProcess === true, o candidato já está no Kanban
+        if (match.hasSelectionProcess === true) {
+            console.log(`🚫 [Filter] Match ${match.matchId} (${match.candidateName}) - Já tem SelectionProcess`);
+            return false;
+        }
+        
+        // Critério 2: Verificar o status do match
+        const status = (match.status || '').toLowerCase().trim();
+        
+        // Status que indicam que o match foi processado (não deve aparecer)
+        const processedStatuses = ['aceito', 'aprovado', 'accepted', 'approved', 'rejeitado', 'rejected', 'recusado'];
+        
+        if (processedStatuses.includes(status)) {
+            console.log(`🚫 [Filter] Match ${match.matchId} (${match.candidateName}) - Status: ${status}`);
+            return false;
+        }
+        
+        // Critério 3: Verificar outros campos que podem indicar processamento
+        if (match.processed === true || match.isProcessed === true) {
+            console.log(`🚫 [Filter] Match ${match.matchId} (${match.candidateName}) - Marcado como processado`);
+            return false;
+        }
+        
+        // Critério 4: Verificar se tem selectionProcessId (indica que já foi para o Kanban)
+        if (match.selectionProcessId || match.selection_process_id) {
+            console.log(`🚫 [Filter] Match ${match.matchId} (${match.candidateName}) - Tem SelectionProcess ID`);
+            return false;
+        }
+        
+        // Se passou por todos os critérios, é pendente
+        return true;
+    });
+    
+    console.log(`📊 [filterPendingMatches] Total: ${matchList.length} → Pendentes: ${filtered.length}`);
+    
+    return filtered;
+}
+
+/**
+ * Carrega todos os matches (apenas pendentes)
+ * IMPORTANTE: Usa findPending() para buscar do backend apenas matches não processados
+ * Aplica filtro adicional no frontend como garantia dupla
  */
 async function loadAllMatches() {
     try {
         showLoading(true);
-        matches = await matchClient.findAll();
+        
+        // Estratégia: Tenta buscar apenas pendentes do backend primeiro
+        let allMatches = [];
+        try {
+            // Tenta usar endpoint específico para pendentes (mais eficiente)
+            allMatches = await matchClient.findPending();
+            console.log(`📤 [loadAllMatches] Usando findPending() - ${allMatches.length} matches`);
+        } catch (pendingError) {
+            console.warn('⚠️ [loadAllMatches] findPending falhou, usando findAll:', pendingError.message);
+            allMatches = await matchClient.findAll();
+        }
+        
+        // Filtro duplo no frontend (garantia adicional)
+        // Mesmo que o backend filtre, aplicamos novamente para garantir
+        matches = filterPendingMatches(allMatches);
         filteredMatches = [...matches];
+        
+        console.log(`📊 [loadAllMatches] Recebidos: ${allMatches.length}, Após filtro: ${matches.length}`);
+        
+        // Log detalhado se houver diferença (indica problema no backend)
+        if (allMatches.length !== matches.length) {
+            const filteredOut = allMatches.filter(m => !matches.some(pm => pm.matchId === m.matchId));
+            console.warn('⚠️ [loadAllMatches] Matches filtrados que deveriam ter sido filtrados no backend:', filteredOut);
+        }
+        
         renderCandidates();
     } catch (error) {
-        console.error('Erro ao carregar matches:', error);
+        console.error('❌ [loadAllMatches] Erro ao carregar matches:', error);
         showMessage('Erro ao carregar candidatos', 'error');
     } finally {
         showLoading(false);
@@ -142,16 +224,33 @@ async function loadAllMatches() {
 }
 
 /**
- * Carrega matches por vaga específica
+ * Carrega matches por vaga específica (apenas pendentes)
+ * IMPORTANTE: Aplica filtro rigoroso para não exibir candidatos já processados
  */
 async function loadMatchesByVacancy(vacancyId) {
     try {
         showLoading(true);
-        matches = await matchClient.findByVacancy(vacancyId);
+        
+        // Busca todos os matches da vaga
+        const allMatches = await matchClient.findByVacancy(vacancyId);
+        
+        // Filtro rigoroso: Remove qualquer match que já foi processado
+        matches = filterPendingMatches(allMatches);
+        
+        console.log(`📊 [loadMatchesByVacancy] Vaga ${vacancyId}:`);
+        console.log(`   - Total recebido: ${allMatches.length}`);
+        console.log(`   - Após filtro: ${matches.length}`);
+        
+        // Log detalhado dos filtrados para debug
+        if (allMatches.length !== matches.length) {
+            const filteredOut = allMatches.filter(m => !matches.some(pm => pm.matchId === m.matchId));
+            console.log('   - Removidos (já processados):', filteredOut.map(m => `${m.candidateName} (${m.status || 'sem status'})`));
+        }
+        
         filteredMatches = [...matches];
         renderCandidates();
     } catch (error) {
-        console.error('Erro ao carregar matches da vaga:', error);
+        console.error('❌ [loadMatchesByVacancy] Erro ao carregar matches da vaga:', error);
         showMessage('Erro ao carregar candidatos da vaga', 'error');
     } finally {
         showLoading(false);
@@ -200,23 +299,42 @@ async function handleCandidateActions(e) {
 
 /**
  * Renderiza a lista de candidatos
+ * IMPORTANTE: Aplica filtro de segurança antes de renderizar
  */
 function renderCandidates() {
     const candidatesList = document.querySelector('.candidates-list');
     if (!candidatesList) return;
 
-    if (filteredMatches.length === 0) {
+    // Filtro de segurança final antes de renderizar
+    // Garante que nenhum candidato já processado seja exibido
+    const matchesToRender = filteredMatches.filter(match => {
+        const status = (match.status || '').toLowerCase();
+        const processedStatuses = ['aceito', 'aprovado', 'accepted', 'approved', 'rejeitado', 'rejected', 'recusado'];
+        
+        // Não renderizar se já foi processado
+        if (processedStatuses.includes(status)) return false;
+        if (match.hasSelectionProcess === true) return false;
+        if (match.selectionProcessId || match.selection_process_id) return false;
+        if (match.processed === true) return false;
+        
+        return true;
+    });
+    
+    console.log(`🖼️ [renderCandidates] Renderizando ${matchesToRender.length} candidatos pendentes`);
+
+    if (matchesToRender.length === 0) {
         candidatesList.innerHTML = `
             <div class="no-results">
-                <i class="fas fa-search"></i>
-                <p>Nenhum candidato encontrado</p>
+                <i class="fas fa-check-circle" style="color: #28a745;"></i>
+                <p>Todos os candidatos foram processados!</p>
+                <small>Não há candidatos pendentes de análise.</small>
             </div>
         `;
         return;
     }
 
     candidatesList.innerHTML = '';
-    filteredMatches.forEach(match => {
+    matchesToRender.forEach(match => {
         const candidateItem = createCandidateItem(match);
         candidatesList.appendChild(candidateItem);
     });
@@ -240,14 +358,18 @@ function createCandidateItem(match) {
     const managerName = match.managerName || match.vacancyManagerName || 'Não informado';
     const score = match.score;
     const matchLevel = match.matchLevel || 'BAIXO';
-    const status = match.status || 'pendente';
+    const status = (match.status || 'pendente').toLowerCase();
     
     // Obter texto e classe do badge de match
     const matchBadgeText = getMatchBadgeText(matchLevel);
     const matchBadgeClass = getMatchBadgeClass(matchLevel);
     
-    // Verificar status do match
-    const isProcessed = status === 'aceito' || status === 'rejeitado';
+    // Verificar status do match - verifica múltiplos critérios
+    const processedStatuses = ['aceito', 'aprovado', 'accepted', 'approved', 'rejeitado', 'rejected', 'recusado'];
+    const isProcessed = processedStatuses.includes(status) || 
+                        match.hasSelectionProcess === true || 
+                        match.processed === true ||
+                        match.selectionProcessId != null;
 
     item.innerHTML = `
         <div class="candidate-avatar">
@@ -395,16 +517,15 @@ async function approveCandidate(matchId) {
         console.log('📤 [approveCandidate] Aprovando match ID:', matchId);
         await matchClient.accept(matchId);
         
-        // Atualizar estado local - usar matchId para encontrar
-        const match = matches.find(m => m.matchId == matchId);
-        if (match) {
-            match.status = 'aceito';
-        }
+        // IMPORTANTE: Remover imediatamente o candidato da lista
+        removeMatchFromList(matchId);
         
-        // Atualizar UI
-        updateCandidateUI(matchId, 'aceito');
-        showMessage('Candidato aprovado com sucesso!', 'success');
-        updateStatistics();
+        showMessage('Candidato aprovado com sucesso! Redirecionando para o Kanban...', 'success');
+        
+        // Redirecionar para o Kanban de Recrutamento com foco na coluna "Aguardando Triagem"
+        setTimeout(() => {
+            window.location.href = 'kanban-recrutamento.html?focusStage=aguardando_triagem';
+        }, 1500); // Aguarda 1.5s para o usuário ver a mensagem de sucesso
     } catch (error) {
         console.error('Erro ao aprovar candidato:', error);
         showMessage('Erro ao aprovar candidato', 'error');
@@ -426,19 +547,65 @@ async function rejectCandidate(matchId) {
         console.log('📤 [rejectCandidate] Rejeitando match ID:', matchId);
         await matchClient.reject(matchId);
         
-        // Atualizar estado local - usar matchId para encontrar
-        const match = matches.find(m => m.matchId == matchId);
-        if (match) {
-            match.status = 'rejeitado';
-        }
+        // IMPORTANTE: Remover imediatamente o candidato da lista
+        removeMatchFromList(matchId);
         
-        // Atualizar UI
-        updateCandidateUI(matchId, 'rejeitado');
-        showMessage('Candidato rejeitado.', 'info');
-        updateStatistics();
+        showMessage('Candidato rejeitado e removido da lista.', 'info');
     } catch (error) {
         console.error('Erro ao rejeitar candidato:', error);
         showMessage('Erro ao rejeitar candidato', 'error');
+    }
+}
+
+/**
+ * Remove um match da lista (após aprovação ou rejeição)
+ * @param {string|number} matchId - ID do match a ser removido
+ */
+function removeMatchFromList(matchId) {
+    console.log(`🗑️ [removeMatchFromList] Removendo match ${matchId} da lista`);
+    
+    // Remove do array principal
+    const indexMain = matches.findIndex(m => m.matchId == matchId);
+    if (indexMain > -1) {
+        matches.splice(indexMain, 1);
+        console.log(`✅ Removido do array matches. Restantes: ${matches.length}`);
+    }
+    
+    // Remove do array filtrado
+    const indexFiltered = filteredMatches.findIndex(m => m.matchId == matchId);
+    if (indexFiltered > -1) {
+        filteredMatches.splice(indexFiltered, 1);
+        console.log(`✅ Removido do array filteredMatches. Restantes: ${filteredMatches.length}`);
+    }
+    
+    // Remove o elemento do DOM com animação
+    const item = document.querySelector(`[data-match-id="${matchId}"]`);
+    if (item) {
+        // Adiciona animação de fade-out
+        item.style.transition = 'all 0.3s ease';
+        item.style.opacity = '0';
+        item.style.transform = 'translateX(50px)';
+        
+        // Remove após a animação
+        setTimeout(() => {
+            item.remove();
+            
+            // Atualiza estatísticas
+            updateStatistics();
+            
+            // Se não houver mais candidatos, mostra mensagem
+            if (filteredMatches.length === 0) {
+                const candidatesList = document.querySelector('.candidates-list');
+                if (candidatesList) {
+                    candidatesList.innerHTML = `
+                        <div class="no-results">
+                            <i class="fas fa-check-circle" style="color: #28a745;"></i>
+                            <p>Todos os candidatos foram processados!</p>
+                        </div>
+                    `;
+                }
+            }
+        }, 300);
     }
 }
 

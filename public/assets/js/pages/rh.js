@@ -796,6 +796,40 @@ function resolveVacancyId(vacancy) {
 }
 
 /**
+ * Resolve o nome do gestor a partir de múltiplos campos possíveis
+ * @param {Object} vacancy - Objeto da vaga
+ * @returns {string} - Nome do gestor ou 'N/A'
+ */
+function resolveManagerName(vacancy) {
+    // Tenta objeto manager
+    if (vacancy.manager && typeof vacancy.manager === 'object') {
+        const name = vacancy.manager.name || vacancy.manager.nome || vacancy.manager.userName;
+        if (name) return name;
+    }
+    // Tenta objeto gestor
+    if (vacancy.gestor && typeof vacancy.gestor === 'object') {
+        const name = vacancy.gestor.name || vacancy.gestor.nome || vacancy.gestor.userName;
+        if (name) return name;
+    }
+    // Tenta objeto user
+    if (vacancy.user && typeof vacancy.user === 'object') {
+        const name = vacancy.user.name || vacancy.user.nome || vacancy.user.userName;
+        if (name) return name;
+    }
+    // Tenta campos diretos (strings)
+    return vacancy.managerName ||
+           vacancy.gestorName ||
+           vacancy.gestorNome ||
+           vacancy.manager_name ||
+           vacancy.gestor_name ||
+           vacancy.nomeGestor ||
+           vacancy.nome_gestor ||
+           vacancy.recruiterName ||
+           vacancy.responsavel ||
+           'N/A';
+}
+
+/**
  * Carrega vagas pendentes de aprovação (status pendente_aprovacao)
  * GET /vacancies/pendingVacancies ou /vacancies/status/pendente_aprovacao
  */
@@ -871,10 +905,22 @@ function renderPendingVacancies(vacancies) {
         
         tr.dataset.id = vacancyId || '';
 
-
+        // Extrai nome do gestor usando função auxiliar
+        const gestorName = resolveManagerName(vacancy);
+        
+        // Log para debug do nome do gestor
+        console.log(`👤 [RH] Vaga ${index + 1} - Gestor extraído: "${gestorName}"`, {
+            manager: vacancy.manager,
+            gestor: vacancy.gestor,
+            user: vacancy.user,
+            managerName: vacancy.managerName,
+            gestorName: vacancy.gestorName,
+            gestorNome: vacancy.gestorNome,
+            fk_manager: vacancy.fk_manager,
+            gestor_id: vacancy.gestor_id
+        });
 
         // Extrai dados da vaga (backend retorna 'position' ao invés de 'position_job')
-        const gestorName = vacancy.manager?.name || vacancy.gestor?.name || vacancy.managerName || 'N/A';
         const cargo = vacancy.position || vacancy.position_job || vacancy.positionJob || vacancy.cargo || 'N/A';
         // Área fixada para aprovações: sempre 'TI'
         const area = 'TI';
@@ -992,8 +1038,8 @@ function renderApprovedVacancies(vacancies) {
         const vacancyId = resolveVacancyId(vacancy);
         tr.dataset.id = vacancyId || '';
 
-        // Extrai dados da vaga
-        const gestorName = vacancy.manager?.name || vacancy.gestor?.name || vacancy.managerName || 'N/A';
+        // Extrai dados da vaga usando função auxiliar para nome do gestor
+        const gestorName = resolveManagerName(vacancy);
         const cargo = vacancy.position || vacancy.position_job || vacancy.positionJob || vacancy.cargo || 'N/A';
         // Área fixada para vagas aprovadas: sempre 'TI'
         const area = 'TI';
@@ -1109,8 +1155,8 @@ function renderRejectedVacancies(vacancies) {
         const vacancyId = resolveVacancyId(vacancy);
         tr.dataset.id = vacancyId || '';
 
-        // Extrai dados da vaga
-        const gestorName = vacancy.manager?.name || vacancy.gestor?.name || vacancy.managerName || 'N/A';
+        // Extrai dados da vaga usando função auxiliar para nome do gestor
+        const gestorName = resolveManagerName(vacancy);
         const cargo = vacancy.position || vacancy.position_job || vacancy.positionJob || vacancy.cargo || 'N/A';
         // Área fixada para vagas rejeitadas: sempre 'TI'
         const area = 'TI';

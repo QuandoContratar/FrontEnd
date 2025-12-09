@@ -827,30 +827,122 @@ export class MatchClient extends ApiClient {
     }
 
     /**
-     * Lista todos os matches de uma vaga
+     * Lista todos os matches de uma vaga (incluindo processados)
      * GET /match/{vacancyId}/list
      * @param {number} vacancyId - ID da vaga
+     * @returns {Promise<Array>} Lista de matches da vaga
      */
     async findByVacancy(vacancyId) {
-        console.log('📤 [MatchClient] Buscando matches da vaga:', vacancyId);
-        const response = await fetch(`${this.url}/${vacancyId}/list`);
-        if (!response.ok) throw new Error('Failed to fetch matches by vacancy');
+        console.log('📤 [MatchClient.findByVacancy] Buscando matches da vaga:', vacancyId);
+        
+        const response = await fetch(`${this.url}/${vacancyId}/list`, {
+            credentials: 'include'
+        });
+        
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error(`❌ [MatchClient.findByVacancy] Erro:`, response.status, errorText);
+            throw new Error(`Failed to fetch matches by vacancy: ${response.status}`);
+        }
+        
         const data = await response.json();
-        console.log('✅ [MatchClient] Matches encontrados:', data);
-        return data;
+        const matches = Array.isArray(data) ? data : [];
+        
+        console.log(`✅ [MatchClient.findByVacancy] ${matches.length} matches encontrados para vaga ${vacancyId}`);
+        
+        // Log dos matches para debug
+        if (matches.length > 0) {
+            console.log('📋 [MatchClient.findByVacancy] Detalhes dos matches:');
+            matches.forEach(m => {
+                console.log(`   - ${m.candidateName}: status=${m.status || 'null'}, hasSelectionProcess=${m.hasSelectionProcess}`);
+            });
+        }
+        
+        return matches;
+    }
+    
+    /**
+     * Lista apenas matches pendentes de uma vaga (não processados)
+     * Primeiro tenta endpoint específico, depois filtra no frontend
+     * @param {number} vacancyId - ID da vaga
+     * @returns {Promise<Array>} Lista de matches pendentes da vaga
+     */
+    async findPendingByVacancy(vacancyId) {
+        console.log('📤 [MatchClient.findPendingByVacancy] Buscando matches pendentes da vaga:', vacancyId);
+        
+        try {
+            // Tenta endpoint específico para pendentes de uma vaga
+            const response = await fetch(`${this.url}/${vacancyId}/pending`, {
+                credentials: 'include'
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                const matches = Array.isArray(data) ? data : [];
+                console.log(`✅ [MatchClient.findPendingByVacancy] ${matches.length} matches pendentes (via endpoint)`);
+                return matches;
+            }
+        } catch (error) {
+            console.warn('⚠️ [MatchClient.findPendingByVacancy] Endpoint específico não disponível');
+        }
+        
+        // Fallback: busca todos e filtra
+        const allMatches = await this.findByVacancy(vacancyId);
+        const pendingMatches = this._filterPendingMatches(allMatches);
+        
+        console.log(`✅ [MatchClient.findPendingByVacancy] ${pendingMatches.length} matches pendentes (via filtro)`);
+        return pendingMatches;
+    }
+    
+    /**
+     * Método interno para filtrar matches pendentes
+     * @private
+     */
+    _filterPendingMatches(matches) {
+        const processedStatuses = ['aceito', 'aprovado', 'accepted', 'approved', 'rejeitado', 'rejected', 'recusado'];
+        
+        return matches.filter(m => {
+            // Verifica se tem SelectionProcess
+            if (m.hasSelectionProcess === true) return false;
+            if (m.selectionProcessId || m.selection_process_id) return false;
+            
+            // Verifica status
+            const status = (m.status || '').toLowerCase().trim();
+            if (processedStatuses.includes(status)) return false;
+            
+            // Verifica flags de processado
+            if (m.processed === true || m.isProcessed === true) return false;
+            
+            return true;
+        });
     }
 
     /**
      * Aceita um match (aprovar candidato)
      * POST /match/{matchId}/accept
+     * Este endpoint deve criar automaticamente o card no Kanban
      * @param {number} matchId - ID do match
      */
     async accept(matchId) {
+        console.log(`📤 [MatchClient.accept] Aprovando match ID: ${matchId}`);
+        console.log(`📤 [MatchClient.accept] URL: ${this.url}/${matchId}/accept`);
+        
         const response = await fetch(`${this.url}/${matchId}/accept`, {
-            method: 'POST'
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include'
         });
-        if (!response.ok) throw new Error('Failed to accept match');
-        return response.json();
+        
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error(`❌ [MatchClient.accept] Erro ao aceitar match:`, response.status, errorText);
+            throw new Error(`Failed to accept match: ${response.status} - ${errorText}`);
+        }
+        
+        const data = await response.json();
+        console.log(`✅ [MatchClient.accept] Match aceito com sucesso:`, data);
+        console.log(`✅ [MatchClient.accept] Verifique se o backend criou o card no Kanban!`);
+        return data;
     }
 
     /**
@@ -869,11 +961,85 @@ export class MatchClient extends ApiClient {
     /**
      * Lista todos os matches
      * GET /match
+     * Retorna todos os matches - o frontend filtra os pendentes
      */
     async findAll() {
-        const response = await fetch(this.url);
-        if (!response.ok) throw new Error('Failed to fetch all matches');
-        return response.json();
+        console.log('📤 [MatchClient.findAll] Buscando todos os matches...');
+        const response = await fetch(this.url, {
+            credentials: 'include'
+        });
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('❌ [MatchClient.findAll] Erro:', response.status, errorText);
+            throw new Error('Failed to fetch all matches');
+        }
+        const data = await response.json();
+        console.log(`✅ [MatchClient.findAll] ${Array.isArray(data) ? data.length : 0} matches encontrados`);
+        return Array.isArray(data) ? data : [];
+    }
+
+    /**
+     * Lista matches pendentes (apenas não processados)
+     * GET /match/status/pendente ou GET /match/pending
+     * Use este método para buscar apenas matches que ainda não foram aceitos/rejeitados
+     * 
+     * ESTRATÉGIA:
+     * 1. Tenta GET /match/pending (endpoint específico)
+     * 2. Fallback: GET /match/status/pendente
+     * 3. Fallback final: GET /match + filtro no frontend
+     */
+    async findPending() {
+        console.log('📤 [MatchClient.findPending] Buscando matches pendentes...');
+        
+        // Estratégia 1: Tentar endpoint /match/pending
+        try {
+            const response1 = await fetch(`${this.url}/pending`, {
+                credentials: 'include'
+            });
+            
+            if (response1.ok) {
+                const data = await response1.json();
+                const matches = Array.isArray(data) ? data : [];
+                console.log(`✅ [MatchClient.findPending] ${matches.length} via /pending`);
+                return matches;
+            }
+        } catch (e) {
+            console.warn('⚠️ [MatchClient.findPending] /pending não disponível');
+        }
+        
+        // Estratégia 2: Tentar endpoint /match/status/pendente
+        try {
+            const response2 = await fetch(`${this.url}/status/pendente`, {
+                credentials: 'include'
+            });
+            
+            if (response2.ok) {
+                const data = await response2.json();
+                const matches = Array.isArray(data) ? data : [];
+                console.log(`✅ [MatchClient.findPending] ${matches.length} via /status/pendente`);
+                return matches;
+            }
+        } catch (e) {
+            console.warn('⚠️ [MatchClient.findPending] /status/pendente não disponível');
+        }
+        
+        // Estratégia 3: Fallback - busca todos e filtra no frontend
+        console.warn('⚠️ [MatchClient.findPending] Usando fallback: findAll + filtro');
+        const allMatches = await this.findAll();
+        const pendingMatches = this._filterPendingMatches(allMatches);
+        
+        console.log(`✅ [MatchClient.findPending] ${pendingMatches.length} via filtro (de ${allMatches.length} total)`);
+        
+        // Log de matches filtrados para debug
+        if (allMatches.length > pendingMatches.length) {
+            const filtered = allMatches.filter(m => !pendingMatches.some(p => p.matchId === m.matchId));
+            console.log('🚫 [MatchClient.findPending] Matches filtrados (já processados):');
+            filtered.forEach(m => {
+                console.log(`   - ${m.candidateName}: status=${m.status}, hasSelectionProcess=${m.hasSelectionProcess}`);
+            });
+        }
+        
+        return pendingMatches;
     }
 
     /**
@@ -893,9 +1059,17 @@ export class MatchClient extends ApiClient {
      * @param {string} status - pendente, aceito, rejeitado
      */
     async findByStatus(status) {
-        const response = await fetch(`${this.url}/status/${status}`);
-        if (!response.ok) throw new Error('Failed to fetch matches by status');
-        return response.json();
+        console.log(`📤 [MatchClient.findByStatus] Buscando matches com status: ${status}`);
+        const response = await fetch(`${this.url}/status/${status}`, {
+            credentials: 'include'
+        });
+        if (!response.ok) {
+            console.error(`❌ [MatchClient.findByStatus] Erro ao buscar status ${status}`);
+            throw new Error('Failed to fetch matches by status');
+        }
+        const data = await response.json();
+        console.log(`✅ [MatchClient.findByStatus] ${Array.isArray(data) ? data.length : 0} matches com status ${status}`);
+        return Array.isArray(data) ? data : [];
     }
 
     

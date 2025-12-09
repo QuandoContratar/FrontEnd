@@ -267,6 +267,111 @@
     pointer-events: none;
 }
 
+/* Column Highlight - Usado ao redirecionar do Match */
+.kanban-column.column-highlight {
+    animation: columnPulse 1.5s ease-in-out 3;
+    box-shadow: 0 0 20px rgba(124, 58, 237, 0.5);
+    border-color: #7c3aed;
+}
+
+@keyframes columnPulse {
+    0%, 100% {
+        transform: scale(1);
+        box-shadow: 0 0 20px rgba(124, 58, 237, 0.3);
+    }
+    50% {
+        transform: scale(1.02);
+        box-shadow: 0 0 30px rgba(124, 58, 237, 0.6);
+    }
+}
+
+/* Notificação do Kanban */
+.kanban-notification {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 15px 20px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    animation: slideInDown 0.3s ease-out;
+    position: relative;
+}
+
+.kanban-notification.notification-success {
+    background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+    border: 1px solid #10b981;
+    color: #047857;
+}
+
+.kanban-notification.notification-info {
+    background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+    border: 1px solid #3b82f6;
+    color: #1d4ed8;
+}
+
+.kanban-notification.notification-warning {
+    background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+    border: 1px solid #f59e0b;
+    color: #b45309;
+}
+
+.kanban-notification.notification-error {
+    background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+    border: 1px solid #ef4444;
+    color: #b91c1c;
+}
+
+.kanban-notification i {
+    font-size: 18px;
+}
+
+.kanban-notification span {
+    flex: 1;
+    font-weight: 500;
+}
+
+.kanban-notification .notification-close {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding: 5px;
+    border-radius: 4px;
+    transition: background 0.2s;
+    color: inherit;
+    opacity: 0.7;
+}
+
+.kanban-notification .notification-close:hover {
+    opacity: 1;
+    background: rgba(0, 0, 0, 0.1);
+}
+
+.kanban-notification.notification-fade-out {
+    animation: fadeOutUp 0.3s ease-out forwards;
+}
+
+@keyframes slideInDown {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes fadeOutUp {
+    from {
+        opacity: 1;
+        transform: translateY(0);
+    }
+    to {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+}
+
 /* Responsive */
 @media (max-width: 768px) {
     .kanban-board {
@@ -285,5 +390,9 @@
     
     .card-actions {
         justify-content: center;
+    }
+    
+    .kanban-notification {
+        flex-wrap: wrap;
     }
 }
