@@ -1255,8 +1255,7 @@ function viewVacancyDetails(id) {
         <strong>Salário:</strong> ${salarioFormatado}<br>
         <strong>Localidade:</strong> ${vacancy.location || vacancy.localidade || 'N/A'}<br>
         <strong>Requisitos:</strong> ${vacancy.requirements || vacancy.requisitos || 'N/A'}<br>
-        <strong>Justificativa:</strong> ${vacancy.openingJustification || vacancy.opening_justification || 'N/A'}<br>
-        <strong>Status:</strong> ${vacancy.statusVacancy || vacancy.status_vacancy || vacancy.status || 'N/A'}
+        <strong>Justificativa:</strong> ${vacancy.openingJustification || vacancy.opening_justification || 'N/A'}
     `;
 
     // Remove modal anterior se existir
