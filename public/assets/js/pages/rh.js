@@ -19,9 +19,46 @@ let pendingVacancies = [];
 let approvedVacancies = [];
 let rejectedVacancies = [];
 
+// Verificar se o usuário é admin ou RH (apenas admin e RH podem gerenciar RH)
+let isAdmin = false;
+let isHR = false;
+
 // Inicialização quando o DOM estiver pronto
 document.addEventListener("DOMContentLoaded", async () => {
-    await initRHPage();
+    // Verificar permissão do usuário - apenas ADMIN e RH podem gerenciar RH
+    const waitForUtils = () => {
+        if (window.Utils && typeof window.Utils.normalizeLevelAccess === 'function') {
+            try {
+                const userLoggedStr = localStorage.getItem('userLogged') || localStorage.getItem('currentUser');
+                if (userLoggedStr) {
+                    const user = JSON.parse(userLoggedStr);
+                    const userLevel = window.Utils.normalizeLevelAccess(user.levelAccess || user.level_access);
+                    isAdmin = userLevel === 'ADMIN';
+                    isHR = userLevel === 'HR';
+                    
+                    if (!isAdmin && !isHR) {
+                        // Bloquear acesso de gestores
+                        const UtilsRef = window.Utils || Utils;
+                        if (UtilsRef && typeof UtilsRef.showMessage === 'function') {
+                            UtilsRef.showMessage('Apenas administradores e RH podem gerenciar membros do RH.', 'error');
+                        } else {
+                            alert('Apenas administradores e RH podem gerenciar membros do RH.');
+                        }
+                        setTimeout(() => {
+                            window.location.href = 'home.html';
+                        }, 2000);
+                        return;
+                    }
+                }
+            } catch (error) {
+                console.error('Erro ao verificar permissão:', error);
+            }
+            initRHPage();
+        } else {
+            setTimeout(waitForUtils, 50);
+        }
+    };
+    waitForUtils();
 });
 
 /**
@@ -225,6 +262,12 @@ function renderRHMembers(members) {
 async function handleFormSubmit(e) {
     e.preventDefault();
 
+    // Verificar se é admin ou RH antes de permitir criar/editar
+    if (!isAdmin && !isHR) {
+        showNotification("Apenas administradores e RH podem criar ou editar membros do RH!", "error");
+        return;
+    }
+
     const name = document.getElementById("name").value.trim();
     const email = document.getElementById("email").value.trim();
     const area = document.getElementById("area").value.trim();
@@ -279,8 +322,46 @@ async function handleFormSubmit(e) {
     if (area && area.trim()) rhData.area = area.trim();
     
     // levelAccess só é enviado na criação
+    // IMPORTANTE: RH só pode criar gestores (MANAGER), não pode criar ADMIN, HR ou MANAGER
     if (!editingUserId) {
-        rhData.levelAccess = "HR"; // Enum apenas na criação
+        // Verificar se o usuário logado é RH tentando criar outro tipo de usuário
+        try {
+            const userLoggedStr = localStorage.getItem('userLogged') || localStorage.getItem('currentUser');
+            if (userLoggedStr) {
+                const currentUser = JSON.parse(userLoggedStr);
+                const UtilsRef = window.Utils || Utils;
+                
+                if (UtilsRef && typeof UtilsRef.normalizeLevelAccess === 'function') {
+                    const currentUserLevel = UtilsRef.normalizeLevelAccess(currentUser.levelAccess || currentUser.level_access);
+                    
+                    // Se o usuário logado é RH, só pode criar MANAGER
+                    if (currentUserLevel === 'HR') {
+                        // Forçar criação apenas de gestores
+                        rhData.levelAccess = "MANAGER";
+                        console.log('✅ [RH] Criando apenas gestor (RH não pode criar ADMIN, HR ou MANAGER)');
+                    } else {
+                        // Se for ADMIN, pode criar qualquer tipo (comportamento padrão)
+                        rhData.levelAccess = "HR"; // Enum apenas na criação
+                    }
+                } else {
+                    // Fallback: verificação direta
+                    const levelAccess = String(currentUser.levelAccess || currentUser.level_access || '').toUpperCase();
+                    if (levelAccess === 'HR' || levelAccess === '2') {
+                        rhData.levelAccess = "MANAGER";
+                        console.log('✅ [RH] Criando apenas gestor (fallback)');
+                    } else {
+                        rhData.levelAccess = "HR";
+                    }
+                }
+            } else {
+                // Fallback: criar como HR (comportamento padrão)
+                rhData.levelAccess = "HR";
+            }
+        } catch (error) {
+            console.error('Erro ao verificar permissão:', error);
+            // Fallback seguro: criar como HR
+            rhData.levelAccess = "HR";
+        }
     }
     
     // Adiciona senha apenas se:
@@ -339,6 +420,12 @@ async function handleTableActions(e) {
  * @param {string|number} id - ID do membro
  */
 async function editRHMember(id) {
+    // Verificar se é admin ou RH antes de permitir editar
+    if (!isAdmin && !isHR) {
+        showNotification("Apenas administradores e RH podem editar membros do RH!", "error");
+        return;
+    }
+
     try {
         const member = await usersClient.findById(id);
 
@@ -396,6 +483,12 @@ async function editRHMember(id) {
  * @param {string|number} id - ID do membro
  */
 async function deleteRHMember(id) {
+    // Verificar se é admin ou RH antes de permitir excluir
+    if (!isAdmin && !isHR) {
+        showNotification("Apenas administradores e RH podem excluir membros do RH!", "error");
+        return;
+    }
+
     if (!confirm("Tem certeza que deseja excluir este membro do RH?")) {
         return;
     }

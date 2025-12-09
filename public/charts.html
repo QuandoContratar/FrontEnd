@@ -56,21 +56,21 @@
             </div>
 
             <!-- Nav Item - Administradores -->
-            <li class="nav-item">
+            <li class="nav-item" data-admin-only>
                 <a class="nav-link" href="adm.html">
                     <i class="fas fa-fw fa-user-shield"></i>
                     <span>Administradores</span></a>
             </li>
 
             <!-- Nav Item - Gerentes -->
-            <li class="nav-item">
+            <li class="nav-item" data-admin-only>
                 <a class="nav-link" href="gerente.html">
                     <i class="fas fa-fw fa-user-tie"></i>
                     <span>Gerentes</span></a>
             </li>
 
             <!-- Nav Item - RH -->
-            <li class="nav-item">
+            <li class="nav-item" data-admin-only>
                 <a class="nav-link" href="rh.html">
                     <i class="fas fa-fw fa-users"></i>
                     <span>RH</span></a>
@@ -598,6 +598,7 @@
 
 <!-- Utils e Auth -->
 <script src="./assets/js/components/utils.js"></script>
+<script src="./assets/js/components/permissions.js"></script>
 <script src="./assets/js/components/auth.js"></script>
 
 <!-- Agora dashboard.js roda de verdade -->

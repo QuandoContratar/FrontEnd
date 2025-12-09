@@ -61,10 +61,10 @@
       <hr class="sidebar-divider my-0" />
       <li class="nav-item"><a class="nav-link" href="home.html"><i class="fas fa-fw fa-tachometer-alt"></i><span>Dashboard</span></a></li>
       <hr class="sidebar-divider" />
-      <div class="sidebar-heading">Cadastros</div>
-      <li class="nav-item"><a class="nav-link" href="adm.html"><i class="fas fa-fw fa-user-shield"></i><span>Administradores</span></a></li>
-      <li class="nav-item active"><a class="nav-link" href="gerente.html"><i class="fas fa-fw fa-user-tie"></i><span>Gerentes</span></a></li>
-      <li class="nav-item"><a class="nav-link" href="rh.html"><i class="fas fa-fw fa-users"></i><span>RH</span></a></li>
+  <div class="sidebar-heading" data-admin-only>Cadastros</div>
+  <li class="nav-item" data-admin-only><a class="nav-link" href="adm.html"><i class="fas fa-fw fa-user-shield"></i><span>Administradores</span></a></li>
+  <li class="nav-item active" data-admin-only><a class="nav-link" href="gerente.html"><i class="fas fa-fw fa-user-tie"></i><span>Gerentes</span></a></li>
+  <li class="nav-item" data-admin-only><a class="nav-link" href="rh.html"><i class="fas fa-fw fa-users"></i><span>RH</span></a></li>
       <hr class="sidebar-divider" />
       <div class="sidebar-heading">Recrutamento</div>
       <li class="nav-item"><a class="nav-link" href="abertura-vaga.html"><i class="fas fa-fw fa-plus-circle"></i><span>Abertura de Vaga</span></a></li>
@@ -117,7 +117,7 @@
                   <h6 class="m-0 font-weight-bold text-primary"><i class="fas fa-user-plus fa-fw"></i> <span id="formTitle">Adicionar Novo Gerente</span></h6>
                 </div>
                 <div class="card-body">
-                  <form id="gerenteForm">
+                  <form id="gerenteForm" data-admin-only>
                     <input type="hidden" id="managerId" />
                     <div class="row">
                       <div class="col-md-4 mb-3">
@@ -159,7 +159,7 @@
                         </small>
                       </div>
                       <div class="col-md-1 mb-3 d-flex align-items-end">
-                        <button type="submit" class="btn btn-primary w-100" id="addGerenteBtn" title="Salvar">
+                        <button type="submit" class="btn btn-primary w-100" id="addGerenteBtn" title="Salvar" data-admin-only>
                           <i class="fas fa-save"></i>
                         </button>
                       </div>
@@ -250,6 +250,7 @@
 
   <!-- Page level custom scripts - Gerente Integration -->
   <script src="./assets/js/components/utils.js"></script>
+  <script src="./assets/js/components/permissions.js"></script>
   <script src="./assets/js/components/auth.js"></script>
   <script type="module" src="assets/js/pages/gerente.js"></script>
   <script>

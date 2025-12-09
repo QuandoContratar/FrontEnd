@@ -52,26 +52,26 @@
             <hr class="sidebar-divider">
 
             <!-- Heading -->
-            <div class="sidebar-heading">
+            <div class="sidebar-heading" data-admin-only>
                 Cadastros
             </div>
 
             <!-- Nav Item - Administradores -->
-            <li class="nav-item">
+            <li class="nav-item" data-admin-only>
                 <a class="nav-link" href="adm.html">
                     <i class="fas fa-fw fa-user-shield"></i>
                     <span>Administradores</span></a>
             </li>
 
             <!-- Nav Item - Gerentes -->
-            <li class="nav-item">
+            <li class="nav-item" data-admin-only>
                 <a class="nav-link" href="gerente.html">
                     <i class="fas fa-fw fa-user-tie"></i>
                     <span>Gerentes</span></a>
             </li>
 
             <!-- Nav Item - RH -->
-            <li class="nav-item">
+            <li class="nav-item" data-admin-only>
                 <a class="nav-link" href="rh.html">
                     <i class="fas fa-fw fa-users"></i>
                     <span>RH</span></a>
@@ -224,19 +224,6 @@
             <p>Realize a abertura de novas vagas, configure detalhes e gerencie o fluxo de recrutamento.</p>
             <button onclick="event.stopPropagation(); window.location.href='abertura-vaga.html'">Clique Aqui</button>
         </div>
-                                <div class="dashboard-card" onclick="window.location.href='kanban-abertura-vaga.html'">
-            <div class="icon-wrapper">
-                <!-- Ícone: Kanban -->
-                <svg class="icon-roxo" viewBox="0 0 48 48">
-                    <rect x="10" y="10" width="8" height="28" rx="2"/>
-                    <rect x="20" y="10" width="8" height="18" rx="2"/>
-                    <rect x="30" y="10" width="8" height="24" rx="2"/>
-                </svg>
-            </div>
-            <h3>Kanban Abertura de Vagas</h3>
-            <p>Acompanhe o status das vagas em diferentes fases: Caixa de Entrada, Vagas Abertas e Aprovadas.</p>
-            <button onclick="event.stopPropagation(); window.location.href='kanban-abertura-vaga.html'">Visualizar</button>
-        </div>
                                 <div class="dashboard-card" onclick="window.location.href='minhas-solicitacoes.html'">
             <div class="icon-wrapper">
                 <!-- Ícone: Lista -->
@@ -380,6 +367,7 @@
 
     <!-- Page level custom scripts -->
     <script src="./assets/js/components/utils.js"></script>
+    <script src="./assets/js/components/permissions.js"></script>
     <script src="./assets/js/components/auth.js"></script>
     <script>
         $(document).ready(function() {
@@ -406,6 +394,83 @@
                     console.warn('Erro ao atualizar título de boas-vindas:', e);
                 }
             }
+            
+            // Filtrar cards baseado no nível de acesso do usuário
+            function filterCardsByPermission() {
+                try {
+                    const userLoggedStr = localStorage.getItem('userLogged') || localStorage.getItem('currentUser');
+                    if (!userLoggedStr) return;
+                    
+                    const user = JSON.parse(userLoggedStr);
+                    const UtilsRef = window.Utils || Utils;
+                    let userLevel = null;
+                    
+                    if (UtilsRef && typeof UtilsRef.normalizeLevelAccess === 'function') {
+                        userLevel = UtilsRef.normalizeLevelAccess(user.levelAccess || user.level_access);
+                    } else {
+                        // Fallback
+                        const levelAccess = String(user.levelAccess || user.level_access || '').toUpperCase();
+                        if (levelAccess === 'ADMIN' || levelAccess === '1') userLevel = 'ADMIN';
+                        else if (levelAccess === 'HR' || levelAccess === '2') userLevel = 'HR';
+                        else if (levelAccess === 'MANAGER' || levelAccess === '3') userLevel = 'MANAGER';
+                    }
+                    
+                    if (!userLevel) return;
+                    
+                    // Selecionar todos os cards
+                    const cards = document.querySelectorAll('.dashboard-card');
+                    
+                    cards.forEach(card => {
+                        // Verificar onclick do card ou do button
+                        const cardOnclick = card.getAttribute('onclick') || '';
+                        const button = card.querySelector('button');
+                        const buttonOnclick = button ? button.getAttribute('onclick') || '' : '';
+                        const onclick = cardOnclick || buttonOnclick;
+                        
+                        // Extrair href do onclick
+                        const hrefMatch = onclick.match(/href=['"]([^'"]+)['"]/);
+                        const href = hrefMatch ? hrefMatch[1] : '';
+                        
+                        if (!href) return;
+                        
+                        // Para gestores: ocultar cards que não têm permissão
+                        if (userLevel === 'MANAGER') {
+                            // Gestores NÃO podem ver:
+                            // - Match de Candidatos (apenas RH pode fazer match)
+                            // - Upload Currículos (apenas RH)
+                            // - Dashboard/Gráficos (charts.html)
+                            if (href.includes('match-candidatos.html') || 
+                                href.includes('upload-curriculos.html') || 
+                                href.includes('charts.html')) {
+                                card.style.display = 'none';
+                            }
+                            // Gestores PODEM ver:
+                            // - Abertura de Vagas
+                            // - Minhas Solicitações
+                            // - Kanban (visualização)
+                            // - Candidatos (visualização)
+                        }
+                        
+                        // Para RH: pode ver tudo exceto cadastro de usuários (já oculto na navbar)
+                        // RH pode ver todos os cards da home
+                        
+                        // Para ADMIN: pode ver tudo
+                        // ADMIN pode ver todos os cards
+                    });
+                } catch (error) {
+                    console.error('Erro ao filtrar cards:', error);
+                }
+            }
+            
+            // Aguardar Utils estar disponível
+            const waitForUtils = () => {
+                if (window.Utils && typeof window.Utils.normalizeLevelAccess === 'function') {
+                    filterCardsByPermission();
+                } else {
+                    setTimeout(waitForUtils, 50);
+                }
+            };
+            waitForUtils();
         });
     </script>
 

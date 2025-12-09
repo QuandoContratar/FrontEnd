@@ -43,9 +43,54 @@ const STAGE_MAPPING = {
 // Flag para forçar dados de teste (útil para desenvolvimento)
 const FORCE_MOCK_DATA = false; // Mude para true para sempre carregar dados de teste
 
+// Verificar se o usuário é gestor (apenas visualização, sem edição)
+let isManager = false;
+
+// Função para verificar permissão do usuário
+function checkUserPermission() {
+    try {
+        const userLoggedStr = localStorage.getItem('userLogged') || localStorage.getItem('currentUser');
+        if (userLoggedStr) {
+            const user = JSON.parse(userLoggedStr);
+            // Usar window.Utils para garantir acesso ao utilitário
+            const UtilsRef = window.Utils || Utils;
+            if (UtilsRef && typeof UtilsRef.normalizeLevelAccess === 'function') {
+                const userLevel = UtilsRef.normalizeLevelAccess(user.levelAccess || user.level_access);
+                isManager = userLevel === 'MANAGER';
+                
+                if (isManager) {
+                    console.log('👁️ [Kanban] Modo visualização ativado para gestor');
+                }
+                return true; // Utils disponível e verificação concluída
+            } else {
+                console.warn('⚠️ [Kanban] Utils não disponível, verificando levelAccess diretamente');
+                // Fallback: verificação direta
+                const levelAccess = String(user.levelAccess || user.level_access || '').toUpperCase();
+                isManager = levelAccess === 'MANAGER' || levelAccess === '3';
+                return false; // Utils não disponível, mas verificação feita com fallback
+            }
+        }
+    } catch (error) {
+        console.error('Erro ao verificar permissão:', error);
+    }
+    return false;
+}
+
 // Inicialização
 document.addEventListener('DOMContentLoaded', async () => {
-    await initKanban();
+    // Aguardar Utils estar disponível antes de verificar permissões
+    const waitForUtils = () => {
+        if (window.Utils && typeof window.Utils.normalizeLevelAccess === 'function') {
+            checkUserPermission();
+            initKanban();
+        } else {
+            // Tentar novamente após um pequeno delay
+            setTimeout(waitForUtils, 50);
+        }
+    };
+    
+    // Iniciar verificação
+    waitForUtils();
 });
 
 /**
@@ -98,6 +143,14 @@ function setupDragAndDrop() {
     columns.forEach(column => {
         const content = column.querySelector('.column-content');
         if (!content) return;
+        
+        // Se for gestor, não permite drag and drop
+        if (isManager) {
+            content.style.cursor = 'not-allowed';
+            content.style.opacity = '0.7';
+            // do not register drag/drop listeners
+            return;
+        }
         
         content.addEventListener('dragover', (e) => {
             e.preventDefault();
@@ -633,6 +686,21 @@ function createProcessCard(process, stage) {
         console.warn('⚠️ Processo sem candidateId:', process);
     }
     
+    // Se for gestor, não mostra botões de ação (apenas visualização)
+    const actionButtons = isManager ? '' : (
+        isLastStage ? `
+            <span class="badge badge-success">Contratado!</span>
+        ` : isProposta ? `
+            <button class="btn-action btn-success" data-action="advance" data-id="${processId}">
+                Finalizar Contratação
+            </button>
+        ` : `
+            <button class="btn-action btn-primary" data-action="advance" data-id="${processId}">
+                Avançar
+            </button>
+        `
+    );
+    
     card.innerHTML = `
         <div class="card-header">
             <h4>${escapeHtml(candidateName)}</h4>
@@ -645,32 +713,31 @@ function createProcessCard(process, stage) {
             <p><strong>Gestor:</strong> ${escapeHtml(managerName)}</p>
         </div>
         <div class="card-actions">
-            ${isLastStage ? `
-                <span class="badge badge-success">Contratado!</span>
-            ` : isProposta ? `
-                <button class="btn-action btn-success" data-action="advance" data-id="${processId}">
-                    Finalizar Contratação
-                </button>
-            ` : `
-                <button class="btn-action btn-primary" data-action="advance" data-id="${processId}">
-                    Avançar
-                </button>
-            `}
+            ${actionButtons}
             ${candidateId ? `
                 <button class="btn-action btn-secondary" data-action="details" data-id="${candidateId}">
                     Ver Candidato
                 </button>
             ` : ''}
+            ${isManager ? `
+                <span class="badge badge-info">Somente Visualização</span>
+            ` : ''}
         </div>
     `;
     
-    // Configura drag and drop
-    card.addEventListener('dragstart', (e) => {
-        draggedElement = card;
-        draggedProcessId = processId;
-        card.classList.add('dragging');
-        e.dataTransfer.effectAllowed = 'move';
-    });
+    // Configura drag and drop apenas se não for gestor
+    if (!isManager) {
+        card.addEventListener('dragstart', (e) => {
+            draggedElement = card;
+            draggedProcessId = processId;
+            card.classList.add('dragging');
+            e.dataTransfer.effectAllowed = 'move';
+        });
+    } else {
+        // Para gestores, desabilita drag
+        card.draggable = false;
+        card.style.cursor = 'default';
+    }
     
     card.addEventListener('dragend', () => {
         card.classList.remove('dragging');
@@ -712,6 +779,16 @@ async function handleCardActions(e) {
     
     const action = btn.dataset.action;
     const id = btn.dataset.id;
+    
+    // Managers only allowed to view details
+    if (isManager && action && action !== 'details') {
+        if (window.Utils && typeof window.Utils.showMessage === 'function') {
+            window.Utils.showMessage('Você não tem permissão para essa ação.', 'error');
+        } else {
+            alert('Você não tem permissão para essa ação.');
+        }
+        return;
+    }
     
     // Desabilita botão temporariamente
     btn.disabled = true;
