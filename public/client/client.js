@@ -1,7 +1,8 @@
 export class ApiClient {
     constructor(route) {
         this.route = route
-        this.baseUrl = 'http://54.144.16.251:8080'
+      //  this.baseUrl = 'http://54.144.16.251:8080'
+     this.baseUrl = 'http://localhost:8080'
     }
 
     get url() {
@@ -827,13 +828,16 @@ export class MatchClient extends ApiClient {
 
     /**
      * Lista todos os matches de uma vaga
-     * GET /match/{vacancyId}
+     * GET /match/{vacancyId}/list
      * @param {number} vacancyId - ID da vaga
      */
     async findByVacancy(vacancyId) {
-        const response = await fetch(`${this.url}/${vacancyId}`);
+        console.log('📤 [MatchClient] Buscando matches da vaga:', vacancyId);
+        const response = await fetch(`${this.url}/${vacancyId}/list`);
         if (!response.ok) throw new Error('Failed to fetch matches by vacancy');
-        return response.json();
+        const data = await response.json();
+        console.log('✅ [MatchClient] Matches encontrados:', data);
+        return data;
     }
 
     /**

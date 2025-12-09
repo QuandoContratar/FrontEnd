@@ -77,6 +77,7 @@ async function loadVacancies() {
 function renderVacancySelector() {
     // Verificar se existe um seletor de vagas na página
     let vacancySelector = document.querySelector('.vacancy-selector');
+    const isNewSelector = !vacancySelector;
     
     if (!vacancySelector) {
         // Criar seletor se não existir
@@ -91,6 +92,7 @@ function renderVacancySelector() {
     }
 
     if (vacancySelector) {
+        // Limpar e preencher opções
         vacancySelector.innerHTML = '<option value="">Todas as vagas</option>';
         vacancies.forEach(vacancy => {
             const option = document.createElement('option');
@@ -99,14 +101,26 @@ function renderVacancySelector() {
             vacancySelector.appendChild(option);
         });
 
-        vacancySelector.addEventListener('change', async (e) => {
-            selectedVacancyId = e.target.value || null;
-            if (selectedVacancyId) {
-                await loadMatchesByVacancy(selectedVacancyId);
-            } else {
-                await loadAllMatches();
-            }
-        });
+        // Adicionar event listener apenas uma vez (quando o seletor é novo)
+        if (isNewSelector) {
+            vacancySelector.addEventListener('change', handleVacancyFilterChange);
+        }
+    }
+}
+
+/**
+ * Handler para mudança no filtro de vagas
+ */
+async function handleVacancyFilterChange(e) {
+    selectedVacancyId = e.target.value || null;
+    console.log('📌 [Filter] Vaga selecionada:', selectedVacancyId || 'Todas');
+    
+    if (selectedVacancyId) {
+        // GET /match/{vacancyId}/list
+        await loadMatchesByVacancy(selectedVacancyId);
+    } else {
+        // GET /match (todos)
+        await loadAllMatches();
     }
 }
 
@@ -154,8 +168,8 @@ function handleSearch(e) {
         filteredMatches = [...matches];
     } else {
         filteredMatches = matches.filter(match => {
-            // Novo DTO: campos planos (candidateName, vacancyJob, etc.)
-            const searchText = `${match.candidateName || ''} ${match.vacancyJob || ''} ${match.vacancyArea || ''}`.toLowerCase();
+            // Novo DTO: campos planos (candidateName, vacancyJob, managerName)
+            const searchText = `${match.candidateName || ''} ${match.vacancyJob || ''} ${match.managerName || match.vacancyManagerName || ''}`.toLowerCase();
             return searchText.includes(searchTerm);
         });
     }
@@ -222,7 +236,8 @@ function createCandidateItem(match) {
     const candidateName = match.candidateName || 'Nome não informado';
     const candidateId = match.candidateId;
     const vacancyJob = match.vacancyJob || 'Não informada';
-    const vacancyArea = match.vacancyArea || 'Não informada';
+    // Gestor responsável pela vaga (substituindo "Área")
+    const managerName = match.managerName || match.vacancyManagerName || 'Não informado';
     const score = match.score;
     const matchLevel = match.matchLevel || 'BAIXO';
     const status = match.status || 'pendente';
@@ -245,7 +260,7 @@ function createCandidateItem(match) {
         </div>
         <div class="candidate-details">
             <p><strong>Vaga:</strong> ${vacancyJob}</p>
-            <p><strong>Área:</strong> ${vacancyArea}</p>
+            <p><strong>Gestor:</strong> ${managerName}</p>
             <p><strong>Score:</strong> ${score != null ? score.toFixed(1) + '%' : 'N/A'}</p>
         </div>
         <div class="candidate-actions">
