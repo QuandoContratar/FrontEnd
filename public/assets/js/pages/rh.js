@@ -65,8 +65,30 @@ document.addEventListener("DOMContentLoaded", async () => {
  * Inicializa a página de RH
  */
 async function initRHPage() {
-    // Carrega a lista de membros do RH
-    await loadRHMembers();
+    // Se o usuário for RH (mas não Admin), ele NÃO deve ver a lista de membros do RH.
+    // Nesse caso, escondemos a aba de "Membros do RH" e exibimos uma mensagem informativa,
+    // além de ativar a aba de Aprovações.
+    if (isHR && !isAdmin) {
+        const membersTab = document.getElementById('members-tab');
+        const membersPane = document.getElementById('members');
+        if (membersTab) membersTab.style.display = 'none';
+        if (membersPane) {
+            membersPane.innerHTML = `
+                <div class="alert alert-info" role="alert">
+                    Acesso restrito: apenas administradores podem ver a lista de membros do RH.
+                </div>
+            `;
+        }
+
+        // Ativa a aba de Aprovações se existir
+        const approvalsTab = document.getElementById('approvals-tab');
+        if (approvalsTab) {
+            try { $(approvalsTab).tab('show'); } catch (e) { /* fallback silencioso */ }
+        }
+    } else {
+        // Carrega a lista de membros do RH (visível apenas para Admins)
+        await loadRHMembers();
+    }
 
     // Configura os event listeners
     setupEventListeners();

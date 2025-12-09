@@ -57,6 +57,19 @@
       });
       // hide any topbar or other dashboard shortcut (if annotated)
       document.querySelectorAll('[data-dashboard-link]').forEach(el => el.style.display = 'none');
+
+      // Additionally, managers are not allowed to see the Gráficos page.
+      // Hide explicit links to `charts.html` in the sidebar and anywhere else.
+      document.querySelectorAll('.sidebar a.nav-link[href$="charts.html"]').forEach(a => {
+        const li = a.closest('.nav-item') || a.parentElement;
+        if (li) li.style.display = 'none';
+        else a.style.display = 'none';
+      });
+      document.querySelectorAll('a[href$="charts.html"]').forEach(a => {
+        const el = a.closest('li') || a;
+        if (el) el.style.display = 'none';
+        else a.style.display = 'none';
+      });
     } catch (e) {
       console.error('Permissions.applySidebarRules error', e);
     }
@@ -98,14 +111,23 @@
     try {
       if (!Permissions.isAdmin()){
         // Buttons or containers that add users/admins usually have ids like addAdminBtn or adminForm
+        // Keep admin-only controls hidden for all non-admins (RH included) — these are
+        // controls such as adding administrators or editing admin forms.
         document.querySelectorAll('#addAdminBtn, #adminForm, .admin-only, [data-admin-only]').forEach(el => {
           el.style.display = 'none';
         });
 
         // Some pages didn't mark the nav-items as data-admin-only. To be defensive,
         // hide any sidebar links that point to admin management pages so the
-        // "Cadastros" heading collapses correctly for non-admins.
-        const adminHrefs = ['adm.html', 'gerente.html', 'rh.html'];
+        // "Cadastros" heading collapses correctly for non-admins. However, RH
+        // users should still be able to access the RH page (Aprovação de Vagas),
+        // so skip hiding links to `rh.html` for them.
+        const adminHrefs = ['adm.html', 'gerente.html'];
+        // only hide rh.html link for users that are NOT HR
+        if (!Permissions.isHR()) {
+          adminHrefs.push('rh.html');
+        }
+
         adminHrefs.forEach(href => {
           // hide links inside sidebar nav
           document.querySelectorAll('.sidebar a.nav-link[href$="' + href + '"]').forEach(a => {
@@ -121,6 +143,15 @@
             else a.style.display = 'none';
           });
         });
+
+        // Ensure RH users still see the RH sidebar link (defensive restore):
+        if (Permissions.isHR()) {
+          document.querySelectorAll('.sidebar a.nav-link[href$="rh.html"]').forEach(a => {
+            const li = a.closest('.nav-item') || a.parentElement;
+            if (li) li.style.display = '';
+            else a.style.display = '';
+          });
+        }
       }
     } catch(e){ console.error('Permissions.applyAdminRules error', e); }
   };

@@ -1069,8 +1069,38 @@ function setupPeriodFilter() {
 
 // Função para verificar permissão e inicializar dashboard
 async function checkPermissionAndInit() {
-    // Todos os usuários podem acessar o dashboard (charts.html), mas com diferentes visualizações
-    // A lógica de filtragem de dados será feita no backend ou na renderização dos gráficos
+    // Bloquear acesso para Gestores (MANAGER) — eles não podem ver os gráficos
+    try {
+        const isManager = (window.Permissions && typeof window.Permissions.isManager === 'function')
+            ? window.Permissions.isManager()
+            : (function(){
+                try {
+                    const u = localStorage.getItem('userLogged') || localStorage.getItem('currentUser');
+                    if (!u) return false;
+                    const parsed = JSON.parse(u);
+                    if (window.Utils && typeof window.Utils.normalizeLevelAccess === 'function') {
+                        return window.Utils.normalizeLevelAccess(parsed.levelAccess || parsed.level_access) === 'MANAGER';
+                    }
+                    const lvl = String(parsed.levelAccess || parsed.level_access || '').toUpperCase();
+                    return lvl === 'MANAGER' || lvl === '3';
+                } catch (e) { return false; }
+            })();
+
+        if (isManager) {
+            // Mostrar mensagem informando que o gestor não tem permissão
+            document.addEventListener('DOMContentLoaded', () => {
+                const mainContainer = document.querySelector('.container-fluid') || document.querySelector('.container') || document.body;
+                if (mainContainer) {
+                    mainContainer.innerHTML = `\n                        <div class="container mt-5">\n                            <div class="alert alert-danger" role="alert">\n                                Acesso negado: gestores não têm permissão para visualizar os gráficos.\n                            </div>\n                        </div>\n                    `;
+                }
+            });
+            return; // não inicializa os gráficos
+        }
+    } catch (e) {
+        console.warn('Erro ao verificar permissão no dashboard:', e);
+    }
+
+    // Para outros perfis, inicializa normalmente
     setupPeriodFilter();
     await initDashboard();
 }
