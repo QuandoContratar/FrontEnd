@@ -1,7 +1,7 @@
 export class ApiClient {
     constructor(route) {
         this.route = route
-        this.baseUrl = 'http://54.144.16.251:8080'
+        this.baseUrl = 'http://3.92.226.132:8080'
     //  this.baseUrl = 'http://localhost:8080'
     }
 
