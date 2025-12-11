@@ -299,8 +299,8 @@ async function loadCandidatosVaga() {
 
     let result;
     try {
-        console.log('📊 [Dashboard] Carregando candidatos por vaga...');
-        result = await dashboardClient.getCandidatosPorVaga();
+        console.log('📊 [Dashboard] Carregando candidatos por vaga para área:', selectedArea);
+        result = await dashboardClient.getCandidatosPorVaga(selectedArea);
         console.log('✅ [Dashboard] Candidatos por vaga:', result);
     } catch (error) {
         console.warn('⚠️ [Dashboard] Usando fallback para candidatos por vaga');
@@ -339,6 +339,57 @@ async function loadCandidatosVaga() {
                 callbacks: { label: (t, c) => `${c.datasets[t.datasetIndex].label}: ${t.yLabel} candidatos` }
             }
         }
+    });
+
+    // Carregar tabela de vagas
+    loadVagasTable();
+}
+
+// ============================
+// TABELA - VAGAS
+// ============================
+async function loadVagasTable() {
+    const tbody = document.getElementById("vagasTableBody");
+    if (!tbody) return;
+
+    let result;
+    try {
+        console.log('📊 [Dashboard] Carregando tabela de vagas para área:', selectedArea);
+        result = await dashboardClient.getCandidatosPorVaga(selectedArea);
+        console.log('✅ [Dashboard] Vagas para tabela:', result);
+    } catch (error) {
+        console.warn('⚠️ [Dashboard] Usando fallback para tabela de vagas');
+        result = FALLBACK_DATA.candidatosVaga;
+    }
+
+    // Ordenar por total de candidatos (decrescente)
+    result.sort((a, b) => b.totalCandidatos - a.totalCandidatos);
+
+    // Limpar linhas existentes
+    tbody.innerHTML = '';
+
+    // Adicionar linhas
+    result.forEach(vaga => {
+        const tr = document.createElement('tr');
+        tr.style.cursor = 'pointer';
+        tr.innerHTML = `
+            <td class="text-sm">${vaga.vaga}</td>
+            <td class="text-right text-sm font-weight-bold text-primary">${vaga.totalCandidatos}</td>
+        `;
+        
+        // Adicionar clique para redirecionar
+        tr.addEventListener('click', function() {
+            const vagaId = vaga.id || vaga.vagaId;
+            if (vagaId) {
+                window.location.href = `vaga-detalhe.html?id=${vagaId}`;
+            } else {
+                // Se não tiver ID, tenta usar o nome da vaga como identificador
+                const vagaNome = encodeURIComponent(vaga.vaga);
+                window.location.href = `vaga-detalhe.html?nome=${vagaNome}`;
+            }
+        });
+        
+        tbody.appendChild(tr);
     });
 }
 
@@ -1617,15 +1668,32 @@ async function initDashboard() {
 }
 
 
-// Filtro de período (para implementação futura)
-function setupPeriodFilter() {
-    const filter = document.getElementById('periodFilter');
+// Variável global para armazenar a área selecionada
+let selectedArea = 'TI';
+
+// Filtro de área
+function setupAreaFilter() {
+    const filter = document.getElementById('areaFilter');
     if (filter) {
+        // Setar valor padrão
+        filter.value = selectedArea;
+        
         filter.addEventListener('change', function() {
-            console.log('📅 Período selecionado:', this.value);
-            // TODO: Recarregar dados com filtro
+            selectedArea = this.value;
+            console.log('🏢 Área selecionada:', selectedArea);
+            // Recarregar todos os gráficos com a nova área
+            reloadDashboardByArea();
         });
     }
+}
+
+// Função para recarregar dados filtrando pela área
+async function reloadDashboardByArea() {
+    console.log('🔄 Recarregando dashboard para a área:', selectedArea);
+    
+    // Recarregar todos os gráficos
+    await loadCandidatosVaga();
+    // Pode adicionar mais funções de recarga aqui conforme necessário
 }
 
 // Função para verificar permissão e inicializar dashboard
@@ -1662,7 +1730,7 @@ async function checkPermissionAndInit() {
     }
 
     // Para outros perfis, inicializa normalmente
-    setupPeriodFilter();
+    setupAreaFilter();
     await initDashboard();
 }
 

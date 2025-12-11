@@ -293,4 +293,60 @@ export class DashboardClient extends ApiClient {
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         return response.json();
     }
+
+    /**
+     * Busca detalhes de uma vaga específica
+     * Endpoint: GET /vacancies/{id}
+     */
+    async getVagaById(vagaId) {
+        const response = await fetch(`${this.baseUrl}/vacancies/${vagaId}`, {
+            method: 'GET',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include'
+        });
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        return response.json();
+    }
+
+    /**
+     * Busca estágios/etapas de uma vaga
+     * Endpoint: GET /dashboard/vaga/{id}/stages
+     */
+    async getVagaStages(vagaId) {
+        const response = await fetch(`${this.url}/vaga/${vagaId}/stages`, {
+            method: 'GET',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include'
+        });
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        return response.json();
+    }
+
+    /**
+     * Busca candidatos de uma vaga
+     * Endpoint: GET /dashboard/vaga/{id}/candidates
+     */
+    async getVagaCandidates(vagaId) {
+        const response = await fetch(`${this.url}/vaga/${vagaId}/candidates`, {
+            method: 'GET',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include'
+        });
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        return response.json();
+    }
+
+    /**
+     * Busca dados de retenção de uma vaga
+     * Endpoint: GET /dashboard/vaga/{id}/retention
+     */
+    async getVagaRetention(vagaId) {
+        const response = await fetch(`${this.url}/vaga/${vagaId}/retention`, {
+            method: 'GET',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include'
+        });
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        return response.json();
+    }
 }

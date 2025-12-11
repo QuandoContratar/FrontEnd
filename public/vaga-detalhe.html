@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="description" content="Detalhes da Vaga - Quando Previdência">
+    <meta name="author" content="">
+
+    <title>Detalhes da Vaga - Quando Previdência</title>
+
+    <!-- Custom fonts for this template-->
+    <link href="vendor/fontawesome-free/css/all.min.css" rel="stylesheet" type="text/css">
+    <link href="https://fonts.googleapis.com/css?family=Nunito:200,200i,300,300i,400,400i,600,600i,700,700i,800,800i,900,900i" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="icon" href="./img/relogio_icone_quando_previdencia.png" type="image/png">
+
+    <!-- Custom styles for this template-->
+    <link href="css/sb-admin-2.min.css" rel="stylesheet">
+    <link href="./assets/css/main.css" rel="stylesheet">
+</head>
+
+<body id="page-top">
+
+    <!-- Page Wrapper -->
+    <div id="wrapper">
+
+        <!-- Sidebar -->
+        <ul class="navbar-nav bg-gradient-primary sidebar sidebar-dark accordion" id="accordionSidebar">
+
+            <!-- Sidebar - Brand -->
+            <a class="sidebar-brand d-flex align-items-center justify-content-center" href="home.html">
+                <div class="sidebar-brand-icon rotate-n-15">
+                    <i class="fas fa-clock"></i>
+                </div>
+                <div class="sidebar-brand-text mx-3">Quando Previdência</div>
+            </a>
+
+            <!-- Divider -->
+            <hr class="sidebar-divider my-0">
+
+            <!-- Nav Item - Dashboard -->
+            <li class="nav-item">
+                <a class="nav-link" href="home.html">
+                    <i class="fas fa-fw fa-tachometer-alt"></i>
+                    <span>Dashboard</span></a>
+            </li>
+
+            <!-- Divider -->
+            <hr class="sidebar-divider">
+
+            <!-- Heading -->
+            <div class="sidebar-heading">
+                Cadastros
+            </div>
+
+            <!-- Nav Item - Administradores -->
+            <li class="nav-item" data-admin-only>
+                <a class="nav-link" href="adm.html">
+                    <i class="fas fa-fw fa-user-shield"></i>
+                    <span>Administradores</span></a>
+            </li>
+
+            <!-- Nav Item - Gerentes -->
+            <li class="nav-item" data-admin-only>
+                <a class="nav-link" href="gerente.html">
+                    <i class="fas fa-fw fa-user-tie"></i>
+                    <span>Gerentes</span></a>
+            </li>
+
+            <!-- Nav Item - RH -->
+            <li class="nav-item" data-admin-only>
+                <a class="nav-link" href="rh.html">
+                    <i class="fas fa-fw fa-users"></i>
+                    <span>RH</span></a>
+            </li>
+
+            <!-- Divider -->
+            <hr class="sidebar-divider">
+
+            <!-- Heading -->
+            <div class="sidebar-heading">
+                Recrutamento
+            </div>
+
+            <!-- Nav Item - Abertura de Vaga -->
+            <li class="nav-item">
+                <a class="nav-link" href="abertura-vaga.html">
+                    <i class="fas fa-fw fa-plus-circle"></i>
+                    <span>Abertura de Vaga</span></a>
+            </li>
+
+            <!-- Nav Item - Vagas -->
+            <li class="nav-item">
+                <a class="nav-link" href="vagas.html">
+                    <i class="fas fa-fw fa-briefcase"></i>
+                    <span>Vagas</span></a>
+            </li>
+
+            <!-- Nav Item - Candidatos -->
+            <li class="nav-item">
+                <a class="nav-link" href="candidatos.html">
+                    <i class="fas fa-fw fa-user-plus"></i>
+                    <span>Candidatos</span></a>
+            </li>
+
+            <!-- Nav Item - Upload Currículos -->
+            <li class="nav-item">
+                <a class="nav-link" href="upload-curriculos.html">
+                    <i class="fas fa-fw fa-file-upload"></i>
+                    <span>Upload Currículos</span></a>
+            </li>
+
+            <!-- Divider -->
+            <hr class="sidebar-divider">
+
+            <!-- Heading -->
+            <div class="sidebar-heading">
+                Relatórios
+            </div>
+
+            <!-- Nav Item - Charts -->
+            <li class="nav-item">
+                <a class="nav-link" href="charts.html">
+                    <i class="fas fa-fw fa-chart-area"></i>
+                    <span>Gráficos</span></a>
+            </li>
+
+            <!-- Nav Item - Tables -->
+            <li class="nav-item">
+                <a class="nav-link" href="tables.html">
+                    <i class="fas fa-fw fa-table"></i>
+                    <span>Tabelas</span></a>
+            </li>
+
+            <!-- Divider -->
+            <hr class="sidebar-divider d-none d-md-block">
+
+            <!-- Sidebar Toggler (Sidebar) -->
+            <div class="text-center d-none d-md-inline">
+                <button class="rounded-circle border-0" id="sidebarToggle"></button>
+            </div>
+
+        </ul>
+        <!-- End of Sidebar -->
+
+        <!-- Content Wrapper -->
+        <div id="content-wrapper" class="d-flex flex-column">
+
+            <!-- Main Content -->
+            <div id="content">
+
+                <!-- Topbar -->
+                <nav class="navbar navbar-expand navbar-light bg-white topbar mb-4 static-top shadow">
+
+                    <!-- Sidebar Toggle (Topbar) -->
+                    <button id="sidebarToggleTop" class="btn btn-link d-md-none rounded-circle mr-3">
+                        <i class="fa fa-bars"></i>
+                    </button>
+
+                    <!-- Topbar Navbar -->
+                    <ul class="navbar-nav ml-auto">
+
+                        <!-- Nav Item - User Information -->
+                        <li class="nav-item dropdown no-arrow">
+                            <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button"
+                                data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                <span class="mr-2 d-none d-lg-inline text-gray-600 small">Carregando...</span>
+                                <img class="img-profile rounded-circle" src="./img/undraw_profile.svg">
+                            </a>
+                            <!-- Dropdown - User Information -->
+                            <div class="dropdown-menu dropdown-menu-right shadow animated--grow-in"
+                                aria-labelledby="userDropdown">
+                                <a class="dropdown-item" href="#" data-toggle="modal" data-target="#logoutModal">
+                                    <i class="fas fa-sign-out-alt fa-sm fa-fw mr-2 text-gray-400"></i>
+                                    Sair
+                                </a>
+                            </div>
+                        </li>
+
+                    </ul>
+
+                </nav>
+                <!-- End of Topbar -->
+
+                <!-- Begin Page Content -->
+                <div class="container-fluid">
+
+                    <!-- Page Heading -->
+                    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+                        <div>
+                            <a href="charts.html" class="btn btn-sm btn-secondary mb-3">
+                                <i class="fas fa-arrow-left mr-2"></i>Voltar
+                            </a>
+                            <h1 class="h3 mb-0 text-gray-800" id="vagaTitulo">Carregando...</h1>
+                        </div>
+                    </div>
+
+                    <!-- Content Row - Métricas por Etapa -->
+                    <div class="row" id="metricsRow" style="overflow-x: auto; padding-bottom: 10px;">
+                        <!-- Métricas serão carregadas dinamicamente -->
+                    </div>
+
+                    <!-- Content Row - Candidatos -->
+                    <div class="row">
+                        <div class="col-lg-12">
+                            <div class="card shadow mb-4">
+                                <div class="card-header py-3">
+                                    <h6 class="m-0 font-weight-bold text-primary">
+                                        <i class="fas fa-users mr-2"></i>Candidatos
+                                    </h6>
+                                </div>
+                                <div class="card-body">
+                                    <!-- Filtros de Match -->
+                                    <div class="mb-3" id="filtrosMatch">
+                                        <!-- Botões serão carregados dinamicamente -->
+                                    </div>
+
+                                    <!-- Tabela de candidatos -->
+                                    <div class="table-responsive">
+                                        <table class="table table-bordered table-hover" id="candidatosTable" width="100%" cellspacing="0">
+                                            <thead>
+                                                <tr>
+                                                    <th>Nome</th>
+                                                    <th>Contato</th>
+                                                    <th>Período</th>
+                                                    <th>Localidade</th>
+                                                    <th>Gestor</th>
+                                                    <th class="text-center">Matching</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="candidatosTableBody">
+                                                <!-- Linhas serão carregadas dinamicamente -->
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Content Row - Gráfico de Retenção -->
+                    <div class="row">
+                        <div class="col-lg-4">
+                            <div class="card shadow mb-4">
+                                <div class="card-header py-3">
+                                    <h6 class="m-0 font-weight-bold text-primary">
+                                        <i class="fas fa-chart-pie mr-2"></i>Retenção
+                                    </h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="chart-pie pt-4 pb-2" style="height: 300px;">
+                                        <canvas id="retencaoChart"></canvas>
+                                    </div>
+                                    <div class="mt-4 text-center small" id="retencaoLegenda">
+                                        <!-- Legenda será gerada dinamicamente -->
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Espaço para outro conteúdo -->
+                        <div class="col-lg-8">
+                            <div class="card shadow mb-4">
+                                <div class="card-header py-3">
+                                    <h6 class="m-0 font-weight-bold text-primary">
+                                        <i class="fas fa-info-circle mr-2"></i>Informações da Vaga
+                                    </h6>
+                                </div>
+                                <div class="card-body" id="vagaInfo">
+                                    <!-- Informações serão carregadas dinamicamente -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+                <!-- /.container-fluid -->
+
+            </div>
+            <!-- End of Main Content -->
+
+            <!-- Footer -->
+            <footer class="sticky-footer bg-white">
+                <div class="container my-auto">
+                    <div class="copyright text-center my-auto">
+                        <span>Copyright &copy; Quando Previdência 2024</span>
+                    </div>
+                </div>
+            </footer>
+            <!-- End of Footer -->
+
+        </div>
+        <!-- End of Content Wrapper -->
+
+    </div>
+    <!-- End of Page Wrapper -->
+
+    <!-- Scroll to Top Button-->
+    <a class="scroll-to-top rounded" href="#page-top">
+        <i class="fas fa-angle-up"></i>
+    </a>
+
+    <!-- Logout Modal-->
+    <div class="modal fade" id="logoutModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="exampleModalLabel">Pronto para sair?</h5>
+                    <button class="close" type="button" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">×</span>
+                    </button>
+                </div>
+                <div class="modal-body">Selecione "Sair" abaixo se você estiver pronto para encerrar sua sessão atual.</div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" type="button" data-dismiss="modal">Cancelar</button>
+                    <button class="btn btn-primary" type="button" onclick="handleLogout()">Sair</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap core JavaScript-->
+    <script src="vendor/jquery/jquery.min.js"></script>
+    <script src="vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Core plugin JavaScript-->
+    <script src="vendor/jquery-easing/jquery.easing.min.js"></script>
+
+    <!-- Custom scripts for all pages-->
+    <script src="js/sb-admin-2.min.js"></script>
+
+    <!-- Chart.js -->
+    <script src="vendor/chart.js/Chart.min.js"></script>
+
+    <!-- Utils e Auth -->
+    <script src="./assets/js/components/utils.js"></script>
+    <script src="./assets/js/components/permissions.js"></script>
+    <script src="./assets/js/components/auth.js"></script>
+
+    <!-- Vaga Detalhe -->
+    <script type="module" src="./assets/js/pages/vaga-detalhe.js"></script>
+
+    <script>
+      $(document).ready(function() {
+        if (window.Utils) {
+          Utils.updateUserName();
+        }
+      });
+    </script>
+
+</body>
+
+</html>
