@@ -40,11 +40,11 @@
             <!-- Divider -->
             <hr class="sidebar-divider my-0">
 
-            <!-- Nav Item - Dashboard -->
+            <!-- Nav Item - Tela Inicial -->
             <li class="nav-item">
                 <a class="nav-link" href="home.html">
-                    <i class="fas fa-fw fa-tachometer-alt"></i>
-                    <span>Dashboard</span></a>
+                    <i class="fas fa-fw fa-home"></i>
+                    <span>Tela Inicial</span></a>
             </li>
 
             <!-- Divider -->
@@ -91,18 +91,18 @@
                     <span>Abertura de Vaga</span></a>
             </li>
 
+            <!-- Nav Item - Minhas Solicitações -->
+            <li class="nav-item">
+                <a class="nav-link" href="minhas-solicitacoes.html">
+                    <i class="fas fa-fw fa-clipboard-list"></i>
+                    <span>Minhas Solicitações</span></a>
+            </li>
+
             <!-- Nav Item - Vagas -->
             <li class="nav-item">
                 <a class="nav-link" href="vagas.html">
                     <i class="fas fa-fw fa-briefcase"></i>
                     <span>Vagas</span></a>
-            </li>
-
-            <!-- Nav Item - Candidatos -->
-            <li class="nav-item">
-                <a class="nav-link" href="candidatos.html">
-                    <i class="fas fa-fw fa-user-plus"></i>
-                    <span>Candidatos</span></a>
             </li>
 
             <!-- Nav Item - Upload Currículos -->
@@ -112,26 +112,32 @@
                     <span>Upload Currículos</span></a>
             </li>
 
-            <!-- Divider -->
-            <hr class="sidebar-divider">
+            <!-- Nav Item - Candidatos -->
+            <li class="nav-item">
+                <a class="nav-link" href="candidatos.html">
+                    <i class="fas fa-fw fa-user-friends"></i>
+                    <span>Candidatos</span></a>
+            </li>
 
-            <!-- Heading -->
-            <div class="sidebar-heading">
-                Relatórios
-            </div>
+            <!-- Nav Item - Match de Candidatos -->
+            <li class="nav-item">
+                <a class="nav-link" href="match-candidatos.html">
+                    <i class="fas fa-fw fa-heart"></i>
+                    <span>Match de Candidatos</span></a>
+            </li>
 
-            <!-- Nav Item - Charts -->
+            <!-- Nav Item - Kanban Recrutamento -->
+            <li class="nav-item">
+                <a class="nav-link" href="kanban-recrutamento.html">
+                    <i class="fas fa-fw fa-columns"></i>
+                    <span>Kanban Recrutamento</span></a>
+            </li>
+
+            <!-- Nav Item - Dashboard -->
             <li class="nav-item">
                 <a class="nav-link" href="charts.html">
                     <i class="fas fa-fw fa-chart-area"></i>
-                    <span>Gráficos</span></a>
-            </li>
-
-            <!-- Nav Item - Tables -->
-            <li class="nav-item">
-                <a class="nav-link" href="tables.html">
-                    <i class="fas fa-fw fa-table"></i>
-                    <span>Tabelas</span></a>
+                    <span>Dashboard</span></a>
             </li>
 
             <!-- Divider -->
@@ -200,6 +206,44 @@
                                 <input type="text" placeholder="Buscar candidatos...">
                             </div>
                         </div>
+                    </div>
+
+                    <!-- Filtros Hierárquicos: Área → Vaga -->
+                    <div class="filter-section mb-4">
+                        <div class="row align-items-end">
+                            <div class="col-md-3">
+                                <label for="filterArea" class="form-label small text-muted mb-1">
+                                    <i class="fas fa-building"></i> Área
+                                </label>
+                                <select id="filterArea" class="form-control form-control-sm">
+                                    <option value="">Todas as áreas</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="filterVaga" class="form-label small text-muted mb-1">
+                                    <i class="fas fa-briefcase"></i> Vaga
+                                </label>
+                                <select id="filterVaga" class="form-control form-control-sm" disabled>
+                                    <option value="">Selecione uma área primeiro</option>
+                                </select>
+                            </div>
+                            <div class="col-md-2">
+                                <button id="btnClearFilters" class="btn btn-sm btn-outline-secondary">
+                                    <i class="fas fa-times"></i> Limpar Filtros
+                                </button>
+                            </div>
+                            <div class="col-md-3 text-right">
+                                <span id="filterStatus" class="text-muted small">
+                                    <i class="fas fa-info-circle"></i> Exibindo todos os candidatos
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Mensagem quando nenhuma vaga selecionada -->
+                    <div id="noVacancyMessage" class="alert alert-info text-center d-none">
+                        <i class="fas fa-filter fa-2x mb-2"></i>
+                        <p class="mb-0">Selecione uma <strong>área</strong> e uma <strong>vaga</strong> para visualizar os candidatos no Kanban.</p>
                     </div>
 
                     <!-- Kanban Board -->
@@ -297,6 +341,17 @@
                                 <!-- Cards serão renderizados dinamicamente pelo JavaScript -->
                             </div>
                         </div>
+
+                        <!-- Coluna: Rejeitados -->
+                        <div class="kanban-column column-rejected" data-stage="rejeitado">
+                            <div class="column-header">
+                                <h3><i class="fas fa-ban text-danger"></i> Rejeitados</h3>
+                                <span class="count count-rejected">0</span>
+                            </div>
+                            <div class="column-content">
+                                <!-- Cards serão renderizados dinamicamente pelo JavaScript -->
+                            </div>
+                        </div>
                     </div>
 
                 </div>
@@ -325,6 +380,39 @@
     <a class="scroll-to-top rounded" href="#page-top">
         <i class="fas fa-angle-up"></i>
     </a>
+
+    <!-- Modal de Rejeição -->
+    <div class="modal fade" id="rejectModal" tabindex="-1" role="dialog" aria-labelledby="rejectModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title" id="rejectModalLabel">
+                        <i class="fas fa-ban"></i> Rejeitar Candidato
+                    </h5>
+                    <button class="close text-white" type="button" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">×</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <p>Você está prestes a rejeitar o candidato:</p>
+                    <p class="font-weight-bold text-center" id="rejectCandidateName">-</p>
+                    <div class="form-group">
+                        <label for="rejectReason">Motivo da Rejeição <span class="text-danger">*</span></label>
+                        <textarea class="form-control" id="rejectReason" rows="4" 
+                            placeholder="Informe o motivo da rejeição (obrigatório)" required></textarea>
+                        <small class="form-text text-muted">Este motivo ficará registrado no histórico do candidato.</small>
+                    </div>
+                    <input type="hidden" id="rejectProcessId" value="">
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" type="button" data-dismiss="modal">Cancelar</button>
+                    <button class="btn btn-danger" type="button" id="btnConfirmReject">
+                        <i class="fas fa-ban"></i> Confirmar Rejeição
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- Logout Modal-->
     <div class="modal fade" id="logoutModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">

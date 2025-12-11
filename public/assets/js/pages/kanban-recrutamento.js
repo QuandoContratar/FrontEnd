@@ -3,16 +3,22 @@
    Gestão de candidatos no processo seletivo
    ======================================== */
 
-import { SelectionProcessClient } from '../../../client/client.js';
+import { SelectionProcessClient, VacanciesClient } from '../../../client/client.js';
 
-// Cliente da API
+// Clientes da API
 const selectionClient = new SelectionProcessClient();
+const vacanciesClient = new VacanciesClient();
 
 // Estado da aplicação
 let processes = [];
 let filteredProcesses = [];
 let draggedElement = null;
 let draggedProcessId = null;
+
+// Estado dos filtros hierárquicos
+let allVacancies = [];
+let selectedArea = '';
+let selectedVacancyId = null;
 
 // Mapeamento de etapas (corresponde ao enum CurrentStage do backend)
 const STAGES = {
@@ -25,7 +31,8 @@ const STAGES = {
     entrevista_tecnica: { key: 'entrevista_tecnica', title: 'Entrevista Técnica', order: 5 },
     entrevista_final: { key: 'entrevista_final', title: 'Entrevista Final', order: 6 },
     proposta_fechamento: { key: 'proposta_fechamento', title: 'Proposta', order: 7 },
-    contratacao: { key: 'contratacao', title: 'Contratação', order: 8 }
+    contratacao: { key: 'contratacao', title: 'Contratação', order: 8 },
+    rejeitado: { key: 'rejeitado', title: 'Rejeitados', order: 10 }
 };
 
 // Mapeamento de nomes de stage do backend para os nomes esperados pelo frontend
@@ -81,7 +88,11 @@ const STAGE_MAPPING = {
     'contratacao': 'contratacao',
     'contratação': 'contratacao',
     'hired': 'contratacao',
-    'hiring': 'contratacao'
+    'hiring': 'contratacao',
+    // Rejeitado
+    'rejeitado': 'rejeitado',
+    'rejected': 'rejeitado',
+    'reprovado': 'rejeitado'
 };
 
 // Flag para forçar dados de teste (útil para desenvolvimento)
@@ -154,12 +165,311 @@ async function initKanban() {
     setupColumnDataAttributes();
     setupEventListeners();
     setupDragAndDrop();
+    setupHierarchicalFilters(); // Novo: configura filtros Área → Vaga
+    setupRejectModal(); // Novo: configura modal de rejeição
+    
+    // Carrega vagas para os filtros
+    await loadVacanciesForFilters();
     
     // Carrega processos da API
     await loadProcesses();
     
     // Verificar se veio da tela de Match com foco em uma coluna específica
     handleFocusStageFromURL();
+    
+    // Restaurar filtros salvos
+    restoreFilters();
+}
+
+/**
+ * Configura os filtros hierárquicos (Área → Vaga)
+ */
+function setupHierarchicalFilters() {
+    const filterArea = document.getElementById('filterArea');
+    const filterVaga = document.getElementById('filterVaga');
+    const btnClearFilters = document.getElementById('btnClearFilters');
+    
+    if (filterArea) {
+        filterArea.addEventListener('change', handleAreaFilterChange);
+    }
+    
+    if (filterVaga) {
+        filterVaga.addEventListener('change', handleVagaFilterChange);
+    }
+    
+    if (btnClearFilters) {
+        btnClearFilters.addEventListener('click', clearFilters);
+    }
+}
+
+/**
+ * Carrega vagas ativas para preencher os filtros
+ */
+async function loadVacanciesForFilters() {
+    try {
+        console.log('📤 [Kanban] Carregando vagas para filtros...');
+        allVacancies = await vacanciesClient.getActiveVacancies();
+        console.log('✅ [Kanban] Vagas carregadas:', allVacancies.length);
+        
+        // Extrai áreas únicas
+        const areas = [...new Set(allVacancies.map(v => v.area).filter(Boolean))];
+        populateAreaFilter(areas);
+    } catch (error) {
+        console.error('❌ [Kanban] Erro ao carregar vagas para filtros:', error);
+        // Fallback: tenta buscar todas as vagas
+        try {
+            allVacancies = await vacanciesClient.findAll();
+            const areas = [...new Set(allVacancies.map(v => v.area).filter(Boolean))];
+            populateAreaFilter(areas);
+        } catch (e) {
+            console.error('❌ [Kanban] Erro no fallback:', e);
+        }
+    }
+}
+
+/**
+ * Popula o dropdown de áreas
+ */
+function populateAreaFilter(areas) {
+    const filterArea = document.getElementById('filterArea');
+    if (!filterArea) return;
+    
+    filterArea.innerHTML = '<option value="">Todas as áreas</option>';
+    
+    areas.sort().forEach(area => {
+        const option = document.createElement('option');
+        option.value = area;
+        option.textContent = area;
+        filterArea.appendChild(option);
+    });
+}
+
+/**
+ * Handler para mudança no filtro de área
+ */
+async function handleAreaFilterChange(e) {
+    selectedArea = e.target.value;
+    const filterVaga = document.getElementById('filterVaga');
+    
+    if (!selectedArea) {
+        // Resetar filtro de vaga
+        filterVaga.innerHTML = '<option value="">Selecione uma área primeiro</option>';
+        filterVaga.disabled = true;
+        selectedVacancyId = null;
+        
+        // Mostrar todos os processos
+        filteredProcesses = [...processes];
+        renderKanban(filteredProcesses);
+        updateFilterStatus('Exibindo todos os candidatos');
+        saveFilters();
+        return;
+    }
+    
+    // Filtrar vagas pela área selecionada
+    let vagasArea = [];
+    
+    try {
+        // Tenta usar o endpoint específico
+        vagasArea = await vacanciesClient.getVacanciesByArea(selectedArea);
+    } catch (error) {
+        // Fallback: filtra localmente
+        vagasArea = allVacancies.filter(v => v.area === selectedArea);
+    }
+    
+    // Popula dropdown de vagas
+    filterVaga.innerHTML = '<option value="">Todas as vagas da área</option>';
+    vagasArea.forEach(vaga => {
+        const option = document.createElement('option');
+        option.value = vaga.id || vaga.id_vacancy;
+        option.textContent = `${vaga.position_job || vaga.positionJob || vaga.titulo} (${vaga.totalCandidatos || 0} candidatos)`;
+        filterVaga.appendChild(option);
+    });
+    filterVaga.disabled = false;
+    
+    // Filtra processos pela área (mostra todas as vagas da área)
+    const vagaIdsArea = vagasArea.map(v => v.id || v.id_vacancy);
+    filteredProcesses = processes.filter(p => vagaIdsArea.includes(p.vacancyId));
+    renderKanban(filteredProcesses);
+    updateFilterStatus(`Área: ${selectedArea} (${filteredProcesses.length} candidatos)`);
+    saveFilters();
+}
+
+/**
+ * Handler para mudança no filtro de vaga
+ */
+async function handleVagaFilterChange(e) {
+    selectedVacancyId = e.target.value ? parseInt(e.target.value) : null;
+    
+    if (!selectedVacancyId) {
+        // Se área selecionada, mostra todos da área
+        if (selectedArea) {
+            const vagasArea = allVacancies.filter(v => v.area === selectedArea);
+            const vagaIdsArea = vagasArea.map(v => v.id || v.id_vacancy);
+            filteredProcesses = processes.filter(p => vagaIdsArea.includes(p.vacancyId));
+            updateFilterStatus(`Área: ${selectedArea} (${filteredProcesses.length} candidatos)`);
+        } else {
+            filteredProcesses = [...processes];
+            updateFilterStatus('Exibindo todos os candidatos');
+        }
+    } else {
+        // Filtra pela vaga específica
+        filteredProcesses = processes.filter(p => p.vacancyId === selectedVacancyId);
+        const vaga = allVacancies.find(v => (v.id || v.id_vacancy) === selectedVacancyId);
+        const vagaNome = vaga ? (vaga.position_job || vaga.positionJob || vaga.titulo) : 'Vaga';
+        updateFilterStatus(`Vaga: ${vagaNome} (${filteredProcesses.length} candidatos)`);
+    }
+    
+    renderKanban(filteredProcesses);
+    saveFilters();
+}
+
+/**
+ * Limpa todos os filtros
+ */
+function clearFilters() {
+    const filterArea = document.getElementById('filterArea');
+    const filterVaga = document.getElementById('filterVaga');
+    
+    if (filterArea) filterArea.value = '';
+    if (filterVaga) {
+        filterVaga.innerHTML = '<option value="">Selecione uma área primeiro</option>';
+        filterVaga.disabled = true;
+    }
+    
+    selectedArea = '';
+    selectedVacancyId = null;
+    filteredProcesses = [...processes];
+    renderKanban(filteredProcesses);
+    updateFilterStatus('Exibindo todos os candidatos');
+    
+    // Limpa filtros salvos
+    localStorage.removeItem('kanban_filters');
+}
+
+/**
+ * Atualiza o texto de status do filtro
+ */
+function updateFilterStatus(text) {
+    const filterStatus = document.getElementById('filterStatus');
+    if (filterStatus) {
+        filterStatus.innerHTML = `<i class="fas fa-info-circle"></i> ${text}`;
+    }
+}
+
+/**
+ * Salva filtros no localStorage
+ */
+function saveFilters() {
+    localStorage.setItem('kanban_filters', JSON.stringify({
+        area: selectedArea,
+        vacancyId: selectedVacancyId
+    }));
+}
+
+/**
+ * Restaura filtros salvos
+ */
+function restoreFilters() {
+    try {
+        const saved = localStorage.getItem('kanban_filters');
+        if (saved) {
+            const { area, vacancyId } = JSON.parse(saved);
+            
+            if (area) {
+                const filterArea = document.getElementById('filterArea');
+                if (filterArea) {
+                    filterArea.value = area;
+                    filterArea.dispatchEvent(new Event('change'));
+                }
+                
+                // Aguarda o dropdown de vaga ser populado
+                setTimeout(() => {
+                    if (vacancyId) {
+                        const filterVaga = document.getElementById('filterVaga');
+                        if (filterVaga) {
+                            filterVaga.value = vacancyId;
+                            filterVaga.dispatchEvent(new Event('change'));
+                        }
+                    }
+                }, 500);
+            }
+        }
+    } catch (e) {
+        console.warn('⚠️ [Kanban] Erro ao restaurar filtros:', e);
+    }
+}
+
+/**
+ * Configura o modal de rejeição
+ */
+function setupRejectModal() {
+    const btnConfirmReject = document.getElementById('btnConfirmReject');
+    if (btnConfirmReject) {
+        btnConfirmReject.addEventListener('click', confirmRejectCandidate);
+    }
+}
+
+/**
+ * Abre o modal de rejeição
+ */
+function openRejectModal(processId, candidateName) {
+    document.getElementById('rejectProcessId').value = processId;
+    document.getElementById('rejectCandidateName').textContent = candidateName;
+    document.getElementById('rejectReason').value = '';
+    
+    $('#rejectModal').modal('show');
+}
+
+/**
+ * Confirma a rejeição do candidato
+ */
+async function confirmRejectCandidate() {
+    const processId = document.getElementById('rejectProcessId').value;
+    const reason = document.getElementById('rejectReason').value.trim();
+    
+    if (!reason) {
+        alert('Por favor, informe o motivo da rejeição.');
+        return;
+    }
+    
+    const btnConfirm = document.getElementById('btnConfirmReject');
+    btnConfirm.disabled = true;
+    btnConfirm.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Rejeitando...';
+    
+    try {
+        // Chama o endpoint de rejeição
+        await selectionClient.rejectCandidate(processId, reason);
+        
+        // Atualiza o processo localmente
+        const process = processes.find(p => (p.processId || p.id) == processId);
+        if (process) {
+            process.currentStage = 'rejeitado';
+            process.rejectionReason = reason;
+            process.progress = 0;
+            
+            // Atualiza filteredProcesses também
+            const filteredIndex = filteredProcesses.findIndex(p => (p.processId || p.id) == processId);
+            if (filteredIndex >= 0) {
+                filteredProcesses[filteredIndex] = process;
+            }
+        }
+        
+        // Re-renderiza o kanban
+        renderKanban(filteredProcesses);
+        
+        // Fecha o modal
+        $('#rejectModal').modal('hide');
+        
+        const candidateName = process?.candidateName || 'Candidato';
+        showNotification(`${candidateName} foi rejeitado.`, 'warning');
+        
+    } catch (error) {
+        console.error('❌ [Kanban] Erro ao rejeitar candidato:', error);
+        showNotification('Erro ao rejeitar candidato. Tente novamente.', 'danger');
+    } finally {
+        btnConfirm.disabled = false;
+        btnConfirm.innerHTML = '<i class="fas fa-ban"></i> Confirmar Rejeição';
+    }
 }
 
 /**
@@ -840,7 +1150,7 @@ function renderKanban(processesToRender = []) {
 function createProcessCard(process, stage) {
     const card = document.createElement('div');
     card.className = 'kanban-card';
-    card.draggable = true;
+    
     // Usa o ID correto do card (pode ser id, cardId, ou processId)
     const cardId = process.id || process.cardId || process.processId;
     card.dataset.id = cardId;
@@ -848,6 +1158,12 @@ function createProcessCard(process, stage) {
     
     const isLastStage = stage === 'contratacao';
     const isProposta = stage === 'proposta_fechamento';
+    const isRejected = stage === 'rejeitado';
+    
+    // Adiciona classe de rejeitado se aplicável
+    if (isRejected) {
+        card.classList.add('card-rejected');
+    }
     
     // Extrai dados do processo (suporta diferentes estruturas de dados)
     const candidateName = process.candidateName || 
@@ -871,6 +1187,7 @@ function createProcessCard(process, stage) {
                        process.fk_candidate || 
                        null;
     const processId = process.id || process.cardId || process.processId;
+    const rejectionReason = process.rejectionReason || process.rejection_reason || '';
     
     // Log para debug
     if (!candidateId) {
@@ -878,46 +1195,68 @@ function createProcessCard(process, stage) {
     }
     
     // Se for gestor, não mostra botões de ação (apenas visualização)
-    const actionButtons = isManager ? '' : (
-        isLastStage ? `
-            <span class="badge badge-success">Contratado!</span>
-        ` : isProposta ? `
+    let actionButtons = '';
+    
+    if (isManager) {
+        actionButtons = '<span class="badge badge-info">Somente Visualização</span>';
+    } else if (isRejected) {
+        // Candidato rejeitado - não tem ações
+        actionButtons = `<span class="badge badge-danger"><i class="fas fa-ban"></i> Rejeitado</span>`;
+    } else if (isLastStage) {
+        actionButtons = '<span class="badge badge-success"><i class="fas fa-check"></i> Contratado!</span>';
+    } else if (isProposta) {
+        actionButtons = `
             <button class="btn-action btn-success" data-action="advance" data-id="${processId}">
-                Finalizar Contratação
+                <i class="fas fa-check"></i> Finalizar
             </button>
-        ` : `
+            <button class="btn-action btn-danger" data-action="reject" data-id="${processId}" data-name="${escapeHtml(candidateName)}">
+                <i class="fas fa-ban"></i> Rejeitar
+            </button>
+        `;
+    } else {
+        actionButtons = `
             <button class="btn-action btn-primary" data-action="advance" data-id="${processId}">
-                Avançar
+                <i class="fas fa-arrow-right"></i> Avançar
             </button>
-        `
-    );
+            <button class="btn-action btn-danger" data-action="reject" data-id="${processId}" data-name="${escapeHtml(candidateName)}">
+                <i class="fas fa-ban"></i> Rejeitar
+            </button>
+        `;
+    }
+    
+    // Motivo de rejeição (se houver)
+    const rejectionSection = rejectionReason ? `
+        <div class="rejection-reason" title="${escapeHtml(rejectionReason)}">
+            <i class="fas fa-comment-alt text-danger"></i>
+            <small class="text-muted">${escapeHtml(rejectionReason.substring(0, 50))}${rejectionReason.length > 50 ? '...' : ''}</small>
+        </div>
+    ` : '';
     
     card.innerHTML = `
         <div class="card-header">
             <h4>${escapeHtml(candidateName)}</h4>
-            <span class="progress-badge">${progress.toFixed(0)}%</span>
+            <span class="progress-badge ${isRejected ? 'badge-rejected' : ''}">${isRejected ? 'X' : progress.toFixed(0) + '%'}</span>
         </div>
         <div class="card-content">
             <p><strong>Vaga:</strong> ${escapeHtml(vacancyTitle)}</p>
             <p><strong>Modelo:</strong> ${escapeHtml(workModel)}</p>
             <p><strong>Contrato:</strong> ${escapeHtml(contractType)}</p>
             <p><strong>Gestor:</strong> ${escapeHtml(managerName)}</p>
+            ${rejectionSection}
         </div>
         <div class="card-actions">
             ${actionButtons}
             ${candidateId ? `
                 <button class="btn-action btn-secondary" data-action="details" data-id="${candidateId}">
-                    Ver Candidato
+                    <i class="fas fa-eye"></i> Ver Candidato
                 </button>
-            ` : ''}
-            ${isManager ? `
-                <span class="badge badge-info">Somente Visualização</span>
             ` : ''}
         </div>
     `;
     
-    // Configura drag and drop apenas se não for gestor
-    if (!isManager) {
+    // Configura drag and drop apenas se não for gestor e não for rejeitado
+    if (!isManager && !isRejected) {
+        card.draggable = true;
         card.addEventListener('dragstart', (e) => {
             draggedElement = card;
             draggedProcessId = processId;
@@ -925,7 +1264,7 @@ function createProcessCard(process, stage) {
             e.dataTransfer.effectAllowed = 'move';
         });
     } else {
-        // Para gestores, desabilita drag
+        // Para gestores ou rejeitados, desabilita drag
         card.draggable = false;
         card.style.cursor = 'default';
     }
@@ -970,6 +1309,7 @@ async function handleCardActions(e) {
     
     const action = btn.dataset.action;
     const id = btn.dataset.id;
+    const candidateName = btn.dataset.name || 'Candidato';
     
     // Managers only allowed to view details
     if (isManager && action && action !== 'details') {
@@ -993,7 +1333,8 @@ async function handleCardActions(e) {
                 await approveProcess(id);
                 break;
             case 'reject':
-                await rejectProcess(id);
+                // Abre o modal de rejeição ao invés de usar prompt
+                openRejectModal(id, candidateName);
                 break;
             case 'details':
                 console.log('🔍 Clicou em Ver Candidato, ID:', id);

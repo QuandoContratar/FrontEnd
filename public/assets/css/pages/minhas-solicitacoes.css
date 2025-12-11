@@ -364,3 +364,167 @@
         align-items: flex-start;
     }
 }
+
+/* ========================================
+   ÍCONES DE STATUS NO CARD
+   ======================================== */
+.vacancy-icon {
+    position: relative;
+}
+
+.status-icon {
+    position: absolute;
+    bottom: -5px;
+    right: -5px;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    border: 2px solid white;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.status-icon.status-pending {
+    background: #f59e0b;
+    color: white;
+}
+
+.status-icon.status-waiting {
+    background: #3b82f6;
+    color: white;
+    animation: pulseWaiting 2s ease-in-out infinite;
+}
+
+.status-icon.status-approved {
+    background: #10b981;
+    color: white;
+}
+
+.status-icon.status-rejected {
+    background: #ef4444;
+    color: white;
+}
+
+.status-icon.status-cancelled {
+    background: #6b7280;
+    color: white;
+}
+
+.status-icon.status-unknown {
+    background: #9ca3af;
+    color: white;
+}
+
+@keyframes pulseWaiting {
+    0%, 100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.1);
+    }
+}
+
+/* ========================================
+   CARD SEMI-TRANSPARENTE (ENVIADO / AGUARDANDO APROVAÇÃO)
+   Status: ENTRADA, ABERTA, PENDENTE_APROVACAO
+   ======================================== */
+.vacancy-item.sent-item {
+    opacity: 0.5; /* 50% de transparência conforme solicitado */
+    background: linear-gradient(135deg, #ffffff 0%, #f3f4f6 100%);
+    border: 1px dashed #d1d5db;
+}
+
+.vacancy-item.sent-item:hover {
+    opacity: 0.7; /* Aumenta um pouco no hover */
+}
+
+.vacancy-item.sent-item .vacancy-icon {
+    opacity: 0.6;
+}
+
+/* ========================================
+   CARD PENDENTE DE ENVIO
+   ======================================== */
+.vacancy-item.pending-item {
+    border-left: 4px solid #f59e0b;
+    background: linear-gradient(135deg, #ffffff 0%, #fef3c7 100%);
+}
+
+/* ========================================
+   BADGES COM ÍCONES
+   ======================================== */
+.badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.badge i {
+    font-size: 10px;
+}
+
+.badge-warning {
+    background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+    color: #b45309;
+    border: 1px solid #f59e0b;
+}
+
+.badge-info {
+    background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+    color: #1d4ed8;
+    border: 1px solid #3b82f6;
+}
+
+.badge-primary {
+    background: linear-gradient(135deg, #ede9fe 0%, #ddd6fe 100%);
+    color: #5b21b6;
+    border: 1px solid #7c3aed;
+}
+
+.badge-success {
+    background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+    color: #047857;
+    border: 1px solid #10b981;
+}
+
+.badge-danger {
+    background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+    color: #b91c1c;
+    border: 1px solid #ef4444;
+}
+
+.badge-secondary {
+    background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
+    color: #374151;
+    border: 1px solid #6b7280;
+}
+
+/* ========================================
+   BOTÕES DE AÇÃO
+   ======================================== */
+.btn-action.btn-detail {
+    background: linear-gradient(135deg, #7c3aed 0%, #5b21b6 100%);
+    color: white;
+}
+
+.btn-action.btn-detail:hover {
+    background: linear-gradient(135deg, #5b21b6 0%, #4c1d95 100%);
+    transform: translateY(-1px);
+}
+
+.btn-action.btn-primary {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: white;
+}
+
+.btn-action.btn-primary:hover {
+    background: linear-gradient(135deg, #059669 0%, #047857 100%);
+    transform: translateY(-1px);
+}

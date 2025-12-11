@@ -283,11 +283,11 @@
             <!-- Divider -->
             <hr class="sidebar-divider my-0">
 
-            <!-- Nav Item - Dashboard -->
+            <!-- Nav Item - Tela Inicial -->
             <li class="nav-item">
                 <a class="nav-link" href="home.html">
-                    <i class="fas fa-fw fa-tachometer-alt"></i>
-                    <span>Dashboard</span></a>
+                    <i class="fas fa-fw fa-home"></i>
+                    <span>Tela Inicial</span></a>
             </li>
 
             <!-- Divider -->
@@ -334,18 +334,18 @@
                     <span>Abertura de Vaga</span></a>
             </li>
 
+            <!-- Nav Item - Minhas Solicitações -->
+            <li class="nav-item">
+                <a class="nav-link" href="minhas-solicitacoes.html">
+                    <i class="fas fa-fw fa-clipboard-list"></i>
+                    <span>Minhas Solicitações</span></a>
+            </li>
+
             <!-- Nav Item - Vagas -->
             <li class="nav-item">
                 <a class="nav-link" href="vagas.html">
                     <i class="fas fa-fw fa-briefcase"></i>
                     <span>Vagas</span></a>
-            </li>
-
-            <!-- Nav Item - Candidatos -->
-            <li class="nav-item">
-                <a class="nav-link" href="candidatos.html">
-                    <i class="fas fa-fw fa-user-plus"></i>
-                    <span>Candidatos</span></a>
             </li>
 
             <!-- Nav Item - Upload Currículos -->
@@ -355,26 +355,32 @@
                     <span>Upload Currículos</span></a>
             </li>
 
-            <!-- Divider -->
-            <hr class="sidebar-divider">
+            <!-- Nav Item - Candidatos -->
+            <li class="nav-item">
+                <a class="nav-link" href="candidatos.html">
+                    <i class="fas fa-fw fa-user-friends"></i>
+                    <span>Candidatos</span></a>
+            </li>
 
-            <!-- Heading -->
-            <div class="sidebar-heading">
-                Relatórios
-            </div>
+            <!-- Nav Item - Match de Candidatos -->
+            <li class="nav-item">
+                <a class="nav-link" href="match-candidatos.html">
+                    <i class="fas fa-fw fa-heart"></i>
+                    <span>Match de Candidatos</span></a>
+            </li>
 
-            <!-- Nav Item - Charts -->
+            <!-- Nav Item - Kanban Recrutamento -->
+            <li class="nav-item">
+                <a class="nav-link" href="kanban-recrutamento.html">
+                    <i class="fas fa-fw fa-columns"></i>
+                    <span>Kanban Recrutamento</span></a>
+            </li>
+
+            <!-- Nav Item - Dashboard -->
             <li class="nav-item">
                 <a class="nav-link" href="charts.html">
                     <i class="fas fa-fw fa-chart-area"></i>
-                    <span>Gráficos</span></a>
-            </li>
-
-            <!-- Nav Item - Tables -->
-            <li class="nav-item">
-                <a class="nav-link" href="tables.html">
-                    <i class="fas fa-fw fa-table"></i>
-                    <span>Tabelas</span></a>
+                    <span>Dashboard</span></a>
             </li>
 
             <!-- Divider -->
@@ -440,6 +446,19 @@
                     <div class="d-sm-flex align-items-center justify-content-between mb-4">
                         <div>
                             <h1 class="h3 mb-0 text-gray-800 page-title">Insira aqui os currículos para análise</h1>
+                            <!-- Informação da vaga selecionada -->
+                            <div id="vagaInfo" class="mt-2" style="display: none;">
+                                <span class="badge badge-primary" style="font-size: 0.9rem; padding: 8px 12px; background: linear-gradient(135deg, #7c3aed 0%, #5b21b6 100%);">
+                                    <i class="fas fa-briefcase mr-1"></i>
+                                    Vaga: <span id="vagaTitulo"></span>
+                                </span>
+                            </div>
+                            <!-- Alerta se não houver vaga selecionada -->
+                            <div id="vagaAlerta" class="alert alert-danger mt-3" style="display: none;">
+                                <i class="fas fa-exclamation-triangle mr-2"></i>
+                                <strong>Atenção:</strong> Nenhuma vaga selecionada. 
+                                <a href="vagas.html" class="alert-link">Selecione uma vaga</a> antes de enviar currículos.
+                            </div>
                         </div>
                     </div>
 
@@ -648,8 +667,41 @@
 
     <!-- Page level custom scripts -->
     <script>
+        // ==========================================
+        // CONFIGURAÇÃO DE VAGA SELECIONADA
+        // ==========================================
+        let selectedVacancyId = null;
+        let selectedVacancyTitle = null;
+
+        // Verifica se há vaga selecionada ao carregar a página
+        function checkSelectedVacancy() {
+            selectedVacancyId = localStorage.getItem('selectedVacancyId');
+            selectedVacancyTitle = localStorage.getItem('selectedVacancyTitle');
+            
+            console.log('📋 [upload-curriculos] Verificando vaga selecionada...');
+            console.log('📋 [upload-curriculos] ID da vaga:', selectedVacancyId);
+            console.log('📋 [upload-curriculos] Título da vaga:', selectedVacancyTitle);
+            
+            if (selectedVacancyId) {
+                // Mostra informação da vaga
+                $('#vagaInfo').show();
+                $('#vagaTitulo').text(selectedVacancyTitle || `ID: ${selectedVacancyId}`);
+                $('#vagaAlerta').hide();
+                $('#sendBtn').prop('disabled', false);
+                console.log('✅ [upload-curriculos] Vaga selecionada encontrada. Upload habilitado.');
+            } else {
+                // Mostra alerta e desabilita upload
+                $('#vagaInfo').hide();
+                $('#vagaAlerta').show();
+                $('#sendBtn').prop('disabled', true);
+                console.warn('⚠️ [upload-curriculos] NENHUMA VAGA SELECIONADA! Upload bloqueado.');
+            }
+        }
 
         $(document).ready(function () {
+            // Verifica vaga selecionada
+            checkSelectedVacancy();
+            
             let uploadedFiles = [];
 
 
@@ -759,38 +811,64 @@
 
             // Update send button
             function updateSendButton() {
-                if (uploadedFiles.length > 0) {
+                // Só habilita se tiver arquivos E vaga selecionada
+                if (uploadedFiles.length > 0 && selectedVacancyId) {
                     $('#sendBtn').prop('disabled', false);
                     $('#deleteAllBtn').prop('disabled', false);
                 } else {
-                    $('#sendBtn').prop('disabled', true);
-                    $('#deleteAllBtn').prop('disabled', true);
+                    // Se não tem vaga, sempre desabilita o envio
+                    $('#sendBtn').prop('disabled', !selectedVacancyId || uploadedFiles.length === 0);
+                    $('#deleteAllBtn').prop('disabled', uploadedFiles.length === 0);
                 }
             }
 
             // Send files (upload)
             $('#sendBtn').on('click', async function () {
+                // ==========================================
+                // VALIDAÇÃO OBRIGATÓRIA: VAGA SELECIONADA
+                // ==========================================
+                if (!selectedVacancyId) {
+                    console.error('❌ [upload-curriculos] ERRO: Tentativa de upload sem vaga selecionada!');
+                    alert('Erro: Selecione uma vaga antes de enviar currículos.\n\nVá para a tela de Vagas Disponíveis e clique em "Enviar Currículo" na vaga desejada.');
+                    window.location.href = 'vagas.html';
+                    return;
+                }
+                
                 if (uploadedFiles.length === 0) return;
+                
+                console.log('📤 [upload-curriculos] Iniciando upload de', uploadedFiles.length, 'arquivo(s)');
+                console.log('📤 [upload-curriculos] Vaga vinculada:', selectedVacancyId, '-', selectedVacancyTitle);
+                
                 $('#progressBar').show();
                 let progress = 0;
                 const total = uploadedFiles.length;
                 let successCount = 0;
                 let errorCount = 0;
+                
                 for (let i = 0; i < total; i++) {
                     const file = uploadedFiles[i];
                     try {
-                        await uploadSingleFile(file);
+                        console.log(`📤 [upload-curriculos] Enviando arquivo ${i + 1}/${total}: ${file.name}`);
+                        await uploadSingleFile(file, selectedVacancyId);
                         successCount++;
+                        console.log(`✅ [upload-curriculos] Arquivo ${file.name} enviado com sucesso para vaga ${selectedVacancyId}`);
                     } catch (err) {
                         errorCount++;
+                        console.error(`❌ [upload-curriculos] Erro ao enviar ${file.name}:`, err);
                     }
                     progress = Math.round(((i + 1) / total) * 100);
                     $('.progress-bar').css('width', progress + '%').attr('aria-valuenow', progress);
                 }
+                
                 setTimeout(() => {
                     $('#progressBar').hide();
                     if (successCount > 0) {
+                        console.log(`✅ [upload-curriculos] Upload concluído! ${successCount} arquivo(s) enviado(s) para vaga ${selectedVacancyId}`);
                         $('#successModal').modal('show');
+                        
+                        // Limpa a vaga selecionada após upload bem-sucedido
+                        localStorage.removeItem('selectedVacancyId');
+                        localStorage.removeItem('selectedVacancyTitle');
                     }
                     if (errorCount > 0) {
                         alert(errorCount + ' arquivo(s) falharam no upload.');
@@ -844,8 +922,19 @@
 
         // ------------------------------------------------------------------------------------------------------
 
-    // Função para upload de um arquivo individual
-    async function uploadSingleFile(file) {
+    // Função para upload de um arquivo individual COM vacancyId
+    async function uploadSingleFile(file, vacancyId) {
+        // ==========================================
+        // VALIDAÇÃO: vacancyId é OBRIGATÓRIO
+        // ==========================================
+        if (!vacancyId) {
+            console.error('❌ [uploadSingleFile] ERRO CRÍTICO: vacancyId não fornecido!');
+            throw new Error("vacancyId é obrigatório para upload de currículo");
+        }
+        
+        console.log(`📤 [uploadSingleFile] Iniciando upload: ${file.name}`);
+        console.log(`📤 [uploadSingleFile] vacancyId: ${vacancyId}`);
+        
         const allowedMimeTypes = [
             "application/pdf",
             "image/jpeg",
@@ -857,23 +946,73 @@
             "text/plain",
             "application/vnd.oasis.opendocument.text"
         ];
-        const baseUrl = 'https://x7cmx55txd.execute-api.us-east-1.amazonaws.com/prd/files/quando-contratar-bucket-raw/';
-        const fileName = file.name;
+        
         const mimeType = file.type;
         if (!allowedMimeTypes.includes(mimeType)) {
-            throw new Error("Tipo de arquivo não suportado: " + fileName);
+            throw new Error("Tipo de arquivo não suportado: " + file.name);
         }
-        const options = {
-            method: 'PUT',
-            body: file,
-            headers: { 'Content-Type': mimeType }
-        };
-        const response = await fetch(baseUrl + fileName, options);
-        if (!response.ok) {
-            const text = await response.text();
-            throw new Error('Erro: ' + text);
+        
+        // ==========================================
+        // ESTRATÉGIA 1: Enviar para backend com vacancyId
+        // ==========================================
+        const backendUrl = 'http://3.92.226.132:8080';
+        // const backendUrl = 'http://localhost:8080';
+        
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('vacancyId', vacancyId);
+        
+        console.log(`📤 [uploadSingleFile] Enviando para backend: ${backendUrl}/candidates/upload?vacancyId=${vacancyId}`);
+        
+        try {
+            const response = await fetch(`${backendUrl}/candidates/upload?vacancyId=${vacancyId}`, {
+                method: 'POST',
+                body: formData
+            });
+            
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error(`❌ [uploadSingleFile] Erro do backend:`, response.status, errorText);
+                throw new Error('Erro no upload: ' + errorText);
+            }
+            
+            const result = await response.json();
+            console.log(`✅ [uploadSingleFile] Resposta do backend:`, result);
+            console.log(`✅ [uploadSingleFile] Matching será feito APENAS para vaga ${vacancyId}`);
+            return result;
+            
+        } catch (backendError) {
+            console.warn(`⚠️ [uploadSingleFile] Backend falhou, tentando S3 direto:`, backendError.message);
+            
+            // ==========================================
+            // ESTRATÉGIA 2 (FALLBACK): Upload direto para S3
+            // ATENÇÃO: Este método NÃO faz matching automático!
+            // ==========================================
+            const baseUrl = 'https://x7cmx55txd.execute-api.us-east-1.amazonaws.com/prd/files/quando-contratar-bucket-raw/';
+            
+            // Adiciona prefixo com vacancyId no nome do arquivo para rastreabilidade
+            const timestamp = Date.now();
+            const fileNameWithVacancy = `vacancy_${vacancyId}_${timestamp}_${file.name}`;
+            
+            console.log(`📤 [uploadSingleFile] Fallback S3: ${fileNameWithVacancy}`);
+            console.warn(`⚠️ [uploadSingleFile] ATENÇÃO: Upload S3 não faz matching automático!`);
+            
+            const options = {
+                method: 'PUT',
+                body: file,
+                headers: { 'Content-Type': mimeType }
+            };
+            
+            const s3Response = await fetch(baseUrl + fileNameWithVacancy, options);
+            if (!s3Response.ok) {
+                const text = await s3Response.text();
+                throw new Error('Erro S3: ' + text);
+            }
+            
+            console.log(`✅ [uploadSingleFile] Arquivo enviado para S3: ${fileNameWithVacancy}`);
+            console.warn(`⚠️ [uploadSingleFile] Matching precisará ser feito manualmente pelo backend`);
+            return { success: true, method: 's3', fileName: fileNameWithVacancy, vacancyId: vacancyId };
         }
-        return true;
     }
     </script>
     <script src="./assets/js/components/utils.js"></script>

@@ -57,17 +57,38 @@ class CandidatosPage {
             const { CandidateClient } = await import('../../../client/client.js');
             const client = new CandidateClient();
             const apiCandidates = await client.findAll();
+            
+            console.log('📋 [candidatos.js] Candidatos da API:', apiCandidates);
+            if (apiCandidates.length > 0) {
+                console.log('📋 [candidatos.js] Exemplo de candidato:', apiCandidates[0]);
+                console.log('📋 [candidatos.js] Campos disponíveis:', Object.keys(apiCandidates[0]));
+            }
+            
             // Mapear dados da API para o formato esperado
-            this.candidates = apiCandidates.map(c => ({
-                id: c.idCandidate,
-                name: c.name,
-                age: c.birth ? this.calculateAge(c.birth) : '',
-                location: c.state || '',
-                position: c.education || '',
-                area: c.skills || '',
-                date: c.createdAt || '' // Ajuste se houver campo de data
-            }));
+            this.candidates = apiCandidates.map(c => {
+                // Tenta encontrar o campo de data em diferentes variações
+                const dateValue = c.createdAt || c.created_at || c.dateCreated || c.date_created || 
+                                  c.registrationDate || c.registration_date || c.insertedAt || c.inserted_at ||
+                                  c.updatedAt || c.updated_at || '';
+                
+                return {
+                    id: c.idCandidate || c.id_candidate || c.id,
+                    name: c.name,
+                    age: c.birth ? this.calculateAge(c.birth) : '',
+                    location: c.state || '',
+                    position: c.education || '',
+                    area: c.skills || '',
+                    date: dateValue
+                };
+            });
+            
+            console.log('📋 [candidatos.js] Candidatos mapeados:', this.candidates);
+            if (this.candidates.length > 0) {
+                console.log('📋 [candidatos.js] Primeiro candidato mapeado:', this.candidates[0]);
+                console.log('📋 [candidatos.js] Data do primeiro:', this.candidates[0].date);
+            }
         } catch (e) {
+            console.error('❌ [candidatos.js] Erro ao carregar candidatos:', e);
             this.candidates = [];
         }
         this.renderCandidates();
@@ -146,19 +167,36 @@ class CandidatosPage {
     }
 
     handleSort(sortType) {
+        console.log('📋 [candidatos.js] Ordenando por:', sortType);
+        console.log('📋 [candidatos.js] Candidatos antes da ordenação:', this.candidates.map(c => ({ name: c.name, date: c.date })));
+        
         // Atualizar botões ativos
         document.querySelectorAll('.sort-option').forEach(option => {
             option.classList.remove('active');
         });
-        document.querySelector(`[data-sort="${sortType}"]`).classList.add('active');
+        const activeBtn = document.querySelector(`[data-sort="${sortType}"]`);
+        if (activeBtn) activeBtn.classList.add('active');
 
-        // Ordenar candidatos
+        // Ordenar candidatos por data de criação (created_at)
         if (sortType === 'recent') {
-            this.candidates.sort((a, b) => new Date(b.date) - new Date(a.date));
+            // Mais recentes primeiro (DESC)
+            this.candidates.sort((a, b) => {
+                const dateA = a.date ? new Date(a.date).getTime() : 0;
+                const dateB = b.date ? new Date(b.date).getTime() : 0;
+                console.log(`📋 Comparando: ${a.name} (${dateA}) vs ${b.name} (${dateB})`);
+                return dateB - dateA;
+            });
         } else if (sortType === 'oldest') {
-            this.candidates.sort((a, b) => new Date(a.date) - new Date(b.date));
+            // Mais antigos primeiro (ASC)
+            this.candidates.sort((a, b) => {
+                const dateA = a.date ? new Date(a.date).getTime() : 0;
+                const dateB = b.date ? new Date(b.date).getTime() : 0;
+                console.log(`📋 Comparando: ${a.name} (${dateA}) vs ${b.name} (${dateB})`);
+                return dateA - dateB;
+            });
         }
 
+        console.log('📋 [candidatos.js] Candidatos após ordenação:', this.candidates.map(c => ({ name: c.name, date: c.date })));
         this.renderCandidates();
     }
 

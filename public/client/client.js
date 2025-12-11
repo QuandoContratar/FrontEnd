@@ -430,9 +430,44 @@ export class VacanciesClient extends ApiClient {
         return response.text();
     }
 
-    
+    /**
+     * Busca vagas ativas
+     * GET /vacancies/activesVacancies
+     */
+    async getActiveVacancies() {
+        console.log('📤 [VacanciesClient] Buscando vagas ativas...');
+        const response = await fetch(`${this.url}/activesVacancies`, {
+            credentials: 'include'
+        });
+        
+        if (!response.ok) {
+            console.error('❌ [VacanciesClient] Erro ao buscar vagas ativas:', response.status);
+            throw new Error('Failed to fetch active vacancies');
+        }
+        
+        const data = await response.json();
+        return Array.isArray(data) ? data : [];
+    }
 
-    
+    /**
+     * Busca vagas por área
+     * GET /dashboard/recruitment/area/{area}/vagas
+     * @param {string} area - Nome da área
+     */
+    async getVacanciesByArea(area) {
+        console.log(`📤 [VacanciesClient] Buscando vagas da área: ${area}`);
+        const response = await fetch(`${this.baseUrl}/dashboard/recruitment/area/${encodeURIComponent(area)}/vagas`, {
+            credentials: 'include'
+        });
+        
+        if (!response.ok) {
+            console.error('❌ [VacanciesClient] Erro ao buscar vagas por área:', response.status);
+            throw new Error('Failed to fetch vacancies by area');
+        }
+        
+        const data = await response.json();
+        return Array.isArray(data) ? data : [];
+    }
 }
 
 // Client para Opening Requests (solicitações de abertura de vaga)
@@ -597,6 +632,51 @@ export class SelectionProcessClient extends ApiClient {
         if (!response.ok) throw new Error('Failed to search');
         return response.json();
     }
+
+    /**
+     * Rejeita um candidato no kanban
+     * PATCH /selection-process/kanban/{id}/reject
+     * @param {number} id - ID do processo/card
+     * @param {string} reason - Motivo da rejeição
+     */
+    async rejectCandidate(id, reason) {
+        console.log(`📤 [SelectionProcessClient] Rejeitando candidato ${id}...`);
+        const response = await fetch(`${this.url}/kanban/${id}/reject`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({ reason })
+        });
+        
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error(`❌ [SelectionProcessClient] Erro ao rejeitar candidato:`, response.status, errorText);
+            throw new Error(`Failed to reject candidate: ${response.status} - ${errorText}`);
+        }
+        
+        return response.json();
+    }
+
+    /**
+     * Busca cards por vaga específica
+     * GET /selection-process/kanban?vagaId={id}
+     * @param {number} vagaId - ID da vaga
+     */
+    async findByVacancy(vagaId) {
+        console.log(`📤 [SelectionProcessClient] Buscando cards da vaga ${vagaId}...`);
+        const response = await fetch(`${this.url}/kanban?vagaId=${vagaId}`, {
+            credentials: 'include'
+        });
+        
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error(`❌ [SelectionProcessClient] Erro ao buscar por vaga:`, response.status, errorText);
+            throw new Error(`Failed to fetch by vacancy: ${response.status} - ${errorText}`);
+        }
+        
+        const data = await response.json();
+        return Array.isArray(data) ? data : [];
+    }
 }
 
 export class UsersClient extends ApiClient {
@@ -650,7 +730,76 @@ export class CandidateClient extends ApiClient {
         return response.json()
     }
 
+    /**
+     * Upload de currículo vinculado a uma vaga específica
+     * @param {File} file - Arquivo do currículo
+     * @param {number} vacancyId - ID da vaga (OBRIGATÓRIO)
+     * @returns {Promise<Object>} Resultado do upload com dados do candidato criado
+     */
+    async uploadResumeForVacancy(file, vacancyId) {
+        if (!vacancyId) {
+            console.error('❌ [CandidateClient.uploadResumeForVacancy] vacancyId é obrigatório!');
+            throw new Error('vacancyId é obrigatório para upload de currículo');
+        }
+        
+        console.log(`📤 [CandidateClient.uploadResumeForVacancy] Enviando currículo para vaga ${vacancyId}`);
+        
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('vacancyId', vacancyId);
+        
+        const response = await fetch(`${this.url}/upload?vacancyId=${vacancyId}`, {
+            method: 'POST',
+            body: formData
+        });
+        
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('❌ [CandidateClient.uploadResumeForVacancy] Erro:', errorText);
+            throw new Error('Failed to upload resume: ' + errorText);
+        }
+        
+        const result = await response.json();
+        console.log('✅ [CandidateClient.uploadResumeForVacancy] Resultado:', result);
+        return result;
+    }
+
+    /**
+     * Upload de múltiplos currículos vinculados a uma vaga específica
+     * @param {File[]} files - Array de arquivos
+     * @param {number} vacancyId - ID da vaga (OBRIGATÓRIO)
+     * @returns {Promise<Object>} Resultado do upload
+     */
+    async uploadMultipleResumesForVacancy(files, vacancyId) {
+        if (!vacancyId) {
+            console.error('❌ [CandidateClient.uploadMultipleResumesForVacancy] vacancyId é obrigatório!');
+            throw new Error('vacancyId é obrigatório para upload de currículos');
+        }
+        
+        console.log(`📤 [CandidateClient.uploadMultipleResumesForVacancy] Enviando ${files.length} currículos para vaga ${vacancyId}`);
+        
+        const formData = new FormData();
+        files.forEach(file => formData.append('files', file));
+        formData.append('vacancyId', vacancyId);
+        
+        const response = await fetch(`${this.url}/upload-multiple?vacancyId=${vacancyId}`, {
+            method: 'POST',
+            body: formData
+        });
+        
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('❌ [CandidateClient.uploadMultipleResumesForVacancy] Erro:', errorText);
+            throw new Error('Failed to upload resumes: ' + errorText);
+        }
+        
+        const result = await response.json();
+        console.log('✅ [CandidateClient.uploadMultipleResumesForVacancy] Resultado:', result);
+        return result;
+    }
+
     async uploadMultipleResumes(files) {
+        console.warn('⚠️ [CandidateClient.uploadMultipleResumes] DEPRECATED: Use uploadMultipleResumesForVacancy com vacancyId');
         const formData = new FormData();
         files.forEach(file => formData.append('files', file));
         const response = await fetch(`${this.url}/upload-multiple-resumes`, {

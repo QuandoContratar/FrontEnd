@@ -340,11 +340,11 @@
             <!-- Divider -->
             <hr class="sidebar-divider my-0">
 
-            <!-- Nav Item - Dashboard -->
+            <!-- Nav Item - Tela Inicial -->
             <li class="nav-item">
                 <a class="nav-link" href="home.html">
-                    <i class="fas fa-fw fa-tachometer-alt"></i>
-                    <span>Dashboard</span></a>
+                    <i class="fas fa-fw fa-home"></i>
+                    <span>Tela Inicial</span></a>
             </li>
 
             <!-- Divider -->
@@ -391,18 +391,18 @@
                     <span>Abertura de Vaga</span></a>
             </li>
 
+            <!-- Nav Item - Minhas Solicitações -->
+            <li class="nav-item">
+                <a class="nav-link" href="minhas-solicitacoes.html">
+                    <i class="fas fa-fw fa-clipboard-list"></i>
+                    <span>Minhas Solicitações</span></a>
+            </li>
+
             <!-- Nav Item - Vagas -->
             <li class="nav-item active">
                 <a class="nav-link" href="vagas.html">
                     <i class="fas fa-fw fa-briefcase"></i>
                     <span>Vagas</span></a>
-            </li>
-
-            <!-- Nav Item - Candidatos -->
-            <li class="nav-item">
-                <a class="nav-link" href="candidatos.html">
-                    <i class="fas fa-fw fa-user-plus"></i>
-                    <span>Candidatos</span></a>
             </li>
 
             <!-- Nav Item - Upload Currículos -->
@@ -412,26 +412,32 @@
                     <span>Upload Currículos</span></a>
             </li>
 
-            <!-- Divider -->
-            <hr class="sidebar-divider">
+            <!-- Nav Item - Candidatos -->
+            <li class="nav-item">
+                <a class="nav-link" href="candidatos.html">
+                    <i class="fas fa-fw fa-user-friends"></i>
+                    <span>Candidatos</span></a>
+            </li>
 
-            <!-- Heading -->
-            <div class="sidebar-heading">
-                Relatórios
-            </div>
+            <!-- Nav Item - Match de Candidatos -->
+            <li class="nav-item">
+                <a class="nav-link" href="match-candidatos.html">
+                    <i class="fas fa-fw fa-heart"></i>
+                    <span>Match de Candidatos</span></a>
+            </li>
 
-            <!-- Nav Item - Charts -->
+            <!-- Nav Item - Kanban Recrutamento -->
+            <li class="nav-item">
+                <a class="nav-link" href="kanban-recrutamento.html">
+                    <i class="fas fa-fw fa-columns"></i>
+                    <span>Kanban Recrutamento</span></a>
+            </li>
+
+            <!-- Nav Item - Dashboard -->
             <li class="nav-item">
                 <a class="nav-link" href="charts.html">
                     <i class="fas fa-fw fa-chart-area"></i>
-                    <span>Gráficos</span></a>
-            </li>
-
-            <!-- Nav Item - Tables -->
-            <li class="nav-item">
-                <a class="nav-link" href="tables.html">
-                    <i class="fas fa-fw fa-table"></i>
-                    <span>Tabelas</span></a>
+                    <span>Dashboard</span></a>
             </li>
 
             <!-- Divider -->
@@ -752,6 +758,8 @@
             async function atualizarVagas() {
                 try {
                     const vagas = await vacanciesClient.findActiveVacancies();
+                    console.log('🔍 [vagas.html] Vagas recebidas do backend:', vagas);
+                    
                     // Armazena vagas para acesso posterior
                     vagasCarregadas = vagas;
                     // KPI removed from UI; no-op
@@ -762,9 +770,13 @@
                         return;
                     }
                     vagas.forEach((vaga, index) => {
-                        // Tenta encontrar o ID da vaga em diferentes formatos
-                        const vagaId = vaga.id || vaga.id_vacancy || vaga.idVacancy || '';
-                        console.log('Vaga carregada:', vaga, 'ID encontrado:', vagaId);
+                        // Log completo do objeto vaga para debug
+                        console.log(`🔍 [vagas.html] Vaga ${index}:`, JSON.stringify(vaga, null, 2));
+                        console.log(`🔍 [vagas.html] Chaves do objeto:`, Object.keys(vaga));
+                        
+                        // Tenta encontrar o ID da vaga em diferentes formatos possíveis
+                        const vagaId = vaga.id || vaga.id_vacancy || vaga.idVacancy || vaga.vacancy_id || vaga.vacancyId || '';
+                        console.log(`✅ [vagas.html] Vaga ${index} - ID encontrado: "${vagaId}"`);
                         
                         vagasContainer.append(`
                             <div class="vaga-card" data-vaga-id="${vagaId}" data-vaga-index="${index}">
@@ -780,7 +792,7 @@
                                         <div class="vaga-details">Área: ${vaga.area || '-'} | Modelo: ${vaga.workModel || vaga.work_model || '-'}</div>
                                     </div>
                                     <div class="col-md-5 text-right">
-                                        <button class="btn btn-enviar">Enviar Currículo</button>
+                                        <button class="btn btn-enviar" data-vaga-id="${vagaId}" data-vaga-title="${(vaga.positionJob || vaga.position_job || '').replace(/"/g, '&quot;')}">Enviar Currículo</button>
                                         <button class="btn btn-ver-mais" data-vaga-id="${vagaId}" data-vaga-index="${index}">
                                             <i class="fas fa-eye mr-1"></i>
                                             Ver Mais
@@ -1001,59 +1013,88 @@
 
             // Funcionalidade dos botões (delegação)
             vagasContainer.on('click', '.btn-enviar', function () {
+                const $btn = $(this);
+                const $card = $btn.closest('.vaga-card');
+                
+                // Tenta obter ID de várias formas
+                let vagaId = $btn.data('vaga-id') || $card.data('vaga-id');
+                const vagaIndex = $card.data('vaga-index');
+                const vagaTitle = $btn.data('vaga-title');
+                
+                console.log('📤 [vagas.html] Clique em Enviar Currículo');
+                console.log('📤 [vagas.html] ID da vaga:', vagaId);
+                console.log('📤 [vagas.html] Índice da vaga:', vagaIndex);
+                console.log('📤 [vagas.html] Título da vaga:', vagaTitle);
+                
+                // Se não tem ID mas tem índice, busca dos dados carregados
+                if (!vagaId && vagaIndex !== undefined && vagasCarregadas[vagaIndex]) {
+                    const vagaDados = vagasCarregadas[vagaIndex];
+                    vagaId = vagaDados.id || vagaDados.id_vacancy || vagaDados.idVacancy || '';
+                    console.log('📤 [vagas.html] ID obtido dos dados carregados:', vagaId);
+                }
+                
+                if (!vagaId) {
+                    console.error('❌ [vagas.html] ID da vaga não encontrado!');
+                    console.error('❌ [vagas.html] Dados carregados:', vagasCarregadas);
+                    alert('Erro: Não foi possível identificar a vaga selecionada. Verifique o console.');
+                    return;
+                }
+                
+                // Armazena a vaga selecionada no localStorage
+                localStorage.setItem('selectedVacancyId', vagaId);
+                localStorage.setItem('selectedVacancyTitle', vagaTitle || '');
+                
+                console.log('✅ [vagas.html] Vaga salva no localStorage. Redirecionando para upload...');
                 window.location.href = 'upload-curriculos.html';
             });
 
             vagasContainer.on('click', '.btn-ver-mais', async function () {
-                // Tenta obter o ID de diferentes formas
-                let vagaId = $(this).data('vaga-id');
-                const vagaIndex = $(this).data('vaga-index');
+                const $btn = $(this);
+                const $card = $btn.closest('.vaga-card');
                 
-                // Se não encontrou, tenta pegar do card pai
-                if (!vagaId) {
-                    vagaId = $(this).closest('.vaga-card').data('vaga-id');
-                }
+                // Tenta obter o ID e índice
+                let vagaId = $btn.data('vaga-id') || $card.data('vaga-id');
+                const vagaIndex = $btn.data('vaga-index') !== undefined ? $btn.data('vaga-index') : $card.data('vaga-index');
                 
-                // Se ainda não encontrou, tenta pegar do atributo diretamente
-                if (!vagaId) {
-                    vagaId = $(this).attr('data-vaga-id');
-                }
-                
-                console.log('ID da vaga capturado:', vagaId);
-                console.log('Índice da vaga:', vagaIndex);
-                console.log('Elemento clicado:', this);
-                console.log('Atributos do elemento:', $(this).data());
+                console.log('👁️ [vagas.html] Clique em Ver Mais');
+                console.log('👁️ [vagas.html] ID da vaga:', vagaId);
+                console.log('👁️ [vagas.html] Índice da vaga:', vagaIndex);
+                console.log('👁️ [vagas.html] Vagas carregadas:', vagasCarregadas.length);
                 
                 let vaga = null;
                 
-                // Se não tem ID mas tem índice, usa os dados já carregados
-                if ((!vagaId || vagaId === '') && vagaIndex !== undefined && vagaIndex !== null) {
-                    console.log('Usando dados da vaga já carregada (índice:', vagaIndex, ')');
+                // Primeiro tenta usar os dados já carregados (mais rápido e confiável)
+                if (vagaIndex !== undefined && vagaIndex !== null && vagasCarregadas[vagaIndex]) {
+                    console.log('✅ [vagas.html] Usando dados da vaga já carregada (índice:', vagaIndex, ')');
                     vaga = vagasCarregadas[vagaIndex];
-                    if (vaga) {
-                        mostrarDetalhesVaga(vaga);
-                        return;
-                    }
+                    mostrarDetalhesVaga(vaga);
+                    return;
                 }
                 
-                if (!vagaId || vagaId === '') {
-                    console.error('Erro: ID da vaga não encontrado. Objeto vaga completo:', $(this).closest('.vaga-card').data());
-                    console.error('Vagas carregadas:', vagasCarregadas);
-                    alert('Erro: ID da vaga não encontrado. Verifique o console para mais detalhes.');
+                // Se não tem índice válido mas tem ID, busca do backend
+                if (!vagaId && vagaIndex !== undefined && vagasCarregadas[vagaIndex]) {
+                    const vagaDados = vagasCarregadas[vagaIndex];
+                    vagaId = vagaDados.id || vagaDados.id_vacancy || vagaDados.idVacancy || '';
+                }
+                
+                if (!vagaId) {
+                    console.error('❌ [vagas.html] Não foi possível obter dados da vaga');
+                    console.error('❌ [vagas.html] Vagas carregadas:', vagasCarregadas);
+                    alert('Erro: Não foi possível carregar os detalhes da vaga.');
                     return;
                 }
                 
                 try {
-                    // Busca detalhes completos da vaga
-                    console.log('Buscando detalhes da vaga com ID:', vagaId);
+                    // Busca detalhes completos da vaga via API
+                    console.log('🔄 [vagas.html] Buscando detalhes da vaga com ID:', vagaId);
                     vaga = await vacanciesClient.findById(vagaId);
-                    console.log('Detalhes da vaga recebidos:', vaga);
+                    console.log('✅ [vagas.html] Detalhes da vaga recebidos:', vaga);
                     mostrarDetalhesVaga(vaga);
                 } catch (err) {
-                    console.error('Erro ao buscar detalhes da vaga:', err);
-                    // Se falhar ao buscar por ID, tenta usar os dados já carregados
+                    console.error('❌ [vagas.html] Erro ao buscar detalhes da vaga:', err);
+                    // Se falhar ao buscar por ID, tenta usar os dados já carregados como fallback
                     if (vagaIndex !== undefined && vagaIndex !== null && vagasCarregadas[vagaIndex]) {
-                        console.log('Tentando usar dados já carregados como fallback');
+                        console.log('⚠️ [vagas.html] Usando dados já carregados como fallback');
                         mostrarDetalhesVaga(vagasCarregadas[vagaIndex]);
                     } else {
                         alert('Erro ao carregar detalhes da vaga: ' + (err.message || 'Tente novamente.'));

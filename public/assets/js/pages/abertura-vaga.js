@@ -361,6 +361,7 @@ function saveVagaLocal(formData) {
         
         // Prepara dados da vaga
         const cargo = formData.get('cargo') || document.getElementById('cargo').value;
+        const area = formData.get('area') || document.getElementById('area').value;
         const periodo = formData.get('periodo') || document.getElementById('periodo').value;
         const modelo = formData.get('modelo') || document.getElementById('modelo').value;
         const regimeRaw = formData.get('regime') || document.getElementById('regime').value;
@@ -406,6 +407,7 @@ function saveVagaLocal(formData) {
         const openingRequestData = {
             id: 'temp_' + Date.now(), // ID temporário
             cargo: cargo,
+            area: area, // Campo área adicionado
             periodo: periodo,
             modeloTrabalho: modelo,
             regimeContratacao: regime,

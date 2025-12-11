@@ -5,6 +5,7 @@
 
 // Base URL da API
 const BASE_URL = 'http://localhost:8080';
+// const BASE_URL = 'http://3.92.226.132:8080'; // Produção
 
 /**
  * Cliente base para API
@@ -342,6 +343,83 @@ export class DashboardClient extends ApiClient {
      */
     async getVagaRetention(vagaId) {
         const response = await fetch(`${this.url}/vaga/${vagaId}/retention`, {
+            method: 'GET',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include'
+        });
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        return response.json();
+    }
+
+    // ========================================
+    // ENDPOINTS DE RECRUTAMENTO - Dashboard Integrado
+    // ========================================
+
+    /**
+     * Busca vagas por área
+     * Endpoint: GET /dashboard/recruitment/area/{area}/vagas
+     */
+    async getVagasByArea(area) {
+        const response = await fetch(`${this.url}/recruitment/area/${encodeURIComponent(area)}/vagas`, {
+            method: 'GET',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include'
+        });
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        return response.json();
+    }
+
+    /**
+     * Busca KPIs de uma vaga
+     * Endpoint: GET /dashboard/recruitment/vaga/{vagaId}/kpis
+     * Retorno: { naoIniciado, avaliacaoTecnica, fitCultural, proposta }
+     */
+    async getVagaKpis(vagaId) {
+        const response = await fetch(`${this.url}/recruitment/vaga/${vagaId}/kpis`, {
+            method: 'GET',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include'
+        });
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        return response.json();
+    }
+
+    /**
+     * Busca candidatos de uma vaga com filtro de match
+     * Endpoint: GET /dashboard/recruitment/vaga/{vagaId}/candidatos?match={filtro}
+     * Filtros: all, baixo, medio, alto, destaque
+     */
+    async getVagaCandidatosByMatch(vagaId, matchFilter = 'all') {
+        const response = await fetch(`${this.url}/recruitment/vaga/${vagaId}/candidatos?match=${matchFilter}`, {
+            method: 'GET',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include'
+        });
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        return response.json();
+    }
+
+    /**
+     * Busca dados de retenção de uma vaga (endpoint de recrutamento)
+     * Endpoint: GET /dashboard/recruitment/vaga/{vagaId}/retencao
+     * Retorno: { emAndamento, rejeitados, aprovados }
+     */
+    async getVagaRetencao(vagaId) {
+        const response = await fetch(`${this.url}/recruitment/vaga/${vagaId}/retencao`, {
+            method: 'GET',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include'
+        });
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        return response.json();
+    }
+
+    /**
+     * Busca dados de ocupação de uma vaga
+     * Endpoint: GET /dashboard/recruitment/vaga/{vagaId}/ocupacao
+     */
+    async getVagaOcupacao(vagaId) {
+        const response = await fetch(`${this.url}/recruitment/vaga/${vagaId}/ocupacao`, {
             method: 'GET',
             headers: { 'Content-Type': 'application/json' },
             credentials: 'include'

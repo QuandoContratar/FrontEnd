@@ -293,27 +293,66 @@ async function loadStatusVagas() {
 // ============================
 // GRÁFICO - CANDIDATOS POR VAGA
 // ============================
+let candidatosPorVagaChartInstance = null;
+
 async function loadCandidatosVaga() {
     const canvas = document.getElementById("candidatosPorVagaChart");
     if (!canvas) return;
 
     let result;
     try {
-        console.log('📊 [Dashboard] Carregando candidatos por vaga para área:', selectedArea);
-        result = await dashboardClient.getCandidatosPorVaga(selectedArea);
-        console.log('✅ [Dashboard] Candidatos por vaga:', result);
+        console.log('📊 [Dashboard] Carregando vagas por área:', selectedArea);
+        // Usar o novo endpoint de recrutamento
+        result = await dashboardClient.getVagasByArea(selectedArea);
+        console.log('✅ [Dashboard] Vagas da área:', result);
     } catch (error) {
-        console.warn('⚠️ [Dashboard] Usando fallback para candidatos por vaga');
-        result = FALLBACK_DATA.candidatosVaga;
+        console.warn('⚠️ [Dashboard] Erro ao carregar vagas por área, tentando fallback...');
+        try {
+            // Fallback para o endpoint antigo
+            result = await dashboardClient.getCandidatosPorVaga(selectedArea);
+        } catch (e) {
+            result = FALLBACK_DATA.candidatosVaga;
+        }
     }
 
-    const valores = result.map(r => r.totalCandidatos);
+    // Destruir gráfico anterior se existir
+    if (candidatosPorVagaChartInstance) {
+        candidatosPorVagaChartInstance.destroy();
+        candidatosPorVagaChartInstance = null;
+    }
+
+    // Debug: mostrar estrutura dos dados recebidos
+    console.log('🔍 [Dashboard] Estrutura dos dados recebidos:', JSON.stringify(result[0], null, 2));
+
+    // Mapear dados - verificar todos os possíveis campos de nome da vaga
+    const vagas = result.map(r => {
+        // Tentar múltiplos campos possíveis para o nome da vaga
+        const nomeDaVaga = r.vaga 
+            || r.nome 
+            || r.name
+            || r.position_job 
+            || r.positionJob
+            || r.title 
+            || r.vacancy
+            || r.vacancyName
+            || r.vacancy_name
+            || r.jobTitle
+            || r.job_title
+            || r.cargo
+            || r.descricao
+            || 'Vaga sem nome';
+        
+        console.log('📋 Vaga mapeada:', nomeDaVaga, '| Objeto:', r);
+        return nomeDaVaga;
+    });
+    
+    const valores = result.map(r => r.totalCandidatos || r.candidatesCount || r.total || r.count || 0);
     const maxValue = Math.max(...valores, 10);
 
-    new Chart(canvas, {
+    candidatosPorVagaChartInstance = new Chart(canvas, {
         type: 'bar',
         data: {
-            labels: result.map(r => r.vaga),
+            labels: vagas,
             datasets: [{
                 label: "Candidatos",
                 backgroundColor: COLORS.primary,
@@ -337,56 +376,115 @@ async function loadCandidatosVaga() {
                 titleFontColor: '#6e707e', borderColor: '#dddfeb', borderWidth: 1,
                 xPadding: 15, yPadding: 15, displayColors: false,
                 callbacks: { label: (t, c) => `${c.datasets[t.datasetIndex].label}: ${t.yLabel} candidatos` }
+            },
+            // Adicionar evento de clique no gráfico
+            onClick: function(evt, elements) {
+                if (elements && elements.length > 0) {
+                    const index = elements[0]._index;
+                    const vagaData = result[index];
+                    if (vagaData) {
+                        const vagaId = vagaData.id || vagaData.vagaId;
+                        if (vagaId) {
+                            window.location.href = `vaga-detalhe.html?id=${vagaId}`;
+                        }
+                    }
+                }
             }
         }
     });
 
     // Carregar tabela de vagas
-    loadVagasTable();
+    loadVagasTable(result);
 }
 
 // ============================
-// TABELA - VAGAS
+// TABELA - VAGAS (Lista lateral)
 // ============================
-async function loadVagasTable() {
+async function loadVagasTable(vagasData = null) {
     const tbody = document.getElementById("vagasTableBody");
     if (!tbody) return;
 
-    let result;
-    try {
-        console.log('📊 [Dashboard] Carregando tabela de vagas para área:', selectedArea);
-        result = await dashboardClient.getCandidatosPorVaga(selectedArea);
-        console.log('✅ [Dashboard] Vagas para tabela:', result);
-    } catch (error) {
-        console.warn('⚠️ [Dashboard] Usando fallback para tabela de vagas');
-        result = FALLBACK_DATA.candidatosVaga;
+    let result = vagasData;
+    
+    // Se não recebeu dados, buscar da API
+    if (!result) {
+        try {
+            console.log('📊 [Dashboard] Carregando tabela de vagas para área:', selectedArea);
+            result = await dashboardClient.getVagasByArea(selectedArea);
+            console.log('✅ [Dashboard] Vagas para tabela:', result);
+        } catch (error) {
+            console.warn('⚠️ [Dashboard] Erro ao carregar vagas, tentando fallback...');
+            try {
+                result = await dashboardClient.getCandidatosPorVaga(selectedArea);
+            } catch (e) {
+                result = FALLBACK_DATA.candidatosVaga;
+            }
+        }
     }
 
     // Ordenar por total de candidatos (decrescente)
-    result.sort((a, b) => b.totalCandidatos - a.totalCandidatos);
+    result.sort((a, b) => {
+        const totalA = a.totalCandidatos || a.candidatesCount || a.total || 0;
+        const totalB = b.totalCandidatos || b.candidatesCount || b.total || 0;
+        return totalB - totalA;
+    });
 
     // Limpar linhas existentes
     tbody.innerHTML = '';
+
+    // Se não houver vagas
+    if (!result || result.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="2" class="text-center py-3">Nenhuma vaga encontrada para esta área</td></tr>';
+        return;
+    }
 
     // Adicionar linhas
     result.forEach(vaga => {
         const tr = document.createElement('tr');
         tr.style.cursor = 'pointer';
+        tr.className = 'vaga-row';
+        
+        // Usar o mesmo mapeamento do gráfico para o nome da vaga
+        const vagaNome = vaga.vaga 
+            || vaga.nome 
+            || vaga.name
+            || vaga.position_job 
+            || vaga.positionJob
+            || vaga.title 
+            || vaga.vacancy
+            || vaga.vacancyName
+            || vaga.vacancy_name
+            || vaga.jobTitle
+            || vaga.job_title
+            || vaga.cargo
+            || vaga.descricao
+            || 'Vaga sem nome';
+        const totalCandidatos = vaga.totalCandidatos || vaga.candidatesCount || vaga.total || vaga.count || 0;
+        
         tr.innerHTML = `
-            <td class="text-sm">${vaga.vaga}</td>
-            <td class="text-right text-sm font-weight-bold text-primary">${vaga.totalCandidatos}</td>
+            <td class="text-sm">${vagaNome}</td>
+            <td class="text-right text-sm font-weight-bold text-primary">${totalCandidatos}</td>
         `;
         
-        // Adicionar clique para redirecionar
+        // Adicionar clique para redirecionar para a Tela 2
         tr.addEventListener('click', function() {
             const vagaId = vaga.id || vaga.vagaId;
             if (vagaId) {
+                // Navegar para a tela de detalhes da vaga com o ID
                 window.location.href = `vaga-detalhe.html?id=${vagaId}`;
             } else {
-                // Se não tiver ID, tenta usar o nome da vaga como identificador
-                const vagaNome = encodeURIComponent(vaga.vaga);
-                window.location.href = `vaga-detalhe.html?nome=${vagaNome}`;
+                // Se não tiver ID, usar o nome como fallback
+                const vagaNomeEncoded = encodeURIComponent(vagaNome);
+                window.location.href = `vaga-detalhe.html?nome=${vagaNomeEncoded}`;
             }
+        });
+        
+        // Efeito hover
+        tr.addEventListener('mouseenter', function() {
+            this.style.backgroundColor = '#f8f9fc';
+        });
+        tr.addEventListener('mouseleave', function() {
+            this.style.backgroundColor = '';
         });
         
         tbody.appendChild(tr);

@@ -15,6 +15,7 @@ let matches = [];
 let filteredMatches = [];
 let vacancies = [];
 let selectedVacancyId = null;
+let selectedArea = null; // Novo: área selecionada para filtro hierárquico
 
 // Inicialização
 document.addEventListener('DOMContentLoaded', async () => {
@@ -27,6 +28,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 async function initMatchPage() {
     setupEventListeners();
     await loadVacancies();
+    renderHierarchicalFilters(); // Novo: renderiza filtros hierárquicos
     await loadAllMatches();
 }
 
@@ -64,7 +66,7 @@ function setupEventListeners() {
 async function loadVacancies() {
     try {
         vacancies = await vacanciesClient.findAll();
-        renderVacancySelector();
+        renderHierarchicalFilters(); // Atualiza filtros após carregar vagas
     } catch (error) {
         console.error('Erro ao carregar vagas:', error);
         showMessage('Erro ao carregar vagas', 'error');
@@ -72,39 +74,110 @@ async function loadVacancies() {
 }
 
 /**
- * Renderiza seletor de vagas
+ * Extrai áreas únicas das vagas
  */
-function renderVacancySelector() {
-    // Verificar se existe um seletor de vagas na página
-    let vacancySelector = document.querySelector('.vacancy-selector');
-    const isNewSelector = !vacancySelector;
+function getUniqueAreas() {
+    const areas = new Set();
+    vacancies.forEach(vacancy => {
+        const area = vacancy.area || vacancy.vacancyArea;
+        if (area && area.trim()) {
+            areas.add(area.trim());
+        }
+    });
+    return Array.from(areas).sort();
+}
+
+/**
+ * Filtra vagas por área
+ */
+function getVacanciesByArea(area) {
+    if (!area) return vacancies;
+    return vacancies.filter(v => {
+        const vacancyArea = v.area || v.vacancyArea || '';
+        return vacancyArea.toLowerCase() === area.toLowerCase();
+    });
+}
+
+/**
+ * Renderiza filtros hierárquicos (Área → Vaga)
+ */
+function renderHierarchicalFilters() {
+    const searchBar = document.querySelector('.search-bar');
+    if (!searchBar) return;
+
+    // Remover seletores existentes para recriar
+    const existingAreaSelector = document.querySelector('.area-selector');
+    const existingVacancySelector = document.querySelector('.vacancy-selector');
     
-    if (!vacancySelector) {
-        // Criar seletor se não existir
-        const searchBar = document.querySelector('.search-bar');
-        if (searchBar) {
-            vacancySelector = document.createElement('select');
-            vacancySelector.className = 'vacancy-selector form-control';
-            vacancySelector.style.marginLeft = '10px';
-            vacancySelector.style.maxWidth = '250px';
-            searchBar.appendChild(vacancySelector);
-        }
+    // Criar container para filtros se não existir
+    let filterContainer = document.querySelector('.hierarchical-filters');
+    if (!filterContainer) {
+        filterContainer = document.createElement('div');
+        filterContainer.className = 'hierarchical-filters d-flex align-items-center ml-3';
+        filterContainer.style.gap = '10px';
+        searchBar.appendChild(filterContainer);
     }
+    
+    filterContainer.innerHTML = '';
 
-    if (vacancySelector) {
-        // Limpar e preencher opções
-        vacancySelector.innerHTML = '<option value="">Todas as vagas</option>';
-        vacancies.forEach(vacancy => {
-            const option = document.createElement('option');
-            option.value = vacancy.id;
-            option.textContent = vacancy.positionJob || vacancy.title || vacancy.area || `Vaga #${vacancy.id}`;
-            vacancySelector.appendChild(option);
-        });
+    // Seletor de Área (nível 1)
+    const areaSelector = document.createElement('select');
+    areaSelector.className = 'area-selector form-control form-control-sm';
+    areaSelector.style.maxWidth = '180px';
+    areaSelector.innerHTML = '<option value="">Todas as Áreas</option>';
+    
+    const areas = getUniqueAreas();
+    areas.forEach(area => {
+        const option = document.createElement('option');
+        option.value = area;
+        option.textContent = area;
+        if (selectedArea === area) option.selected = true;
+        areaSelector.appendChild(option);
+    });
+    
+    areaSelector.addEventListener('change', handleAreaFilterChange);
+    filterContainer.appendChild(areaSelector);
 
-        // Adicionar event listener apenas uma vez (quando o seletor é novo)
-        if (isNewSelector) {
-            vacancySelector.addEventListener('change', handleVacancyFilterChange);
+    // Seletor de Vaga (nível 2)
+    const vacancySelector = document.createElement('select');
+    vacancySelector.className = 'vacancy-selector form-control form-control-sm';
+    vacancySelector.style.maxWidth = '220px';
+    vacancySelector.innerHTML = '<option value="">Todas as Vagas</option>';
+    
+    // Preencher vagas baseado na área selecionada
+    const filteredVacancies = selectedArea ? getVacanciesByArea(selectedArea) : vacancies;
+    filteredVacancies.forEach(vacancy => {
+        const option = document.createElement('option');
+        option.value = vacancy.id;
+        option.textContent = vacancy.positionJob || vacancy.title || vacancy.position_job || `Vaga #${vacancy.id}`;
+        if (selectedVacancyId && String(selectedVacancyId) === String(vacancy.id)) {
+            option.selected = true;
         }
+        vacancySelector.appendChild(option);
+    });
+    
+    vacancySelector.addEventListener('change', handleVacancyFilterChange);
+    filterContainer.appendChild(vacancySelector);
+}
+
+/**
+ * Handler para mudança no filtro de área
+ */
+async function handleAreaFilterChange(e) {
+    selectedArea = e.target.value || null;
+    selectedVacancyId = null; // Resetar vaga ao mudar área
+    
+    console.log('📌 [Filter] Área selecionada:', selectedArea || 'Todas');
+    
+    // Atualizar seletor de vagas
+    renderHierarchicalFilters();
+    
+    // Recarregar matches
+    if (selectedArea) {
+        // Filtrar matches pela área
+        filterMatchesByArea(selectedArea);
+    } else {
+        await loadAllMatches();
     }
 }
 
@@ -118,10 +191,28 @@ async function handleVacancyFilterChange(e) {
     if (selectedVacancyId) {
         // GET /match/{vacancyId}/list
         await loadMatchesByVacancy(selectedVacancyId);
+    } else if (selectedArea) {
+        // Filtrar por área se selecionada
+        filterMatchesByArea(selectedArea);
     } else {
         // GET /match (todos)
         await loadAllMatches();
     }
+}
+
+/**
+ * Filtra matches pela área selecionada
+ */
+function filterMatchesByArea(area) {
+    if (!area) {
+        filteredMatches = [...matches];
+    } else {
+        filteredMatches = matches.filter(match => {
+            const matchArea = match.vacancyArea || match.area || '';
+            return matchArea.toLowerCase() === area.toLowerCase();
+        });
+    }
+    renderCandidates();
 }
 
 /**
@@ -401,7 +492,6 @@ function createCandidateItem(match) {
         </div>
         <div class="match-level">
             <span class="match-badge ${matchBadgeClass}">${matchBadgeText}</span>
-            ${status !== 'pendente' ? `<span class="status-badge status-${status}">${status}</span>` : ''}
         </div>
     `;
 

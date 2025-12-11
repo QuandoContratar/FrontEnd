@@ -1,6 +1,7 @@
 /* ========================================
-   PÁGINA DE DETALHES DA VAGA
-   Mostra informações de candidatos por vaga
+   PÁGINA DE DETALHES DA VAGA (TELA 2)
+   Painel detalhado com KPIs, candidatos, retenção
+   Integrado com API Backend Spring Boot
    ======================================== */
 
 import { DashboardClient } from "../components/client.js";
@@ -22,186 +23,145 @@ const COLORS = {
     danger: '#e74a3b'
 };
 
-// Dados de fallback
-const FALLBACK_DATA = {
-    vaga: {
-        id: 1,
-        nome: "Java Junior",
-        descricao: "Desenvolvedor Java com conhecimentos em Spring Boot",
-        ativo: true,
-        dataAbertura: new Date().toLocaleDateString('pt-BR'),
-        totalCandidatos: 3671
-    },
-    candidatos: [
-        { id: 1, nome: "Nathan", contato: "PJ", periodo: "Diurno", localidade: "São Paulo", gestor: "Alexandre", matching: 80 },
-        { id: 2, nome: "Maria", contato: "CLT", periodo: "Noturno", localidade: "São Paulo", gestor: "Alexandre", matching: 75 },
-        { id: 3, nome: "João", contato: "PJ", periodo: "Diurno", localidade: "Rio de Janeiro", gestor: "Pedro", matching: 85 }
-    ],
-    etapas: [
-        { nome: "Não iniciado", total: 3671 },
-        { nome: "Avaliacao Técnica", total: 156 },
-        { nome: "Fit cultural", total: 156 },
-        { nome: "Proposta", total: 156 }
-    ],
-    retencao: [
-        { status: "Em Andamento", total: 2200 },
-        { status: "Aprovados", total: 1000 },
-        { status: "Rejeitados", total: 471 }
-    ]
-};
+// Instância do gráfico de retenção (para destruir antes de recriar)
+let retencaoChartInstance = null;
+
+// Dados da vaga carregada (armazenado globalmente para uso em múltiplas funções)
+let currentVagaData = null;
+let currentVagaId = null;
 
 // ============================
 // FUNÇÕES UTILITÁRIAS
 // ============================
 function getVagaIdFromUrl() {
     const params = new URLSearchParams(window.location.search);
-    return params.get('id') || params.get('nome');
+    return params.get('id') || params.get('vagaId');
 }
 
 function numberFormat(number) {
+    if (number === null || number === undefined) return '0';
     return number.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+}
+
+function showLoading(elementId) {
+    const el = document.getElementById(elementId);
+    if (el) el.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
 }
 
 // ============================
 // CARREGAR DADOS DA VAGA
 // ============================
 async function loadVagaDetails() {
-    const vagaId = getVagaIdFromUrl();
+    currentVagaId = getVagaIdFromUrl();
     
-    if (!vagaId) {
-        console.warn('Nenhuma vaga selecionada');
+    if (!currentVagaId) {
+        console.warn('⚠️ [Vaga Detalhe] Nenhuma vaga selecionada');
+        showErrorState('Nenhuma vaga selecionada. Volte para o Dashboard e selecione uma vaga.');
         return;
     }
 
-    let vagaData;
-    
-    try {
-        console.log('📊 [Vaga Detalhe] Carregando dados da vaga:', vagaId);
-        vagaData = await dashboardClient.getVagaById(vagaId);
-        console.log('✅ [Vaga Detalhe] Vaga carregada:', vagaData);
-    } catch (error) {
-        console.warn('⚠️ [Vaga Detalhe] Usando fallback para vaga');
-        vagaData = FALLBACK_DATA.vaga;
-    }
+    console.log('📊 [Vaga Detalhe] Iniciando carregamento da vaga:', currentVagaId);
 
-    // Atualizar título da página
-    const titulo = document.getElementById('vagaTitulo');
-    if (titulo) {
-        titulo.textContent = `Painel de candidatos para {${vagaData.nome}}`;
-    }
-
-    // Carregar métricas por etapa
-    await loadMetricasPorEtapa(vagaId);
+    // Carregar KPIs primeiro para preencher os cards
+    await loadKPIs(currentVagaId);
     
-    // Carregar tabela de candidatos
-    await loadCandidatos(vagaId);
+    // Carregar candidatos (isso também popula informações da vaga)
+    await loadCandidatos(currentVagaId, 'all');
     
     // Carregar gráfico de retenção
-    await loadRetencao(vagaId);
+    await loadRetencao(currentVagaId);
     
-    // Carregar informações da vaga
-    await loadInfomacoes(vagaId, vagaData);
+    // Carregar ocupação
+    await loadOcupacao(currentVagaId);
+}
+
+function showErrorState(message) {
+    const titulo = document.getElementById('vagaTitulo');
+    if (titulo) {
+        titulo.textContent = 'Erro ao carregar vaga';
+    }
+    
+    const metricsRow = document.getElementById('metricsRow');
+    if (metricsRow) {
+        metricsRow.innerHTML = `
+            <div class="col-12">
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle mr-2"></i>${message}
+                </div>
+            </div>
+        `;
+    }
 }
 
 // ============================
-// CARREGAR MÉTRICAS POR ETAPA
+// CARREGAR KPIs DA VAGA
 // ============================
-async function loadMetricasPorEtapa(vagaId) {
+async function loadKPIs(vagaId) {
     const metricsRow = document.getElementById('metricsRow');
     if (!metricsRow) return;
 
-    let etapas;
+    // Mostrar loading
+    metricsRow.innerHTML = `
+        <div class="col-12 text-center py-4">
+            <div class="spinner-border text-primary" role="status">
+                <span class="sr-only">Carregando...</span>
+            </div>
+        </div>
+    `;
+
+    let kpisData;
     
     try {
-        console.log('📊 [Vaga Detalhe] Carregando etapas...');
-        etapas = await dashboardClient.getVagaStages(vagaId);
-        console.log('✅ [Vaga Detalhe] Etapas carregadas:', etapas);
+        console.log('📊 [Vaga Detalhe] Carregando KPIs...');
+        kpisData = await dashboardClient.getVagaKpis(vagaId);
+        console.log('✅ [Vaga Detalhe] KPIs carregados:', kpisData);
     } catch (error) {
-        console.warn('⚠️ [Vaga Detalhe] Usando fallback para etapas');
-        etapas = FALLBACK_DATA.etapas;
+        console.error('❌ [Vaga Detalhe] Erro ao carregar KPIs:', error);
+        // Fallback com zeros
+        kpisData = {
+            naoIniciado: 0,
+            avaliacaoTecnica: 0,
+            fitCultural: 0,
+            proposta: 0
+        };
     }
 
-    // Mapa de configuração para cada etapa (cor, ícone, etc)
-    const etapasConfig = [
+    // Configuração dos cards KPI conforme mapeamento do backend
+    const kpisConfig = [
         {
-            key: 'aguardando_triagem',
+            key: 'naoIniciado',
             nome: 'Aguardando Triagem',
             cor: 'primary',
             icon: 'fa-hourglass-start'
         },
         {
-            key: 'triagem',
-            nome: 'Triagem',
-            cor: 'success',
-            icon: 'fa-search'
-        },
-        {
-            key: 'entrevista_rh',
-            nome: 'Entrevista RH',
-            cor: 'info',
-            icon: 'fa-comments'
-        },
-        {
-            key: 'fit_cultural',
-            nome: 'Fit Cultural',
-            cor: 'warning',
-            icon: 'fa-users'
-        },
-        {
-            key: 'teste_tecnico',
+            key: 'avaliacaoTecnica',
             nome: 'Teste Técnico',
             cor: 'danger',
             icon: 'fa-code'
         },
         {
-            key: 'entrevista_tecnica',
-            nome: 'Entrevista Técnica',
-            cor: 'secondary',
-            icon: 'fa-laptop-code'
-        },
-        {
-            key: 'entrevista_final',
-            nome: 'Entrevista Final',
+            key: 'fitCultural',
+            nome: 'Fit Cultural',
             cor: 'warning',
-            icon: 'fa-handshake'
+            icon: 'fa-users'
         },
         {
             key: 'proposta',
             nome: 'Proposta',
             cor: 'success',
             icon: 'fa-file-contract'
-        },
-        {
-            key: 'contratacao',
-            nome: 'Contratação',
-            cor: 'primary',
-            icon: 'fa-check-circle'
         }
     ];
 
     metricsRow.innerHTML = '';
 
-    // Criar um mapa dos dados recebidos para fácil acesso
-    const etapasMap = {};
-    etapas.forEach(etapa => {
-        const nomeNormalizado = etapa.nome
-            .toLowerCase()
-            .replace(/\s+/g, '_')
-            .replace(/[áàâã]/g, 'a')
-            .replace(/[éè]/g, 'e')
-            .replace(/[í]/g, 'i')
-            .replace(/[óôõ]/g, 'o')
-            .replace(/[ú]/g, 'u');
-        etapasMap[nomeNormalizado] = etapa;
-    });
-
-    // Gerar cards para cada etapa configurada
-    etapasConfig.forEach((config) => {
-        const etapaData = etapasMap[config.key] || { total: 0 };
-        const total = etapaData.total || 0;
+    // Gerar cards KPI
+    kpisConfig.forEach((config) => {
+        const valor = kpisData[config.key] || 0;
 
         const metricHtml = `
-            <div class="col-6 col-sm-4 col-md-3 mb-4" style="flex: 1 1 20%; max-width: 20%;">
+            <div class="col-6 col-md-3 mb-4">
                 <div class="card border-left-${config.cor} shadow h-100 py-2">
                     <div class="card-body">
                         <div class="row no-gutters align-items-center">
@@ -210,7 +170,7 @@ async function loadMetricasPorEtapa(vagaId) {
                                     ${config.nome}
                                 </div>
                                 <div class="h4 mb-0 font-weight-bold text-gray-800">
-                                    ${numberFormat(total)}
+                                    ${numberFormat(valor)}
                                 </div>
                             </div>
                             <div class="col-auto">
@@ -227,54 +187,104 @@ async function loadMetricasPorEtapa(vagaId) {
 }
 
 // ============================
-// CARREGAR CANDIDATOS
+// CARREGAR CANDIDATOS COM FILTRO DE MATCH
 // ============================
-async function loadCandidatos(vagaId) {
-    let candidatos;
+async function loadCandidatos(vagaId, matchFilter = 'all') {
+    const tbody = document.getElementById('candidatosTableBody');
+    if (!tbody) return;
+
+    // Mostrar loading na tabela
+    tbody.innerHTML = `
+        <tr>
+            <td colspan="6" class="text-center py-4">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="sr-only">Carregando...</span>
+                </div>
+            </td>
+        </tr>
+    `;
+
+    let candidatosData;
     
     try {
-        console.log('📊 [Vaga Detalhe] Carregando candidatos...');
-        candidatos = await dashboardClient.getVagaCandidates(vagaId);
-        console.log('✅ [Vaga Detalhe] Candidatos carregados:', candidatos);
+        console.log(`📊 [Vaga Detalhe] Carregando candidatos (filtro: ${matchFilter})...`);
+        candidatosData = await dashboardClient.getVagaCandidatosByMatch(vagaId, matchFilter);
+        console.log('✅ [Vaga Detalhe] Candidatos carregados:', candidatosData);
     } catch (error) {
-        console.warn('⚠️ [Vaga Detalhe] Usando fallback para candidatos');
-        candidatos = FALLBACK_DATA.candidatos;
+        console.error('❌ [Vaga Detalhe] Erro ao carregar candidatos:', error);
+        candidatosData = [];
+    }
+
+    // Se retornou dados, extrair informações da vaga do primeiro candidato
+    if (candidatosData && candidatosData.length > 0) {
+        const firstCandidate = candidatosData[0];
+        
+        // Atualizar título da página com nome da vaga
+        const titulo = document.getElementById('vagaTitulo');
+        if (titulo && firstCandidate.vacancyTitle) {
+            titulo.textContent = `Painel de candidatos para {${firstCandidate.vacancyTitle}}`;
+        }
+        
+        // Armazenar dados da vaga para informações
+        currentVagaData = {
+            nome: firstCandidate.vacancyTitle || firstCandidate.position_job,
+            periodo: firstCandidate.period,
+            workModel: firstCandidate.workModel,
+            location: firstCandidate.location,
+            managerName: firstCandidate.managerName,
+            totalCandidatos: candidatosData.length
+        };
+        
+        // Atualizar bloco de informações da vaga
+        loadInformacoes(currentVagaData);
+    } else {
+        // Tentar carregar informações da vaga separadamente
+        try {
+            const vagaInfo = await dashboardClient.getVagaById(vagaId);
+            const titulo = document.getElementById('vagaTitulo');
+            if (titulo) {
+                titulo.textContent = `Painel de candidatos para {${vagaInfo.nome || vagaInfo.position_job || 'Vaga'}}`;
+            }
+            currentVagaData = vagaInfo;
+            loadInformacoes(currentVagaData);
+        } catch (e) {
+            console.warn('⚠️ Não foi possível carregar informações da vaga');
+        }
     }
 
     // Gerar filtros de match
-    generateMatchFilters(candidatos);
+    generateMatchFilters(vagaId);
     
-    // Popular tabela
-    populateCandidatosTable(candidatos);
+    // Popular tabela de candidatos
+    populateCandidatosTable(candidatosData);
 }
 
 // ============================
 // GERAR FILTROS DE MATCH
 // ============================
-function generateMatchFilters(candidatos) {
+function generateMatchFilters(vagaId) {
     const filtrosDiv = document.getElementById('filtrosMatch');
     if (!filtrosDiv) return;
 
-    // Definir ranges de matching
-    const matchRanges = [
-        { label: 'Tudo', min: 0, max: 100, class: 'primary' },
-        { label: 'Baixo', min: 0, max: 35, class: 'danger' },
-        { label: 'Médio', min: 36, max: 65, class: 'warning' },
-        { label: 'Alto', min: 66, max: 85, class: 'info' },
-        { label: 'Destaque', min: 86, max: 100, class: 'success' }
+    // Definir filtros conforme API: all, baixo, medio, alto, destaque
+    const matchFilters = [
+        { label: 'Tudo', value: 'all', class: 'primary' },
+        { label: 'Baixo', value: 'baixo', class: 'danger' },
+        { label: 'Médio', value: 'medio', class: 'warning' },
+        { label: 'Alto', value: 'alto', class: 'info' },
+        { label: 'Destaque', value: 'destaque', class: 'success' }
     ];
 
     filtrosDiv.innerHTML = '';
 
-    matchRanges.forEach((range, index) => {
+    matchFilters.forEach((filter, index) => {
         const isActive = index === 0 ? 'active' : '';
         const button = document.createElement('button');
-        button.className = `btn btn-sm btn-outline-${range.class} mr-2 mb-2 match-filter ${isActive}`;
-        button.textContent = range.label;
-        button.dataset.min = range.min;
-        button.dataset.max = range.max;
+        button.className = `btn btn-sm btn-outline-${filter.class} mr-2 mb-2 match-filter ${isActive}`;
+        button.textContent = filter.label;
+        button.dataset.match = filter.value;
 
-        button.addEventListener('click', function() {
+        button.addEventListener('click', async function() {
             // Remove active de todos os botões
             document.querySelectorAll('.match-filter').forEach(btn => {
                 btn.classList.remove('active');
@@ -282,12 +292,44 @@ function generateMatchFilters(candidatos) {
             // Adiciona active ao clicado
             this.classList.add('active');
 
-            // Filtrar tabela
-            filterCandidatosTable(Number(this.dataset.min), Number(this.dataset.max));
+            // Fazer nova chamada à API com o filtro selecionado
+            await loadCandidatosByFilter(vagaId, this.dataset.match);
         });
 
         filtrosDiv.appendChild(button);
     });
+}
+
+// ============================
+// CARREGAR CANDIDATOS POR FILTRO (chamada à API)
+// ============================
+async function loadCandidatosByFilter(vagaId, matchFilter) {
+    const tbody = document.getElementById('candidatosTableBody');
+    if (!tbody) return;
+
+    // Mostrar loading
+    tbody.innerHTML = `
+        <tr>
+            <td colspan="6" class="text-center py-3">
+                <div class="spinner-border spinner-border-sm text-primary" role="status">
+                    <span class="sr-only">Carregando...</span>
+                </div>
+            </td>
+        </tr>
+    `;
+
+    let candidatosData;
+    
+    try {
+        console.log(`📊 [Vaga Detalhe] Filtrando candidatos (filtro: ${matchFilter})...`);
+        candidatosData = await dashboardClient.getVagaCandidatosByMatch(vagaId, matchFilter);
+        console.log('✅ [Vaga Detalhe] Candidatos filtrados:', candidatosData);
+    } catch (error) {
+        console.error('❌ [Vaga Detalhe] Erro ao filtrar candidatos:', error);
+        candidatosData = [];
+    }
+
+    populateCandidatosTable(candidatosData);
 }
 
 // ============================
@@ -306,7 +348,9 @@ function populateCandidatosTable(candidatos) {
 
     candidatos.forEach(candidato => {
         const tr = document.createElement('tr');
-        const matching = parseFloat(candidato.matching || candidato.matchScore || 0);
+        
+        // Extrair matching (pode vir como matching, matchScore, ou match)
+        const matching = parseFloat(candidato.matching || candidato.matchScore || candidato.match || 0);
 
         // Definir cor do matching
         let matchingClass = 'text-danger';
@@ -314,64 +358,24 @@ function populateCandidatosTable(candidatos) {
         else if (matching >= 66) matchingClass = 'text-info';
         else if (matching >= 36) matchingClass = 'text-warning';
 
+        // Mapear campos da API (pode vir em português ou inglês)
+        const nome = candidato.nome || candidato.name || candidato.candidateName || 'N/A';
+        const contato = candidato.contato || candidato.contact || candidato.contractType || 'N/A';
+        const periodo = candidato.periodo || candidato.period || 'N/A';
+        const localidade = candidato.localidade || candidato.location || 'N/A';
+        const gestor = candidato.gestor || candidato.manager || candidato.managerName || 'N/A';
+
         tr.innerHTML = `
-            <td class="text-sm">${candidato.nome || candidato.name || 'N/A'}</td>
-            <td class="text-sm">${candidato.contato || candidato.contact || 'N/A'}</td>
-            <td class="text-sm">${candidato.periodo || candidato.period || 'N/A'}</td>
-            <td class="text-sm">${candidato.localidade || candidato.location || 'N/A'}</td>
-            <td class="text-sm">${candidato.gestor || candidato.manager || 'N/A'}</td>
-            <td class="text-center text-sm font-weight-bold ${matchingClass}">${matching}%</td>
+            <td class="text-sm">${nome}</td>
+            <td class="text-sm">${contato}</td>
+            <td class="text-sm">${periodo}</td>
+            <td class="text-sm">${localidade}</td>
+            <td class="text-sm">${gestor}</td>
+            <td class="text-center text-sm font-weight-bold ${matchingClass}">${matching.toFixed(0)}%</td>
         `;
 
-        // Armazenar matching como número no dataset
-        tr.dataset.matching = matching;
         tbody.appendChild(tr);
     });
-
-    // Aplicar filtro padrão "Tudo"
-    filterCandidatosTable(0, 100);
-}
-
-// ============================
-// FILTRAR TABELA DE CANDIDATOS
-// ============================
-function filterCandidatosTable(min, max) {
-    const tbody = document.getElementById('candidatosTableBody');
-    if (!tbody) return;
-
-    const rows = tbody.querySelectorAll('tr');
-    let visibleCount = 0;
-    let emptyMessageRow = tbody.querySelector('.no-results-message');
-
-    rows.forEach(row => {
-        if (row.classList.contains('no-results-message')) return;
-        
-        if (!row.dataset.matching) return;
-        
-        const matching = parseFloat(row.dataset.matching);
-        
-        if (matching >= min && matching <= max) {
-            row.style.display = '';
-            visibleCount++;
-        } else {
-            row.style.display = 'none';
-        }
-    });
-
-    // Remover mensagem de vazio anterior se existir
-    if (emptyMessageRow) {
-        emptyMessageRow.remove();
-    }
-
-    // Se nenhuma linha visível, mostrar mensagem
-    if (visibleCount === 0) {
-        const emptyRow = tbody.insertRow();
-        emptyRow.classList.add('no-results-message');
-        const cell = emptyRow.insertCell(0);
-        cell.colSpan = 6;
-        cell.className = 'text-center py-3';
-        cell.textContent = 'Nenhum candidato nesta faixa de matching';
-    }
 }
 
 // ============================
@@ -385,29 +389,45 @@ async function loadRetencao(vagaId) {
     
     try {
         console.log('📊 [Vaga Detalhe] Carregando dados de retenção...');
-        retencaoData = await dashboardClient.getVagaRetention(vagaId);
+        retencaoData = await dashboardClient.getVagaRetencao(vagaId);
         console.log('✅ [Vaga Detalhe] Retenção carregada:', retencaoData);
     } catch (error) {
-        console.warn('⚠️ [Vaga Detalhe] Usando fallback para retenção');
-        retencaoData = FALLBACK_DATA.retencao;
+        console.error('❌ [Vaga Detalhe] Erro ao carregar retenção:', error);
+        // Fallback
+        retencaoData = {
+            emAndamento: 0,
+            rejeitados: 0,
+            aprovados: 0
+        };
     }
 
-    const labels = retencaoData.map(r => r.status || r.statusName);
-    const valores = retencaoData.map(r => r.total || r.count);
+    // Mapear dados para o gráfico
+    const labels = ['Em Andamento', 'Aprovados', 'Rejeitados'];
+    const valores = [
+        retencaoData.emAndamento || 0,
+        retencaoData.aprovados || 0,
+        retencaoData.rejeitados || 0
+    ];
 
     // Cores para retenção
-    const retencaoColors = ['#7367f0', '#a29bfe', '#fd79a8'];
-    const retencaoHoverColors = ['#6255d5', '#8a75e6', '#ff6b9d'];
+    const retencaoColors = ['#7367f0', '#1cc88a', '#e74a3b'];
+    const retencaoHoverColors = ['#6255d5', '#17a673', '#c0392b'];
 
     // Atualizar legenda
     const legendaDiv = document.getElementById('retencaoLegenda');
     if (legendaDiv) {
         legendaDiv.innerHTML = labels.map((label, i) => 
-            `<span class="mr-3"><i class="fas fa-circle" style="color: ${retencaoColors[i]}"></i> ${label}</span>`
+            `<span class="mr-3"><i class="fas fa-circle" style="color: ${retencaoColors[i]}"></i> ${label}: ${valores[i]}</span>`
         ).join('');
     }
 
-    new Chart(canvas, {
+    // Destruir gráfico anterior se existir
+    if (retencaoChartInstance) {
+        retencaoChartInstance.destroy();
+        retencaoChartInstance = null;
+    }
+
+    retencaoChartInstance = new Chart(canvas, {
         type: 'doughnut',
         data: {
             labels: labels,
@@ -439,51 +459,109 @@ async function loadRetencao(vagaId) {
 }
 
 // ============================
+// CARREGAR OCUPAÇÃO
+// ============================
+async function loadOcupacao(vagaId) {
+    try {
+        console.log('📊 [Vaga Detalhe] Carregando ocupação...');
+        const ocupacaoData = await dashboardClient.getVagaOcupacao(vagaId);
+        console.log('✅ [Vaga Detalhe] Ocupação carregada:', ocupacaoData);
+        
+        // Se houver dados de ocupação, adicionar ao bloco de informações
+        if (ocupacaoData && currentVagaData) {
+            currentVagaData.ocupacao = ocupacaoData;
+            loadInformacoes(currentVagaData);
+        }
+    } catch (error) {
+        console.warn('⚠️ [Vaga Detalhe] Ocupação não disponível:', error);
+    }
+}
+
+// ============================
 // CARREGAR INFORMAÇÕES DA VAGA
 // ============================
-async function loadInfomacoes(vagaId, vagaData) {
+function loadInformacoes(vagaData) {
     const infoDiv = document.getElementById('vagaInfo');
-    if (!infoDiv) return;
+    if (!infoDiv || !vagaData) return;
+
+    // Formatar data se disponível
+    let dataAbertura = 'N/A';
+    if (vagaData.dataAbertura) {
+        try {
+            dataAbertura = new Date(vagaData.dataAbertura).toLocaleDateString('pt-BR');
+        } catch (e) {
+            dataAbertura = vagaData.dataAbertura;
+        }
+    }
+
+    // Verificar ocupação
+    let ocupacaoHtml = '';
+    if (vagaData.ocupacao) {
+        ocupacaoHtml = `
+            <div class="col-md-6">
+                <p class="mb-2">
+                    <strong>Vagas Disponíveis:</strong><br>
+                    <span class="text-info font-weight-bold">${vagaData.ocupacao.vagasRestantes || 0} de ${vagaData.ocupacao.totalVagas || 0}</span>
+                </p>
+            </div>
+        `;
+    }
 
     const html = `
         <div class="row">
             <div class="col-md-6">
                 <p class="mb-2">
                     <strong>Nome da Vaga:</strong><br>
-                    ${vagaData.nome || 'N/A'}
+                    ${vagaData.nome || vagaData.position_job || 'N/A'}
                 </p>
             </div>
             <div class="col-md-6">
                 <p class="mb-2">
-                    <strong>Status:</strong><br>
-                    <span class="badge badge-${vagaData.ativo ? 'success' : 'danger'}">
-                        ${vagaData.ativo ? 'Ativa' : 'Inativa'}
-                    </span>
+                    <strong>Gestor:</strong><br>
+                    ${vagaData.managerName || vagaData.gestor || 'N/A'}
                 </p>
             </div>
         </div>
         <div class="row">
             <div class="col-md-6">
                 <p class="mb-2">
-                    <strong>Data de Abertura:</strong><br>
-                    ${vagaData.dataAbertura || 'N/A'}
+                    <strong>Período:</strong><br>
+                    ${vagaData.periodo || vagaData.period || 'N/A'}
                 </p>
             </div>
+            <div class="col-md-6">
+                <p class="mb-2">
+                    <strong>Modelo de Trabalho:</strong><br>
+                    ${vagaData.workModel || 'N/A'}
+                </p>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-6">
+                <p class="mb-2">
+                    <strong>Localização:</strong><br>
+                    ${vagaData.location || vagaData.localidade || 'N/A'}
+                </p>
+            </div>
+            ${ocupacaoHtml || `
             <div class="col-md-6">
                 <p class="mb-2">
                     <strong>Total de Candidatos:</strong><br>
                     <span class="text-primary font-weight-bold">${numberFormat(vagaData.totalCandidatos || 0)}</span>
                 </p>
             </div>
+            `}
         </div>
+        ${vagaData.descricao ? `
         <div class="row">
             <div class="col-md-12">
                 <p class="mb-0">
                     <strong>Descrição:</strong><br>
-                    ${vagaData.descricao || 'N/A'}
+                    ${vagaData.descricao}
                 </p>
             </div>
         </div>
+        ` : ''}
     `;
 
     infoDiv.innerHTML = html;
@@ -493,6 +571,8 @@ async function loadInfomacoes(vagaId, vagaData) {
 // INICIALIZAR
 // ============================
 document.addEventListener('DOMContentLoaded', async function() {
+    console.log('🚀 [Vaga Detalhe] Iniciando página...');
+    
     // Aguardar Utils estar disponível
     const waitForUtils = () => {
         if (window.Utils && typeof window.Utils.normalizeLevelAccess === 'function') {
