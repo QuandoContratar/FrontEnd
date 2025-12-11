@@ -1,8 +1,8 @@
 export class ApiClient {
     constructor(route) {
         this.route = route
-      //  this.baseUrl = 'http://54.144.16.251:8080'
-     this.baseUrl = 'http://localhost:8080'
+        this.baseUrl = 'http://54.144.16.251:8080'
+    //  this.baseUrl = 'http://localhost:8080'
     }
 
     get url() {
@@ -648,12 +648,6 @@ export class CandidateClient extends ApiClient {
         });
         if (!response.ok) throw new Error('Failed to delete candidate');
         return response.json()
-    }
-
-    async downloadResume(id) {
-        const response = await fetch(`${this.url}/${id}/resume`);
-        if (!response.ok) throw new Error('Failed to download resume');
-        return response.arrayBuffer(); // PDF binário
     }
 
     async uploadMultipleResumes(files) {

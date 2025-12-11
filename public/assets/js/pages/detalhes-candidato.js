@@ -1,5 +1,5 @@
 // Função para expandir/recolher seções
-window.toggleSection = function(section) {
+window.toggleSection = function (section) {
 	const content = document.getElementById(section + '-content');
 	const chevron = document.getElementById(section + '-chevron');
 	if (!content || !chevron) return;
@@ -14,28 +14,31 @@ window.toggleSection = function(section) {
 
 // Script para preencher detalhes do candidato usando localStorage e CandidateClient
 import { CandidateClient, SelectionProcessClient } from '../../../client/client.js';
-
+let responseCandidate
 async function carregarCandidato() {
 	// Tenta obter o ID da URL primeiro, depois do localStorage
 	const urlParams = new URLSearchParams(window.location.search);
 	let candidateId = urlParams.get('id') || localStorage.getItem('selectedCandidateId');
-	
+
 	if (!candidateId) {
 		mostrarErro('Nenhum candidato selecionado.');
 		return;
 	}
-	
+
 	// Garante que está salvo no localStorage para compatibilidade
 	localStorage.setItem('selectedCandidateId', String(candidateId));
+
 	try {
 		const client = new CandidateClient();
 		// Busca dados básicos do candidato
 		const candidato = await client.findById(candidateId);
+		responseCandidate = candidato
+		console.log("🚀 ~ carregarCandidato ~ responseCandidate:", responseCandidate)
 		console.log("🚀 ~ candidato:", candidato);
-		
+
 		// Preenche informações básicas
 		preencherCamposBasicos(candidato);
-		
+
 		// Busca detalhes completos (pode ter mais informações)
 		try {
 			const detalhes = await client.getCandidateDetails(candidateId);
@@ -45,7 +48,7 @@ async function carregarCandidato() {
 		} catch (e) {
 			console.warn('Erro ao buscar detalhes completos:', e);
 		}
-		
+
 		// Busca experiência separadamente
 		try {
 			const experiencia = await client.getCandidateExperience(candidateId);
@@ -54,14 +57,14 @@ async function carregarCandidato() {
 			console.warn('Erro ao buscar experiência:', e);
 			renderExperience(null);
 		}
-		
+
 		// Preenche escolaridade e competências dos dados básicos
 		renderEducation(candidato.education);
 		renderSkills(candidato.skills);
-		
+
 		// Busca processo seletivo do candidato
 		await carregarProcessoSeletivo(candidateId);
-		
+
 	} catch (e) {
 		console.error('Erro ao carregar candidato:', e);
 		mostrarErro('Erro ao carregar dados do candidato.');
@@ -80,7 +83,7 @@ function preencherCamposBasicos(candidato) {
 	setText('#candidateEmail', candidato.email || candidato.emailCandidate);
 	setText('#candidatePhone', candidato.phoneNumber || candidato.phone || '');
 	setText('#candidateState', candidato.state || '');
-	
+
 	// Formata data de nascimento
 	if (candidato.birth) {
 		const birthDate = new Date(candidato.birth);
@@ -109,14 +112,14 @@ function setText(selector, value) {
 function renderEducation(education) {
 	const container = document.querySelector('#education-content');
 	if (!container) return;
-	
+
 	container.innerHTML = '';
-	
+
 	if (!education || education.trim() === '') {
 		container.innerHTML = '<div class="text-muted text-center py-3">Nenhuma escolaridade informada.</div>';
 		return;
 	}
-	
+
 	// Se education for uma string, tenta formatar
 	if (typeof education === 'string') {
 		// Se for JSON string, tenta parsear
@@ -148,7 +151,7 @@ function renderEducation(education) {
 function createEducationItem(edu) {
 	const item = document.createElement('div');
 	item.className = 'education-item';
-	
+
 	if (typeof edu === 'string') {
 		item.innerHTML = `<p>${escapeHtml(edu)}</p>`;
 	} else {
@@ -156,7 +159,7 @@ function createEducationItem(edu) {
 		const institution = edu.institution || edu.school || '';
 		const period = edu.period || (edu.startDate && edu.endDate ? `${edu.startDate} - ${edu.endDate}` : '') || '';
 		const status = edu.status || edu.completed ? 'Concluído' : 'Em andamento';
-		
+
 		item.innerHTML = `
 			<h6>${escapeHtml(title)}</h6>
 			${institution ? `<p><strong>Instituição:</strong> ${escapeHtml(institution)}</p>` : ''}
@@ -164,21 +167,21 @@ function createEducationItem(edu) {
 			<p><strong>Status:</strong> ${escapeHtml(status)}</p>
 		`;
 	}
-	
+
 	return item;
 }
 
 function renderSkills(skills) {
 	const container = document.querySelector('#skills-content');
 	if (!container) return;
-	
+
 	container.innerHTML = '';
-	
+
 	if (!skills || (typeof skills === 'string' && skills.trim() === '')) {
 		container.innerHTML = '<div class="text-muted text-center py-3">Nenhuma competência informada.</div>';
 		return;
 	}
-	
+
 	// Se skills for uma string, separa por vírgula
 	if (typeof skills === 'string') {
 		skills.split(',').forEach(skill => {
@@ -198,7 +201,7 @@ function renderSkills(skills) {
 			container.appendChild(tag);
 		});
 	}
-	
+
 	// Se não houver skills adicionadas, mostra mensagem
 	if (container.children.length === 0) {
 		container.innerHTML = '<div class="text-muted text-center py-3">Nenhuma competência informada.</div>';
@@ -208,14 +211,14 @@ function renderSkills(skills) {
 function renderExperience(experience) {
 	const container = document.querySelector('#experience-content');
 	if (!container) return;
-	
+
 	container.innerHTML = '';
-	
+
 	if (!experience || (typeof experience === 'string' && experience.trim() === '')) {
 		container.innerHTML = '<div class="text-muted text-center py-3">Nenhuma experiência informada.</div>';
 		return;
 	}
-	
+
 	// Se experience for uma string (texto), exibe como texto formatado
 	if (typeof experience === 'string') {
 		// Tenta parsear como JSON
@@ -250,7 +253,7 @@ function renderExperience(experience) {
 	} else {
 		container.appendChild(createExperienceItem(experience));
 	}
-	
+
 	// Se não houver experiência adicionada, mostra mensagem
 	if (container.children.length === 0) {
 		container.innerHTML = '<div class="text-muted text-center py-3">Nenhuma experiência informada.</div>';
@@ -260,7 +263,7 @@ function renderExperience(experience) {
 function createExperienceItem(exp) {
 	const item = document.createElement('div');
 	item.className = 'experience-item';
-	
+
 	if (typeof exp === 'string') {
 		item.innerHTML = `<p>${escapeHtml(exp)}</p>`;
 	} else {
@@ -268,7 +271,7 @@ function createExperienceItem(exp) {
 		const company = exp.company || exp.employer || '';
 		const period = exp.period || (exp.startDate && exp.endDate ? `${exp.startDate} - ${exp.endDate}` : '') || '';
 		const description = exp.description || exp.responsibilities || '';
-		
+
 		item.innerHTML = `
 			<h6>${escapeHtml(title)}</h6>
 			${company ? `<p><strong>Empresa:</strong> ${escapeHtml(company)}</p>` : ''}
@@ -276,7 +279,7 @@ function createExperienceItem(exp) {
 			${description ? `<p><strong>Descrição:</strong> ${escapeHtml(description)}</p>` : ''}
 		`;
 	}
-	
+
 	return item;
 }
 
@@ -300,21 +303,21 @@ function mostrarErro(msg) {
 // Função para criar o gráfico de progresso
 function criarGraficoProgresso(porcentagem = 0) {
 	console.log(`🎨 criarGraficoProgresso chamado com ${porcentagem}%`);
-	
+
 	const ctx = document.getElementById('progressChart');
 	if (!ctx) {
 		console.error('❌ Elemento progressChart não encontrado!');
 		return;
 	}
-	
+
 	// Atualiza a porcentagem exibida usando a função dedicada
 	atualizarPorcentagemNoDOM(porcentagem);
-	
+
 	// Destrói gráfico anterior se existir
 	if (window.progressChartInstance) {
 		window.progressChartInstance.destroy();
 	}
-	
+
 	// Cria novo gráfico
 	window.progressChartInstance = new Chart(ctx, {
 		type: 'doughnut',
@@ -349,66 +352,67 @@ function criarGraficoProgresso(porcentagem = 0) {
 }
 
 // Função para download do currículo
-window.downloadResume = async function() {
-	const client = new CandidateClient();
+window.downloadResume = async function () {
 	const candidateId = localStorage.getItem('selectedCandidateId');
 	if (!candidateId) {
 		alert('Erro: Candidato não identificado.');
 		return;
 	}
-	
-	try{
-		const arrayBuffer = await client.downloadResume(candidateId);
-		const blob = new Blob([arrayBuffer], { type: "application/pdf"});
-		const url = window.URL.createObjectURL(blob);
-
-		const a = document.createElement("a")
-		a.href = url;
-		a.download = `resume_${candidateId}.pdf`;
-		document.body.appendChild(a);
-		a.click();
-
-		a.remove();
-		window.URL.revokeObjectURL(url)
-		console.log("Download do currículo realizado.")
-
+	try {
 		
+		const apiUrl = `https://x7cmx55txd.execute-api.us-east-1.amazonaws.com/prd/files/quando-contratar-bucket-raw/${responseCandidate.pathResume}`;
+		fetch(apiUrl)
+			.then(response => {
+				if (!response.ok) throw new Error('Erro ao baixar arquivo');
+				return response.blob();
+			})
+			.then(blob => {
+				const url = window.URL.createObjectURL(blob);
+				const a = document.createElement('a');
+				a.href = url;
+				a.download = responseCandidate.name + '.pdf';
+				document.body.appendChild(a);
+				a.click();
+				a.remove();
+				window.URL.revokeObjectURL(url);
+			})
+			.catch(err => alert(err.message));
 	}
-	catch(error) {
+	catch (error) {
 		console.log('Erro ao fazer donwload', error);
 		alert("Erro ao fazer download.")
 	}
 };
 
 // Função para excluir candidato
-window.excludeCandidate = async function() {
-    const client = new CandidateClient();
-    const urlParams = new URLSearchParams(window.location.search);
-    const candidateId = urlParams.get('id') || localStorage.getItem('selectedCandidateId');
+window.excludeCandidate = async function () {
+	const client = new CandidateClient();
+	const urlParams = new URLSearchParams(window.location.search);
+	const candidateId = urlParams.get('id') || localStorage.getItem('selectedCandidateId');
 
-    if (!candidateId) {
-        alert('Erro: Candidato não identificado.');
-        return;
-    }
+	if (!candidateId) {
+		alert('Erro: Candidato não identificado.');
+		return;
+	}
 
-    const confirmDelete = confirm(
-        'Tem certeza que deseja excluir este candidato? Esta ação não pode ser desfeita.'
-    );
+	const confirmDelete = confirm(
+		'Tem certeza que deseja excluir este candidato? Esta ação não pode ser desfeita.'
+	);
 
-    if (!confirmDelete) return;
+	if (!confirmDelete) return;
 
-    try {
-        const deleted = await client.deleteCandidate(candidateId);
+	try {
+		const deleted = await client.deleteCandidate(candidateId);
 
-        alert('Candidato excluído com sucesso!');
-        console.log('Candidato excluído:', deleted);
+		alert('Candidato excluído com sucesso!');
+		console.log('Candidato excluído:', deleted);
 
-        window.location.href = "candidatos.html";
+		window.location.href = "candidatos.html";
 
-    } catch (error) {
-        console.error('Erro ao excluir candidato:', error);
-        alert('Erro ao excluir candidato.');
-    }
+	} catch (error) {
+		console.error('Erro ao excluir candidato:', error);
+		alert('Erro ao excluir candidato.');
+	}
 };
 
 /**
@@ -441,15 +445,15 @@ function atualizarPorcentagemNoDOM(progress) {
  */
 function mapKanbanCardToProcess(card) {
 	// O backend pode retornar currentStage diretamente ou stage.name
-	let stage = card.currentStage || 
-	            card.stage?.name || 
-	            card.stageName || 
-	            card.stage || 
-	            'aguardando_triagem';
-	
+	let stage = card.currentStage ||
+		card.stage?.name ||
+		card.stageName ||
+		card.stage ||
+		'aguardando_triagem';
+
 	// Normaliza o nome do stage
 	stage = String(stage).toLowerCase().trim();
-	
+
 	// Mapeia para o nome esperado pelo frontend se necessário
 	const STAGE_MAPPING = {
 		"triagem": "triagem",
@@ -462,9 +466,9 @@ function mapKanbanCardToProcess(card) {
 		"proposta_fechamento": "proposta_fechamento",
 		"contratacao": "contratacao"
 	};
-	
+
 	const mappedStage = STAGE_MAPPING[stage] || stage;
-	
+
 	const mapped = {
 		id: card.processId || card.id || card.cardId,
 		processId: card.processId || card.id || card.cardId,
@@ -478,7 +482,7 @@ function mapKanbanCardToProcess(card) {
 		currentStage: mappedStage,
 		progress: card.progress || calculateProgress(mappedStage)
 	};
-	
+
 	return mapped;
 }
 
@@ -500,7 +504,7 @@ function calculateProgress(stage) {
 		'proposta_fechamento': 87.5,
 		'contratacao': 100.0
 	};
-	
+
 	const normalizedStage = String(stage || '').toLowerCase().trim();
 	const progress = stageProgress[normalizedStage] || 0;
 	console.log(`🔢 calculateProgress: stage="${normalizedStage}" -> ${progress}%`);
@@ -514,69 +518,69 @@ function calculateProgress(stage) {
 async function carregarProcessoSeletivo(candidateId) {
 	try {
 		const selectionClient = new SelectionProcessClient();
-		
+
 		// Busca todos os processos do kanban e filtra pelo candidato
 		const allProcesses = await selectionClient.findAllKanban();
 		console.log('📊 Todos os processos do kanban:', allProcesses);
 		console.log('🔍 Buscando processo para candidato ID:', candidateId);
-		
+
 		// Converte candidateId para número para comparação
 		const candidateIdNum = Number(candidateId);
 		const candidateIdStr = String(candidateId);
-		
+
 		console.log(`🔍 Buscando processo para candidato ID (num: ${candidateIdNum}, str: ${candidateIdStr})`);
-		
+
 		// Encontra o processo deste candidato (tenta diferentes campos e formatos)
 		const candidateProcess = allProcesses.find(p => {
 			// Tenta diferentes campos onde o candidateId pode estar
-			const pCandidateId = p.candidateId || 
-			                    p.candidate?.id || 
-			                    p.candidate?.id_candidate || 
-			                    p.candidate?.idCandidate ||
-			                    p.fk_candidate || 
-			                    p.fkCandidate;
-			
+			const pCandidateId = p.candidateId ||
+				p.candidate?.id ||
+				p.candidate?.id_candidate ||
+				p.candidate?.idCandidate ||
+				p.fk_candidate ||
+				p.fkCandidate;
+
 			// Tenta diferentes comparações
-			const match = pCandidateId == candidateId || 
-			             pCandidateId === candidateIdNum ||
-			             pCandidateId === candidateIdStr ||
-			             String(pCandidateId) === candidateIdStr ||
-			             Number(pCandidateId) === candidateIdNum;
-			
+			const match = pCandidateId == candidateId ||
+				pCandidateId === candidateIdNum ||
+				pCandidateId === candidateIdStr ||
+				String(pCandidateId) === candidateIdStr ||
+				Number(pCandidateId) === candidateIdNum;
+
 			if (match) {
 				console.log('✅ Match encontrado! Processo:', p);
 				console.log('📋 CandidateId do processo:', pCandidateId, 'Tipo:', typeof pCandidateId);
 			}
 			return match;
 		});
-		
+
 		if (candidateProcess) {
 			console.log('✅ Processo seletivo encontrado (RAW):', JSON.stringify(candidateProcess, null, 2));
-			
+
 			// Mapeia o card do backend (igual ao kanban)
 			const mappedProcess = mapKanbanCardToProcess(candidateProcess);
 			console.log('✅ Processo mapeado:', mappedProcess);
-			
+
 			// Extrai dados do processo mapeado
-			let currentStage = mappedProcess.currentStage || 
-			                  candidateProcess.currentStage || 
-			                  candidateProcess.stage?.name || 
-			                  candidateProcess.stageName || 
-			                  candidateProcess.stage || 
-			                  'aguardando_triagem';
-			
+			let currentStage = mappedProcess.currentStage ||
+				candidateProcess.currentStage ||
+				candidateProcess.stage?.name ||
+				candidateProcess.stageName ||
+				candidateProcess.stage ||
+				'aguardando_triagem';
+
 			// Normaliza o stage
 			currentStage = String(currentStage).toLowerCase().trim();
-			
+
 			// SEMPRE calcula o progresso baseado na etapa (garantia)
 			// Tenta usar o progress do backend primeiro, mas se não tiver, calcula
 			let progress = mappedProcess.progress || candidateProcess.progress;
-			
+
 			// Converte para número se necessário
 			if (typeof progress === 'string') {
 				progress = parseFloat(progress);
 			}
-			
+
 			// Se não tem progresso válido, calcula baseado na etapa
 			if (!progress || progress === 0 || isNaN(progress) || progress < 0) {
 				progress = calculateProgress(currentStage);
@@ -584,26 +588,26 @@ async function carregarProcessoSeletivo(candidateId) {
 			} else {
 				console.log(`📈 Progresso do backend: ${progress}%`);
 			}
-			
+
 			// Garante que progress está entre 0 e 100
 			progress = Math.max(0, Math.min(100, Number(progress) || 0));
-			
-			const vacancyTitle = mappedProcess.vacancyTitle || 
-			                    candidateProcess.vacancyTitle ||
-			                    candidateProcess.vacancy?.position_job || 
-			                    candidateProcess.vacancy?.positionJob ||
-			                    'Vaga não especificada';
-			
+
+			const vacancyTitle = mappedProcess.vacancyTitle ||
+				candidateProcess.vacancyTitle ||
+				candidateProcess.vacancy?.position_job ||
+				candidateProcess.vacancy?.positionJob ||
+				'Vaga não especificada';
+
 			const progressFinal = Math.round(progress);
 			console.log(`✅ Dados finais - Progresso: ${progressFinal}%, Etapa: "${currentStage}", Vaga: "${vacancyTitle}"`);
 			console.log(`✅ Atualizando gráfico com ${progressFinal}% e etapa "${currentStage}"`);
-			
+
 			// Atualiza a porcentagem no DOM IMEDIATAMENTE
 			atualizarPorcentagemNoDOM(progressFinal);
-			
+
 			// Atualiza o gráfico com a porcentagem real
 			criarGraficoProgresso(progressFinal);
-			
+
 			// Atualiza informações do processo seletivo
 			atualizarInfoProcessoSeletivo({
 				progress: progressFinal,
@@ -619,14 +623,14 @@ async function carregarProcessoSeletivo(candidateId) {
 				fk_candidate: p.fk_candidate,
 				processId: p.processId || p.id
 			})));
-			
+
 			// Se não encontrou processo, mostra 0% mas ainda atualiza a interface
 			const defaultProgress = 0;
 			console.log(`⚠️ Usando progresso padrão: ${defaultProgress}%`);
-			
+
 			// Atualiza a porcentagem no DOM IMEDIATAMENTE
 			atualizarPorcentagemNoDOM(defaultProgress);
-			
+
 			criarGraficoProgresso(defaultProgress);
 			atualizarInfoProcessoSeletivo({
 				progress: defaultProgress,
@@ -637,14 +641,14 @@ async function carregarProcessoSeletivo(candidateId) {
 	} catch (error) {
 		console.error('❌ Erro ao carregar processo seletivo:', error);
 		console.error('Stack trace:', error.stack);
-		
+
 		// Em caso de erro, mostra 0% mas garante que a interface seja atualizada
 		const errorProgress = 0;
 		console.log(`❌ Erro - Usando progresso padrão: ${errorProgress}%`);
-		
+
 		// Atualiza a porcentagem no DOM IMEDIATAMENTE
 		atualizarPorcentagemNoDOM(errorProgress);
-		
+
 		criarGraficoProgresso(errorProgress);
 		atualizarInfoProcessoSeletivo({
 			progress: errorProgress,
@@ -660,13 +664,13 @@ async function carregarProcessoSeletivo(candidateId) {
  */
 function atualizarInfoProcessoSeletivo(info) {
 	console.log(`🔄 atualizarInfoProcessoSeletivo chamado com:`, info);
-	
+
 	// Atualiza a porcentagem (garante que está atualizada)
 	atualizarPorcentagemNoDOM(info.progress);
-	
+
 	// Atualiza timeline do processo seletivo
 	atualizarTimelineProcesso(info.currentStage);
-	
+
 	// Adiciona informações adicionais se necessário
 	if (info.currentStage && info.vacancyTitle) {
 		let stageInfo = document.getElementById('currentStageInfo');
@@ -680,7 +684,7 @@ function atualizarInfoProcessoSeletivo(info) {
 				progressInfo.appendChild(stageInfo);
 			}
 		}
-		
+
 		const stageNames = {
 			'aguardando_triagem': 'Aguardando Triagem',
 			'triagem': 'Triagem',
@@ -693,9 +697,9 @@ function atualizarInfoProcessoSeletivo(info) {
 			'proposta_fechamento': 'Proposta',
 			'contratacao': 'Contratação'
 		};
-		
+
 		const stageName = stageNames[info.currentStage] || info.currentStage;
-		
+
 		stageInfo.innerHTML = `
 			<p class="mb-1" style="font-weight: 600; color: #2c3e50;">Vaga em Processo:</p>
 			<p class="mb-0" style="color: #7c3aed; font-weight: 500;">${escapeHtml(info.vacancyTitle)}</p>
@@ -715,7 +719,7 @@ function atualizarTimelineProcesso(currentStage) {
 		});
 		return;
 	}
-	
+
 	// Ordem das etapas
 	const stageOrder = [
 		'aguardando_triagem',
@@ -728,17 +732,17 @@ function atualizarTimelineProcesso(currentStage) {
 		'proposta_fechamento',
 		'contratacao'
 	];
-	
+
 	const currentIndex = stageOrder.indexOf(currentStage);
-	
+
 	// Atualiza cada item da timeline
 	document.querySelectorAll('.timeline-item').forEach(item => {
 		const itemStage = item.dataset.stage;
 		const itemIndex = stageOrder.indexOf(itemStage);
-		
+
 		// Remove classes anteriores
 		item.classList.remove('completed', 'current');
-		
+
 		// Se a etapa já foi completada
 		if (itemIndex >= 0 && itemIndex < currentIndex) {
 			item.classList.add('completed');
@@ -755,10 +759,10 @@ function atualizarTimelineProcesso(currentStage) {
 function inicializarGraficoProgresso() {
 	const initProgress = 0;
 	console.log('🎨 Inicializando gráfico com 0% (aguardando dados)');
-	
+
 	// Atualiza a porcentagem no DOM IMEDIATAMENTE
 	atualizarPorcentagemNoDOM(initProgress);
-	
+
 	// Cria o gráfico
 	criarGraficoProgresso(initProgress);
 }
