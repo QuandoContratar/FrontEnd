@@ -412,11 +412,10 @@ function populateCandidatosTable(candidatos) {
         else if (matching >= 36) matchingClass = 'text-warning';
 
         // Mapear campos da API conforme DTO do backend
-        // DTO: id, nome, email, contrato, periodo, modelo, localidade, gestor, matching
         const nome = candidato.nome || candidato.name || candidato.candidateName || 'N/A';
         
-        // CONTATO = EMAIL (campo retornado pelo backend)
-        const contato = candidato.email || candidato.contato || candidato.contact || 'N/A';
+        // CONTRATO = tipo de contrato (CLT, PJ, Estágio, etc)
+        const contrato = candidato.contrato || candidato.contractType || candidato.contract_type || 'N/A';
         
         const periodo = candidato.periodo || candidato.period || 'N/A';
         const localidade = candidato.localidade || candidato.location || 'N/A';
@@ -424,7 +423,7 @@ function populateCandidatosTable(candidatos) {
 
         tr.innerHTML = `
             <td class="text-sm">${nome}</td>
-            <td class="text-sm">${contato}</td>
+            <td class="text-sm">${contrato}</td>
             <td class="text-sm">${periodo}</td>
             <td class="text-sm">${localidade}</td>
             <td class="text-sm">${gestor}</td>
