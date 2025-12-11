@@ -170,10 +170,27 @@
           btn.setAttribute('title', 'Permissão de visualização (Gestor)');
         }
       });
-      // visually mark draggable areas as read-only
+      // visually mark draggable areas as read-only but keep links clickable
       document.querySelectorAll('.column-content').forEach(c => {
-        c.style.pointerEvents = 'none';
-        c.style.opacity = '0.85';
+        // keep pointer events so details links work; only style to indicate read-only
+        c.style.opacity = '0.95';
+      });
+      // additionally, disable interactive controls except details
+      document.querySelectorAll('.column-content button, .column-content a').forEach(el => {
+        try {
+          const action = el.dataset && el.dataset.action;
+          if (action && action !== 'details') {
+            if (el.tagName.toLowerCase() === 'button') {
+              el.disabled = true;
+              el.classList.add('disabled');
+            } else {
+              // anchor: prevent click but keep it focusable for accessibility
+              el.addEventListener('click', function(e){ if (this.dataset.action !== 'details') e.preventDefault(); });
+              el.classList.add('disabled-link');
+              el.setAttribute('aria-disabled', 'true');
+            }
+          }
+        } catch (e) { }
       });
     } catch (e) { console.error('Permissions.applyKanbanRules error', e); }
   };
