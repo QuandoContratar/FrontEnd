@@ -325,115 +325,56 @@ async function loadVacancies() {
     if (isLoading) return;
     
     try {
-        isLoading = true;
         showLoading(true);
         
         // Primeiro, adiciona solicitações pendentes do localStorage à lista
         const pendingRequests = JSON.parse(localStorage.getItem('pendingOpeningRequests') || '[]');
-        console.log('📋 Solicitações pendentes no localStorage:', pendingRequests.length, pendingRequests);
+        console.log('📋 Solicitações pendentes no localStorage:', pendingRequests.length);
         
-        // Inicializa array de vagas
-        let apiVacancies = [];
-        
-        // ESTRATÉGIA 1: Busca solicitações de abertura (opening-requests)
+        // Busca solicitações pelo gestor usando o endpoint correto do backend
         try {
-            console.log('📡 [1] Buscando opening-requests do gestor ID:', currentUser.id_user);
             const result = await openingRequestClient.findByGestor(currentUser.id_user);
-            if (Array.isArray(result) && result.length > 0) {
-                apiVacancies = [...apiVacancies, ...result.map(r => ({ ...r, source: 'opening-request' }))];
-                console.log('📋 [1] Opening requests encontradas:', result.length);
-            }
+            vacancies = Array.isArray(result) ? result : [];
+            console.log('📋 Solicitações da API:', vacancies.length);
         } catch (error) {
-            console.warn('⚠️ [1] Erro ao buscar opening-requests por gestor:', error.message);
-        }
-        
-        // ESTRATÉGIA 2: Busca vagas pelo gestor (vacancies)
-        try {
-            console.log('📡 [2] Buscando vacancies do gestor ID:', currentUser.id_user);
-            const vacancyResult = await vacanciesClient.findByManager(currentUser.id_user);
-            if (Array.isArray(vacancyResult) && vacancyResult.length > 0) {
-                // Mapeia campos da vacancy para o formato esperado
-                const mappedVacancies = vacancyResult.map(v => ({
-                    id: v.id || v.id_vacancy,
-                    idOpeningRequest: v.id || v.id_vacancy,
-                    cargo: v.position_job || v.positionJob || v.position,
-                    area: v.area || 'N/A',
-                    periodo: v.period || v.periodo,
-                    status: v.statusVacancy || v.status || 'ENTRADA',
-                    createdAt: v.createdAt || v.created_at,
-                    gestor: { id_user: currentUser.id_user, name: currentUser.name },
-                    vacancy: v,
-                    source: 'vacancy',
-                    isPending: false
-                }));
-                apiVacancies = [...apiVacancies, ...mappedVacancies];
-                console.log('📋 [2] Vacancies encontradas:', vacancyResult.length);
-            }
-        } catch (error) {
-            console.warn('⚠️ [2] Erro ao buscar vacancies por manager:', error.message);
-        }
-        
-        // ESTRATÉGIA 3: Fallback - busca todas as opening-requests e filtra
-        if (apiVacancies.length === 0) {
+            console.warn('⚠️ Erro ao buscar por gestor:', error);
+            // Fallback: busca todas e filtra pelo gestor
             try {
-                console.log('📡 [3] Fallback: buscando todas as opening-requests');
                 const allRequests = await openingRequestClient.findAll();
-                if (Array.isArray(allRequests)) {
-                    const filtered = allRequests.filter(v => {
-                        const matchesGestor = 
-                            v.manager?.id_user === currentUser.id_user ||
-                            v.managerId === currentUser.id_user ||
-                            v.id_manager === currentUser.id_user ||
-                            v.gestor?.id_user === currentUser.id_user ||
-                            v.gestor_id === currentUser.id_user ||
-                            v.fk_manager === currentUser.id_user;
-                        return matchesGestor;
-                    });
-                    apiVacancies = [...apiVacancies, ...filtered.map(r => ({ ...r, source: 'opening-request-fallback' }))];
-                    console.log('📋 [3] Opening requests filtradas:', filtered.length);
-                }
+                vacancies = Array.isArray(allRequests) 
+                    ? allRequests.filter(v => 
+                        v.manager?.id_user === currentUser.id_user ||
+                        v.managerId === currentUser.id_user ||
+                        v.id_manager === currentUser.id_user ||
+                        v.gestor?.id_user === currentUser.id_user
+                    )
+                    : [];
+                console.log('📋 Solicitações do fallback:', vacancies.length);
             } catch (fallbackError) {
-                console.warn('⚠️ [3] Erro no fallback findAll:', fallbackError.message);
+                console.warn('⚠️ Erro no fallback:', fallbackError);
+                vacancies = [];
             }
         }
         
-        // Remove duplicatas por ID
-        const uniqueIds = new Set();
-        apiVacancies = apiVacancies.filter(v => {
-            const id = v.id || v.idOpeningRequest || v.id_vacancy;
-            if (uniqueIds.has(id)) return false;
-            uniqueIds.add(id);
-            return true;
-        });
-        
-        console.log('📋 Total de solicitações da API (sem duplicatas):', apiVacancies.length);
-        
-        // Combina: pendentes do localStorage + solicitações da API
-        vacancies = [];
+        // Garante que seja array
+        if (!Array.isArray(vacancies)) {
+            vacancies = [];
+        }
         
         // Adiciona solicitações pendentes à lista (marcadas como pendentes)
         if (pendingRequests.length > 0) {
-            console.log('📋 Adicionando', pendingRequests.length, 'solicitações pendentes do localStorage');
+            console.log('📋 Encontradas', pendingRequests.length, 'solicitações pendentes no localStorage:', pendingRequests);
             const pendingMapped = pendingRequests.map(req => ({
                 ...req,
-                isPending: true, // Flag para identificar como pendente de envio
+                isPending: true, // Flag para identificar como pendente
                 gestor: req.gestor || { id_user: req.gestor_id, name: currentUser.name }
             }));
-            vacancies = [...pendingMapped];
+            vacancies = [...pendingMapped, ...vacancies];
+            console.log('📋 Total de solicitações (pendentes + API):', vacancies.length);
+            console.log('📋 Solicitações mapeadas:', pendingMapped);
+        } else {
+            console.log('📋 Nenhuma solicitação pendente encontrada no localStorage');
         }
-        
-        // Adiciona solicitações da API (já enviadas)
-        if (apiVacancies.length > 0) {
-            console.log('📋 Adicionando', apiVacancies.length, 'solicitações da API');
-            // Marca como não pendentes (já foram enviadas)
-            const apiMapped = apiVacancies.map(req => ({
-                ...req,
-                isPending: false
-            }));
-            vacancies = [...vacancies, ...apiMapped];
-        }
-        
-        console.log('📋 Total de solicitações combinadas:', vacancies.length);
         
         filteredVacancies = [...vacancies];
         
@@ -447,7 +388,6 @@ async function loadVacancies() {
         filteredVacancies = [];
         renderVacancies();
     } finally {
-        isLoading = false;
         showLoading(false);
     }
 }
@@ -495,29 +435,16 @@ function renderVacancies() {
 function createVacancyItem(vacancy) {
     const item = document.createElement('div');
     item.className = 'vacancy-item';
-    
-    // Status da solicitação
-    const status = (vacancy.status || '').toUpperCase();
-    
-    // Adiciona classes baseadas no status
     if (vacancy.isPending) {
-        item.classList.add('pending-item');
+        item.classList.add('pending-item'); // Classe para identificar pendentes
     }
-    
-    // Card semi-transparente (50%) para solicitações aguardando aprovação
-    // Status: ENTRADA, ABERTA, PENDENTE_APROVACAO
-    const pendingApprovalStatuses = ['ENTRADA', 'ABERTA', 'PENDENTE_APROVACAO', 'PENDENTE APROVACAO'];
-    if (!vacancy.isPending && pendingApprovalStatuses.includes(status)) {
-        item.classList.add('sent-item'); // Classe para efeito semi-transparente 50%
-    }
-    
     item.dataset.id = vacancy.id || vacancy.idOpeningRequest;
 
     // OpeningRequestDTO campos: status, gestor (UserDTO), vacancy (VacancyDTO)
     // Para solicitações pendentes, usa os campos diretos
     const statusBadge = vacancy.isPending 
-        ? getStatusBadgeWithIcon('PENDENTE_ENVIO')
-        : getStatusBadgeWithIcon(vacancy.status);
+        ? '<span class="badge badge-warning">Pendente de Envio</span>'
+        : getStatusBadge(vacancy.status);
     
     const managerName = vacancy.gestor?.name || vacancy.manager?.name || currentUser?.name || 'N/A';
     
@@ -529,13 +456,9 @@ function createVacancyItem(vacancy) {
     const area = vacancy.vacancy?.area || vacancy.area || 'N/A';
     const createdDate = vacancy.createdAt ? formatDate(vacancy.createdAt) : '';
 
-    // Ícone do status no canto do card
-    const statusIcon = getStatusIcon(vacancy.isPending ? 'PENDENTE_ENVIO' : vacancy.status);
-
     item.innerHTML = `
         <div class="vacancy-icon">
             <i class="fas fa-briefcase"></i>
-            ${statusIcon}
         </div>
         <div class="vacancy-info">
             <div class="vacancy-details">
@@ -569,56 +492,30 @@ function createVacancyItem(vacancy) {
 }
 
 /**
- * Retorna ícone de status para exibição no card
- * @param {string} status - Status da solicitação
- */
-function getStatusIcon(status) {
-    const statusUpper = (status || '').toUpperCase();
-    
-    const iconMap = {
-        'PENDENTE_ENVIO': '<span class="status-icon status-pending" title="Pendente de Envio"><i class="fas fa-clock"></i></span>',
-        'ENTRADA': '<span class="status-icon status-waiting" title="Aguardando Aprovação"><i class="fas fa-hourglass-half"></i></span>',
-        'ABERTA': '<span class="status-icon status-waiting" title="Pendente Aprovação"><i class="fas fa-hourglass-half"></i></span>',
-        'APROVADA': '<span class="status-icon status-approved" title="Aprovada"><i class="fas fa-check-circle"></i></span>',
-        'REJEITADA': '<span class="status-icon status-rejected" title="Rejeitada"><i class="fas fa-times-circle"></i></span>',
-        'CANCELADA': '<span class="status-icon status-cancelled" title="Cancelada"><i class="fas fa-ban"></i></span>'
-    };
-    
-    return iconMap[statusUpper] || '<span class="status-icon status-unknown" title="Status Desconhecido"><i class="fas fa-question-circle"></i></span>';
-}
-
-/**
- * Retorna badge de status com ícone
- * @param {string} status - Status da solicitação (OpeningRequestStatus enum do backend)
- */
-function getStatusBadgeWithIcon(status) {
-    const statusUpper = (status || '').toUpperCase();
-    
-    // OpeningRequestStatus enum: ABERTA, CANCELADA, REJEITADA, ENTRADA, APROVADA
-    const statusMap = {
-        'PENDENTE_ENVIO': { class: 'badge-warning', text: 'Pendente de Envio', icon: 'fa-clock' },
-        'ENTRADA': { class: 'badge-info', text: 'Aguardando Aprovação', icon: 'fa-hourglass-half' },
-        'ABERTA': { class: 'badge-primary', text: 'Pendente Aprovação', icon: 'fa-hourglass-half' },
-        'APROVADA': { class: 'badge-success', text: 'Aprovada', icon: 'fa-check-circle' },
-        'REJEITADA': { class: 'badge-danger', text: 'Rejeitada', icon: 'fa-times-circle' },
-        'CANCELADA': { class: 'badge-secondary', text: 'Cancelada', icon: 'fa-ban' },
-        // Fallbacks para compatibilidade
-        'EM_ANALISE': { class: 'badge-warning', text: 'Em Análise', icon: 'fa-hourglass-half' },
-        'PENDENTE': { class: 'badge-warning', text: 'Pendente', icon: 'fa-clock' },
-        'PENDENTE_APROVACAO': { class: 'badge-info', text: 'Aguardando Aprovação', icon: 'fa-hourglass-half' }
-    };
-
-    const statusInfo = statusMap[statusUpper] || { class: 'badge-secondary', text: status || 'Desconhecido', icon: 'fa-question-circle' };
-    
-    return `<span class="badge ${statusInfo.class}"><i class="fas ${statusInfo.icon} mr-1"></i>${statusInfo.text}</span>`;
-}
-
-/**
- * Retorna badge de status (mantido para compatibilidade)
+ * Retorna badge de status
  * @param {string} status - Status da solicitação (OpeningRequestStatus enum do backend)
  */
 function getStatusBadge(status) {
-    return getStatusBadgeWithIcon(status);
+    // OpeningRequestStatus enum: ABERTA, CANCELADA, REJEITADA, ENTRADA, APROVADA
+    const statusMap = {
+        'ENTRADA': { class: 'badge-info', text: 'Entrada' },
+        'ABERTA': { class: 'badge-primary', text: 'Aberta' },
+        'APROVADA': { class: 'badge-success', text: 'Aprovada' },
+        'REJEITADA': { class: 'badge-danger', text: 'Rejeitada' },
+        'CANCELADA': { class: 'badge-secondary', text: 'Cancelada' },
+        // Fallbacks para compatibilidade (lowercase)
+        'em_analise': { class: 'badge-warning', text: 'Em Análise' },
+        'aprovada': { class: 'badge-success', text: 'Aprovada' },
+        'rejeitada': { class: 'badge-danger', text: 'Rejeitada' },
+        'cancelada': { class: 'badge-secondary', text: 'Cancelada' },
+        'rascunho': { class: 'badge-secondary', text: 'Rascunho' },
+        'pendente': { class: 'badge-warning', text: 'Pendente' },
+        'pendente aprovação': { class: 'badge-info', text: 'Aguardando Aprovação' }
+    };
+
+    const statusInfo = statusMap[status] || { class: 'badge-secondary', text: status || 'Em Análise' };
+    
+    return `<span class="badge ${statusInfo.class}">${statusInfo.text}</span>`;
 }
 
 /**
