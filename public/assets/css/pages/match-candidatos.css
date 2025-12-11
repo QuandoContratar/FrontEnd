@@ -292,7 +292,7 @@
 .vacancy-selector {
     border: 1px solid #e9ecef;
     border-radius: 8px;
-    padding: 10px 15px;
+    /* padding: 10px 15px; */
     font-size: 14px;
     color: #6c757d;
     background: #f8f9fa;
