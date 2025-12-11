@@ -55,11 +55,11 @@ const FALLBACK_DATA = {
         { status: "Rejeitadas", quantidade: 1 }
     ],
     candidatosVaga: [
-        { vaga: "Desenvolvedor Full-Stack", totalCandidatos: 25 },
-        { vaga: "Analista de RH", totalCandidatos: 18 },
-        { vaga: "Gerente de Projetos", totalCandidatos: 12 },
-        { vaga: "Designer UX/UI", totalCandidatos: 15 },
-        { vaga: "Analista de Dados", totalCandidatos: 20 }
+        { id: 1, titulo: "Desenvolvedor Full-Stack", totalCandidatos: 25 },
+        { id: 2, titulo: "Analista de RH", totalCandidatos: 18 },
+        { id: 3, titulo: "Gerente de Projetos", totalCandidatos: 12 },
+        { id: 4, titulo: "Designer UX/UI", totalCandidatos: 15 },
+        { id: 5, titulo: "Analista de Dados", totalCandidatos: 20 }
     ],
     tipoContrato: [
         { contrato: "CLT", total: 14 },
@@ -324,23 +324,24 @@ async function loadCandidatosVaga() {
     // Debug: mostrar estrutura dos dados recebidos
     console.log('🔍 [Dashboard] Estrutura dos dados recebidos:', JSON.stringify(result[0], null, 2));
 
-    // Mapear dados - verificar todos os possíveis campos de nome da vaga
+    // Mapear dados - usar 'titulo' como campo principal (retornado pelo backend)
     const vagas = result.map(r => {
-        // Tentar múltiplos campos possíveis para o nome da vaga
-        const nomeDaVaga = r.vaga 
-            || r.nome 
-            || r.name
-            || r.position_job 
-            || r.positionJob
-            || r.title 
-            || r.vacancy
-            || r.vacancyName
-            || r.vacancy_name
-            || r.jobTitle
-            || r.job_title
-            || r.cargo
-            || r.descricao
-            || 'Vaga sem nome';
+        // Priorizar 'titulo' que é o campo retornado pelo backend
+        const nomeDaVaga = r.titulo
+            ?? r.vaga 
+            ?? r.nome 
+            ?? r.name
+            ?? r.position_job 
+            ?? r.positionJob
+            ?? r.title 
+            ?? r.vacancy
+            ?? r.vacancyName
+            ?? r.vacancy_name
+            ?? r.jobTitle
+            ?? r.job_title
+            ?? r.cargo
+            ?? r.descricao
+            ?? 'Vaga sem nome';
         
         console.log('📋 Vaga mapeada:', nomeDaVaga, '| Objeto:', r);
         return nomeDaVaga;
@@ -384,8 +385,12 @@ async function loadCandidatosVaga() {
                     const vagaData = result[index];
                     if (vagaData) {
                         const vagaId = vagaData.id || vagaData.vagaId;
+                        // Extrair título da vaga para passar na URL
+                        const vagaTitulo = vagaData.titulo ?? vagaData.position_job ?? vagaData.nome ?? '';
                         if (vagaId) {
-                            window.location.href = `vaga-detalhe.html?id=${vagaId}`;
+                            const params = new URLSearchParams({ id: vagaId });
+                            if (vagaTitulo) params.append('titulo', vagaTitulo);
+                            window.location.href = `vaga-detalhe.html?${params.toString()}`;
                         }
                     }
                 }
@@ -444,21 +449,22 @@ async function loadVagasTable(vagasData = null) {
         tr.style.cursor = 'pointer';
         tr.className = 'vaga-row';
         
-        // Usar o mesmo mapeamento do gráfico para o nome da vaga
-        const vagaNome = vaga.vaga 
-            || vaga.nome 
-            || vaga.name
-            || vaga.position_job 
-            || vaga.positionJob
-            || vaga.title 
-            || vaga.vacancy
-            || vaga.vacancyName
-            || vaga.vacancy_name
-            || vaga.jobTitle
-            || vaga.job_title
-            || vaga.cargo
-            || vaga.descricao
-            || 'Vaga sem nome';
+        // Priorizar 'titulo' que é o campo retornado pelo backend
+        const vagaNome = vaga.titulo
+            ?? vaga.vaga 
+            ?? vaga.nome 
+            ?? vaga.name
+            ?? vaga.position_job 
+            ?? vaga.positionJob
+            ?? vaga.title 
+            ?? vaga.vacancy
+            ?? vaga.vacancyName
+            ?? vaga.vacancy_name
+            ?? vaga.jobTitle
+            ?? vaga.job_title
+            ?? vaga.cargo
+            ?? vaga.descricao
+            ?? 'Vaga sem nome';
         const totalCandidatos = vaga.totalCandidatos || vaga.candidatesCount || vaga.total || vaga.count || 0;
         
         tr.innerHTML = `
@@ -470,8 +476,12 @@ async function loadVagasTable(vagasData = null) {
         tr.addEventListener('click', function() {
             const vagaId = vaga.id || vaga.vagaId;
             if (vagaId) {
-                // Navegar para a tela de detalhes da vaga com o ID
-                window.location.href = `vaga-detalhe.html?id=${vagaId}`;
+                // Navegar para a tela de detalhes da vaga com ID e título
+                const params = new URLSearchParams({ id: vagaId });
+                if (vagaNome && vagaNome !== 'Vaga sem nome') {
+                    params.append('titulo', vagaNome);
+                }
+                window.location.href = `vaga-detalhe.html?${params.toString()}`;
             } else {
                 // Se não tiver ID, usar o nome como fallback
                 const vagaNomeEncoded = encodeURIComponent(vagaNome);
@@ -838,8 +848,8 @@ async function setupTopCandidatesSelect() {
         
         vagas.forEach(vaga => {
             const id = vaga.id || vaga.vacancyId || vaga.id_vacancy;
-            // Prioridade: position_job -> cargo -> area -> "Vaga #ID"
-            const titulo = vaga.position_job || vaga.cargo || vaga.area || vaga.position || `Vaga #${id}`;
+            // Prioridade: titulo -> position_job -> cargo -> area -> "Vaga #ID"
+            const titulo = vaga.titulo ?? vaga.position_job ?? vaga.cargo ?? vaga.area ?? vaga.position ?? `Vaga #${id}`;
             select.innerHTML += `<option value="${id}">${titulo}</option>`;
         });
     } catch (error) {
@@ -867,7 +877,8 @@ async function setupPipelineSelect() {
         
         vagas.forEach(vaga => {
             const id = vaga.id || vaga.vacancyId || vaga.id_vacancy;
-            const titulo = vaga.position_job || vaga.cargo || vaga.area || vaga.position || `Vaga #${id}`;
+            // Prioridade: titulo -> position_job -> cargo -> area -> "Vaga #ID"
+            const titulo = vaga.titulo ?? vaga.position_job ?? vaga.cargo ?? vaga.area ?? vaga.position ?? `Vaga #${id}`;
             select.innerHTML += `<option value="${id}">${titulo}</option>`;
         });
     } catch (error) {

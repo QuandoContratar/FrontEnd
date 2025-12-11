@@ -38,6 +38,11 @@ function getVagaIdFromUrl() {
     return params.get('id') || params.get('vagaId');
 }
 
+function getVagaTituloFromUrl() {
+    const params = new URLSearchParams(window.location.search);
+    return params.get('titulo') || params.get('nome') || params.get('title');
+}
+
 function numberFormat(number) {
     if (number === null || number === undefined) return '0';
     return number.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
@@ -48,11 +53,26 @@ function showLoading(elementId) {
     if (el) el.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
 }
 
+/**
+ * Extrai o nome da vaga de um objeto, priorizando 'titulo' conforme backend
+ */
+function extrairNomeVaga(vaga) {
+    return vaga.titulo
+        ?? vaga.position_job
+        ?? vaga.positionJob
+        ?? vaga.nome
+        ?? vaga.name
+        ?? vaga.title
+        ?? vaga.cargo
+        ?? 'Vaga';
+}
+
 // ============================
 // CARREGAR DADOS DA VAGA
 // ============================
 async function loadVagaDetails() {
     currentVagaId = getVagaIdFromUrl();
+    const tituloFromUrl = getVagaTituloFromUrl();
     
     if (!currentVagaId) {
         console.warn('⚠️ [Vaga Detalhe] Nenhuma vaga selecionada');
@@ -62,10 +82,18 @@ async function loadVagaDetails() {
 
     console.log('📊 [Vaga Detalhe] Iniciando carregamento da vaga:', currentVagaId);
 
-    // Carregar KPIs primeiro para preencher os cards
+    // Se já temos o título da URL, mostrar imediatamente
+    if (tituloFromUrl) {
+        updatePageTitle(tituloFromUrl);
+    }
+
+    // Carregar informações completas da vaga primeiro (para preencher título e card de informações)
+    await loadVagaInfo(currentVagaId);
+
+    // Carregar KPIs para preencher os cards
     await loadKPIs(currentVagaId);
     
-    // Carregar candidatos (isso também popula informações da vaga)
+    // Carregar candidatos
     await loadCandidatos(currentVagaId, 'all');
     
     // Carregar gráfico de retenção
@@ -73,6 +101,63 @@ async function loadVagaDetails() {
     
     // Carregar ocupação
     await loadOcupacao(currentVagaId);
+}
+
+/**
+ * Atualiza o título da página com o nome da vaga
+ */
+function updatePageTitle(nomeVaga) {
+    const titulo = document.getElementById('vagaTitulo');
+    if (titulo) {
+        titulo.textContent = `Painel de candidatos para ${nomeVaga}`;
+    }
+    // Atualizar também o título da aba do navegador
+    document.title = `${nomeVaga} - Detalhes da Vaga - Quando Previdência`;
+}
+
+/**
+ * Carrega informações completas da vaga do endpoint /vacancies/{id}
+ */
+async function loadVagaInfo(vagaId) {
+    try {
+        console.log('📊 [Vaga Detalhe] Carregando informações da vaga...');
+        const vagaData = await dashboardClient.getVagaById(vagaId);
+        console.log('✅ [Vaga Detalhe] Informações da vaga:', vagaData);
+        
+        // Extrair nome da vaga usando a função utilitária
+        const nomeVaga = extrairNomeVaga(vagaData);
+        
+        // Atualizar título da página
+        updatePageTitle(nomeVaga);
+        
+        // Armazenar dados para uso em outras funções
+        currentVagaData = {
+            id: vagaData.id,
+            nome: nomeVaga,
+            gestor: vagaData.manager?.name || vagaData.managerName || vagaData.gestor,
+            periodo: vagaData.period || vagaData.periodo,
+            workModel: vagaData.workModel || vagaData.work_model || vagaData.modelo,
+            location: vagaData.location || vagaData.localidade,
+            area: vagaData.area,
+            status: vagaData.statusVacancy || vagaData.status,
+            descricao: vagaData.requirements || vagaData.descricao,
+            salario: vagaData.salary,
+            contractType: vagaData.contractType || vagaData.contract_type
+        };
+        
+        // Preencher card de informações (sem ocupação ainda)
+        loadInformacoes(currentVagaData);
+        
+        return vagaData;
+    } catch (error) {
+        console.error('❌ [Vaga Detalhe] Erro ao carregar informações da vaga:', error);
+        // Se falhar, tentar extrair do título da URL
+        const tituloFromUrl = getVagaTituloFromUrl();
+        if (tituloFromUrl) {
+            updatePageTitle(tituloFromUrl);
+        }
+        return null;
+    }
 }
 
 function showErrorState(message) {
@@ -215,41 +300,9 @@ async function loadCandidatos(vagaId, matchFilter = 'all') {
         candidatosData = [];
     }
 
-    // Se retornou dados, extrair informações da vaga do primeiro candidato
-    if (candidatosData && candidatosData.length > 0) {
-        const firstCandidate = candidatosData[0];
-        
-        // Atualizar título da página com nome da vaga
-        const titulo = document.getElementById('vagaTitulo');
-        if (titulo && firstCandidate.vacancyTitle) {
-            titulo.textContent = `Painel de candidatos para {${firstCandidate.vacancyTitle}}`;
-        }
-        
-        // Armazenar dados da vaga para informações
-        currentVagaData = {
-            nome: firstCandidate.vacancyTitle || firstCandidate.position_job,
-            periodo: firstCandidate.period,
-            workModel: firstCandidate.workModel,
-            location: firstCandidate.location,
-            managerName: firstCandidate.managerName,
-            totalCandidatos: candidatosData.length
-        };
-        
-        // Atualizar bloco de informações da vaga
-        loadInformacoes(currentVagaData);
-    } else {
-        // Tentar carregar informações da vaga separadamente
-        try {
-            const vagaInfo = await dashboardClient.getVagaById(vagaId);
-            const titulo = document.getElementById('vagaTitulo');
-            if (titulo) {
-                titulo.textContent = `Painel de candidatos para {${vagaInfo.nome || vagaInfo.position_job || 'Vaga'}}`;
-            }
-            currentVagaData = vagaInfo;
-            loadInformacoes(currentVagaData);
-        } catch (e) {
-            console.warn('⚠️ Não foi possível carregar informações da vaga');
-        }
+    // Atualizar total de candidatos no card de informações
+    if (currentVagaData) {
+        currentVagaData.totalCandidatos = candidatosData.length;
     }
 
     // Gerar filtros de match
@@ -358,9 +411,13 @@ function populateCandidatosTable(candidatos) {
         else if (matching >= 66) matchingClass = 'text-info';
         else if (matching >= 36) matchingClass = 'text-warning';
 
-        // Mapear campos da API (pode vir em português ou inglês)
+        // Mapear campos da API conforme DTO do backend
+        // DTO: id, nome, email, contrato, periodo, modelo, localidade, gestor, matching
         const nome = candidato.nome || candidato.name || candidato.candidateName || 'N/A';
-        const contato = candidato.contato || candidato.contact || candidato.contractType || 'N/A';
+        
+        // CONTATO = EMAIL (campo retornado pelo backend)
+        const contato = candidato.email || candidato.contato || candidato.contact || 'N/A';
+        
         const periodo = candidato.periodo || candidato.period || 'N/A';
         const localidade = candidato.localidade || candidato.location || 'N/A';
         const gestor = candidato.gestor || candidato.manager || candidato.managerName || 'N/A';
@@ -467,9 +524,15 @@ async function loadOcupacao(vagaId) {
         const ocupacaoData = await dashboardClient.getVagaOcupacao(vagaId);
         console.log('✅ [Vaga Detalhe] Ocupação carregada:', ocupacaoData);
         
-        // Se houver dados de ocupação, adicionar ao bloco de informações
+        // Atualizar dados da vaga com ocupação
+        // DTO: total, preenchidas, faltam
         if (ocupacaoData && currentVagaData) {
-            currentVagaData.ocupacao = ocupacaoData;
+            currentVagaData.ocupacao = {
+                total: ocupacaoData.total || 0,
+                preenchidas: ocupacaoData.preenchidas || 0,
+                faltam: ocupacaoData.faltam || 0
+            };
+            // Atualizar card de informações com ocupação
             loadInformacoes(currentVagaData);
         }
     } catch (error) {
@@ -484,85 +547,141 @@ function loadInformacoes(vagaData) {
     const infoDiv = document.getElementById('vagaInfo');
     if (!infoDiv || !vagaData) return;
 
-    // Formatar data se disponível
-    let dataAbertura = 'N/A';
-    if (vagaData.dataAbertura) {
+    // Formatar salário se disponível
+    let salarioFormatado = 'Não informado';
+    if (vagaData.salario) {
         try {
-            dataAbertura = new Date(vagaData.dataAbertura).toLocaleDateString('pt-BR');
+            salarioFormatado = new Intl.NumberFormat('pt-BR', { 
+                style: 'currency', 
+                currency: 'BRL' 
+            }).format(Number(vagaData.salario));
         } catch (e) {
-            dataAbertura = vagaData.dataAbertura;
+            salarioFormatado = vagaData.salario;
         }
     }
 
-    // Verificar ocupação
-    let ocupacaoHtml = '';
-    if (vagaData.ocupacao) {
-        ocupacaoHtml = `
+    // Extrair dados com fallbacks
+    const nomeVaga = vagaData.nome || vagaData.position_job || vagaData.titulo || 'Não informado';
+    const gestor = vagaData.gestor || vagaData.managerName || 'Não informado';
+    const periodo = vagaData.periodo || vagaData.period || 'Não informado';
+    const workModel = vagaData.workModel || vagaData.work_model || vagaData.modelo || 'Não informado';
+    const location = vagaData.location || vagaData.localidade || 'Não informado';
+    const area = vagaData.area || 'Não informado';
+
+    // Construir HTML do card de informações
+    let html = `
+        <div class="row">
             <div class="col-md-6">
                 <p class="mb-2">
-                    <strong>Vagas Disponíveis:</strong><br>
-                    <span class="text-info font-weight-bold">${vagaData.ocupacao.vagasRestantes || 0} de ${vagaData.ocupacao.totalVagas || 0}</span>
+                    <strong><i class="fas fa-briefcase text-primary mr-2"></i>Nome da Vaga:</strong><br>
+                    <span class="text-gray-800">${nomeVaga}</span>
                 </p>
             </div>
+            <div class="col-md-6">
+                <p class="mb-2">
+                    <strong><i class="fas fa-user-tie text-primary mr-2"></i>Gestor:</strong><br>
+                    <span class="text-gray-800">${gestor}</span>
+                </p>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-6">
+                <p class="mb-2">
+                    <strong><i class="fas fa-clock text-primary mr-2"></i>Período:</strong><br>
+                    <span class="text-gray-800">${periodo}</span>
+                </p>
+            </div>
+            <div class="col-md-6">
+                <p class="mb-2">
+                    <strong><i class="fas fa-laptop-house text-primary mr-2"></i>Modelo de Trabalho:</strong><br>
+                    <span class="text-gray-800">${workModel}</span>
+                </p>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-6">
+                <p class="mb-2">
+                    <strong><i class="fas fa-map-marker-alt text-primary mr-2"></i>Localização:</strong><br>
+                    <span class="text-gray-800">${location}</span>
+                </p>
+            </div>
+            <div class="col-md-6">
+                <p class="mb-2">
+                    <strong><i class="fas fa-building text-primary mr-2"></i>Área:</strong><br>
+                    <span class="text-gray-800">${area}</span>
+                </p>
+            </div>
+        </div>
+    `;
+
+    // Adicionar ocupação se disponível
+    if (vagaData.ocupacao) {
+        const faltam = vagaData.ocupacao.faltam || 0;
+        const total = vagaData.ocupacao.total || 0;
+        const preenchidas = vagaData.ocupacao.preenchidas || 0;
+        
+        // Calcular porcentagem de preenchimento
+        const porcentagem = total > 0 ? Math.round((preenchidas / total) * 100) : 0;
+        
+        // Definir cor baseada no preenchimento
+        let corBarra = 'bg-success';
+        if (porcentagem < 50) corBarra = 'bg-danger';
+        else if (porcentagem < 75) corBarra = 'bg-warning';
+
+        html += `
+        <div class="row">
+            <div class="col-md-6">
+                <p class="mb-2">
+                    <strong><i class="fas fa-users text-primary mr-2"></i>Vagas Disponíveis:</strong><br>
+                    <span class="h5 text-info font-weight-bold">${faltam}</span> 
+                    <span class="text-gray-600">de ${total}</span>
+                </p>
+                <div class="progress mb-2" style="height: 10px;">
+                    <div class="progress-bar ${corBarra}" role="progressbar" 
+                         style="width: ${porcentagem}%" 
+                         aria-valuenow="${preenchidas}" 
+                         aria-valuemin="0" 
+                         aria-valuemax="${total}">
+                    </div>
+                </div>
+                <small class="text-muted">${preenchidas} preenchidas (${porcentagem}%)</small>
+            </div>
+            <div class="col-md-6">
+                <p class="mb-2">
+                    <strong><i class="fas fa-user-friends text-primary mr-2"></i>Total de Candidatos:</strong><br>
+                    <span class="h5 text-primary font-weight-bold">${numberFormat(vagaData.totalCandidatos || 0)}</span>
+                </p>
+            </div>
+        </div>
+        `;
+    } else {
+        // Mostrar apenas total de candidatos se ocupação não disponível
+        html += `
+        <div class="row">
+            <div class="col-md-6">
+                <p class="mb-2">
+                    <strong><i class="fas fa-user-friends text-primary mr-2"></i>Total de Candidatos:</strong><br>
+                    <span class="h5 text-primary font-weight-bold">${numberFormat(vagaData.totalCandidatos || 0)}</span>
+                </p>
+            </div>
+        </div>
         `;
     }
 
-    const html = `
-        <div class="row">
-            <div class="col-md-6">
-                <p class="mb-2">
-                    <strong>Nome da Vaga:</strong><br>
-                    ${vagaData.nome || vagaData.position_job || 'N/A'}
-                </p>
-            </div>
-            <div class="col-md-6">
-                <p class="mb-2">
-                    <strong>Gestor:</strong><br>
-                    ${vagaData.managerName || vagaData.gestor || 'N/A'}
-                </p>
-            </div>
-        </div>
-        <div class="row">
-            <div class="col-md-6">
-                <p class="mb-2">
-                    <strong>Período:</strong><br>
-                    ${vagaData.periodo || vagaData.period || 'N/A'}
-                </p>
-            </div>
-            <div class="col-md-6">
-                <p class="mb-2">
-                    <strong>Modelo de Trabalho:</strong><br>
-                    ${vagaData.workModel || 'N/A'}
-                </p>
-            </div>
-        </div>
-        <div class="row">
-            <div class="col-md-6">
-                <p class="mb-2">
-                    <strong>Localização:</strong><br>
-                    ${vagaData.location || vagaData.localidade || 'N/A'}
-                </p>
-            </div>
-            ${ocupacaoHtml || `
-            <div class="col-md-6">
-                <p class="mb-2">
-                    <strong>Total de Candidatos:</strong><br>
-                    <span class="text-primary font-weight-bold">${numberFormat(vagaData.totalCandidatos || 0)}</span>
-                </p>
-            </div>
-            `}
-        </div>
-        ${vagaData.descricao ? `
+    // Adicionar descrição/requisitos se disponível
+    if (vagaData.descricao) {
+        html += `
+        <hr class="my-3">
         <div class="row">
             <div class="col-md-12">
                 <p class="mb-0">
-                    <strong>Descrição:</strong><br>
-                    ${vagaData.descricao}
+                    <strong><i class="fas fa-file-alt text-primary mr-2"></i>Requisitos:</strong><br>
+                    <span class="text-gray-700">${vagaData.descricao}</span>
                 </p>
             </div>
         </div>
-        ` : ''}
-    `;
+        `;
+    }
 
     infoDiv.innerHTML = html;
 }
