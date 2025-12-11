@@ -1086,4 +1086,4 @@ async function base64ToFile(base64, fileName, mimeType = 'application/pdf') {
 // Funções globais para o modal (compatibilidade com onclick no HTML)
 window.showDeleteModal = showDeleteModal;
 window.hideDeleteModal = hideDeleteModal;
-window.confirmDelete = confirmDelete;
+window.confirmDelete = confirmDelete;   
