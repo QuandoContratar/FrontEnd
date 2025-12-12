@@ -194,7 +194,7 @@
                     <!-- 1️⃣ Header – Filtros gerais -->
                     <div class="dashboard-header">
                         <div class="row align-items-center">
-                            <div class="col-md-6">
+                            <div class="col-md-12">
                                 <label for="areaFilter" class="font-weight-bold text-gray-700">Filtro por Área:</label>
                                 <select id="areaFilter" class="form-control">
                                     <option value="">Todas as Áreas</option>
@@ -203,16 +203,6 @@
                                     <option value="Comercial">Comercial</option>
                                     <option value="Marketing">Marketing</option>
                                     <option value="Financeiro">Financeiro</option>
-                                </select>
-                            </div>
-                            <div class="col-md-6">
-                                <label for="periodFilter" class="font-weight-bold text-gray-700">Filtro por Período:</label>
-                                <select id="periodFilter" class="form-control">
-                                    <option value="last_month">Último Mês</option>
-                                    <option value="last_3_months">Últimos 3 Meses</option>
-                                    <option value="last_6_months">Últimos 6 Meses</option>
-                                    <option value="last_year" selected>Último Ano</option>
-                                    <option value="all">Todo o Período</option>
                                 </select>
                             </div>
                         </div>
@@ -370,44 +360,6 @@
                         </div>
                     </div>
 
-                    <!-- 9️⃣ Taxa de aprovação por etapa -->
-                    <div class="row mb-4">
-                        <div class="col-xl-12">
-                            <div class="card shadow mb-4">
-                                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-                                    <h6 class="m-0 font-weight-bold text-primary">Taxa de Aprovação por Etapa</h6>
-                                </div>
-                                <div class="card-body">
-                                    <div class="row">
-                                        <div class="col-md-3">
-                                            <div class="approval-card success">
-                                                <div class="approval-stage">Triagem</div>
-                                                <div class="approval-rate" id="taxaTriagem">40%</div>
-                                            </div>
-                                        </div>
-                                        <div class="col-md-3">
-                                            <div class="approval-card info">
-                                                <div class="approval-stage">Teste Técnico</div>
-                                                <div class="approval-rate" id="taxaTesteTecnico">30%</div>
-                                            </div>
-                                        </div>
-                                        <div class="col-md-3">
-                                            <div class="approval-card warning">
-                                                <div class="approval-stage">Entrevista</div>
-                                                <div class="approval-rate" id="taxaEntrevista">10%</div>
-                                            </div>
-                                        </div>
-                                        <div class="col-md-3">
-                                            <div class="approval-card success">
-                                                <div class="approval-stage">Fit Cultural</div>
-                                                <div class="approval-rate" id="taxaFitCultural">5%</div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
 
                 </div>
                 <!-- /.container-fluid -->

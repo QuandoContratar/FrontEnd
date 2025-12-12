@@ -2064,8 +2064,7 @@ async function initDashboard() {
             loadTaxaContratacaoPorArea(),
             loadMatchScore(),
             loadTopFaculdades(),
-            loadTempoContratacao(),
-            loadTaxaAprovacaoEtapa()
+            loadTempoContratacao()
         ]);
 
         // Gráficos existentes (manter compatibilidade)
@@ -2108,7 +2107,6 @@ async function initDashboard() {
 
 // Variável global para armazenar a área selecionada
 let selectedArea = '';
-let selectedPeriod = 'last_year';
 
 // ============================
 // NOVAS FUNÇÕES - Dashboard Completo
@@ -2447,32 +2445,6 @@ async function loadFunilCompleto(vacancyId) {
     });
 }
 
-// 9️⃣ Taxa de aprovação por etapa (já existe, mas vamos atualizar)
-async function loadTaxaAprovacaoEtapa() {
-    let data;
-    try {
-        data = await dashboardClient.getMetrics();
-    } catch (error) {
-        data = {
-            qtdCurriculos: 156,
-            triagem: 98,
-            testeTecnico: 42,
-            entrevista: 30,
-            fitCultural: 12
-        };
-    }
-
-    const curriculos = data.qtdCurriculos || 156;
-    const triagem = data.triagem || 98;
-    const testeTecnico = data.testeTecnico || 42;
-    const entrevista = data.entrevista || 30;
-    const fitCultural = data.fitCultural || 12;
-
-    document.getElementById('taxaTriagem').textContent = curriculos > 0 ? `${Math.round((triagem / curriculos) * 100)}%` : '0%';
-    document.getElementById('taxaTesteTecnico').textContent = triagem > 0 ? `${Math.round((testeTecnico / triagem) * 100)}%` : '0%';
-    document.getElementById('taxaEntrevista').textContent = testeTecnico > 0 ? `${Math.round((entrevista / testeTecnico) * 100)}%` : '0%';
-    document.getElementById('taxaFitCultural').textContent = entrevista > 0 ? `${Math.round((fitCultural / entrevista) * 100)}%` : '0%';
-}
 
 // 🔟 Custo por contratação
 let custoContratacaoChartInstance = null;
@@ -2537,10 +2509,9 @@ async function loadCustoContratacao() {
     });
 }
 
-// Filtro de área e período
+// Filtro de área
 function setupAreaFilter() {
     const areaFilter = document.getElementById('areaFilter');
-    const periodFilter = document.getElementById('periodFilter');
     
     if (areaFilter) {
         areaFilter.addEventListener('change', function() {
@@ -2549,19 +2520,11 @@ function setupAreaFilter() {
             reloadDashboardByArea();
         });
     }
-    
-    if (periodFilter) {
-        periodFilter.addEventListener('change', function() {
-            selectedPeriod = this.value;
-            console.log('📅 Período selecionado:', selectedPeriod);
-            reloadDashboardByArea();
-        });
-    }
 }
 
-// Função para recarregar dados filtrando pela área e período
+// Função para recarregar dados filtrando pela área
 async function reloadDashboardByArea() {
-    console.log('🔄 Recarregando dashboard para a área:', selectedArea, 'período:', selectedPeriod);
+    console.log('🔄 Recarregando dashboard para a área:', selectedArea);
     
     // Recarregar todos os gráficos principais
     await Promise.all([
@@ -2571,7 +2534,6 @@ async function reloadDashboardByArea() {
         loadMatchScore(),
         loadTopFaculdades(),
         loadTempoContratacao(),
-        loadTaxaAprovacaoEtapa(),
         loadCandidatosVaga()
     ]);
 }
