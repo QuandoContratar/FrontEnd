@@ -526,9 +526,13 @@
                                     <h6 class="m-0 font-weight-bold text-primary">
                                         <i class="fas fa-briefcase fa-fw"></i>
                                         Vagas Disponíveis
+                                        <span class="badge badge-info ml-2" id="vagasCount">0</span>
                                     </h6>
+                                    <button class="btn btn-sm btn-primary" id="btnAtualizarVagas" title="Atualizar lista de vagas">
+                                        <i class="fas fa-sync-alt"></i> Atualizar
+                                    </button>
                                 </div>
-                                <div class="card-body">
+                                <div class="card-body" id="vagasContainer">
                                     <!-- Vaga 1 -->
                                     <div class="vaga-card">
                                         <div class="row align-items-center">
@@ -751,24 +755,53 @@
         import { VacanciesClient } from './client/client.js';
         $(document).ready(async function () {
             const vacanciesClient = new VacanciesClient();
-            const vagasContainer = $('.card-body');
-
+            const vagasContainer = $('#vagasContainer');
+            
+            // Armazena as vagas carregadas para acesso rápido
+            let vagasCarregadas = [];
 
             // Função para atualizar KPI e renderizar vagas
             async function atualizarVagas() {
                 try {
+                    console.log('🔄 [vagas.html] Iniciando busca de vagas ativas...');
+                    
+                    // Mostra loading
+                    vagasContainer.html(`
+                        <div class="text-center py-4">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="sr-only">Carregando...</span>
+                            </div>
+                            <p class="mt-2 text-muted">Carregando vagas...</p>
+                        </div>
+                    `);
+                    
                     const vagas = await vacanciesClient.findActiveVacancies();
                     console.log('🔍 [vagas.html] Vagas recebidas do backend:', vagas);
+                    console.log('🔍 [vagas.html] Quantidade de vagas:', vagas ? vagas.length : 0);
                     
                     // Armazena vagas para acesso posterior
-                    vagasCarregadas = vagas;
-                    // KPI removed from UI; no-op
+                    vagasCarregadas = vagas || [];
+                    
+                    // Atualiza contador
+                    $('#vagasCount').text(vagasCarregadas.length);
+                    
                     // Renderiza cards
                     vagasContainer.empty();
-                    if (!vagas.length) {
-                        vagasContainer.append('<p class="text-center">Nenhuma vaga encontrada.</p>');
+                    
+                    if (!vagas || !vagas.length) {
+                        vagasContainer.html(`
+                            <div class="text-center py-4">
+                                <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                                <p class="text-muted">Nenhuma vaga disponível no momento.</p>
+                                <p class="small text-muted">Vagas aparecem aqui após serem aprovadas pelo RH.</p>
+                                <button class="btn btn-sm btn-outline-primary mt-2" onclick="location.reload()">
+                                    <i class="fas fa-sync-alt"></i> Tentar novamente
+                                </button>
+                            </div>
+                        `);
                         return;
                     }
+                    
                     vagas.forEach((vaga, index) => {
                         // Log completo do objeto vaga para debug
                         console.log(`🔍 [vagas.html] Vaga ${index}:`, JSON.stringify(vaga, null, 2));
@@ -787,12 +820,12 @@
                                         </div>
                                     </div>
                                     <div class="col-md-6">
-                                        <div class="vaga-title">${vaga.positionJob || vaga.position_job || ''}</div>
+                                        <div class="vaga-title">${vaga.positionJob || vaga.position_job || vaga.position || 'Vaga sem título'}</div>
                                         <div class="vaga-manager">Gestor(a): ${vaga.managerName || vaga.manager?.name || '-'}</div>
-                                        <div class="vaga-details">Área: ${vaga.area || '-'} | Modelo: ${vaga.workModel || vaga.work_model || '-'}</div>
+                                        <div class="vaga-details">Área: ${vaga.area || '-'} | Modelo: ${vaga.workModel || vaga.work_model || '-'} | Status: ${vaga.statusVacancy || vaga.status || '-'}</div>
                                     </div>
                                     <div class="col-md-5 text-right">
-                                        <button class="btn btn-enviar" data-vaga-id="${vagaId}" data-vaga-title="${(vaga.positionJob || vaga.position_job || '').replace(/"/g, '&quot;')}">Enviar Currículo</button>
+                                        <button class="btn btn-enviar" data-vaga-id="${vagaId}" data-vaga-title="${(vaga.positionJob || vaga.position_job || vaga.position || '').replace(/"/g, '&quot;')}">Enviar Currículo</button>
                                         <button class="btn btn-ver-mais" data-vaga-id="${vagaId}" data-vaga-index="${index}">
                                             <i class="fas fa-eye mr-1"></i>
                                             Ver Mais
@@ -803,13 +836,27 @@
                         `);
                     });
                 } catch (err) {
-                    // KPI removed from UI; show error message
-                    vagasContainer.empty().append('<p class="text-center text-danger">Erro ao carregar vagas.</p>');
+                    console.error('❌ [vagas.html] Erro ao carregar vagas:', err);
+                    vagasContainer.html(`
+                        <div class="text-center py-4">
+                            <i class="fas fa-exclamation-triangle fa-3x text-danger mb-3"></i>
+                            <p class="text-danger">Erro ao carregar vagas.</p>
+                            <p class="small text-muted">${err.message || 'Verifique se o backend está rodando.'}</p>
+                            <button class="btn btn-sm btn-outline-danger mt-2" onclick="location.reload()">
+                                <i class="fas fa-sync-alt"></i> Tentar novamente
+                            </button>
+                        </div>
+                    `);
                 }
             }
-
-            // Armazena as vagas carregadas para acesso rápido
-            let vagasCarregadas = [];
+            
+            // Botão de atualização
+            $('#btnAtualizarVagas').on('click', async function() {
+                const $btn = $(this);
+                $btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Atualizando...');
+                await atualizarVagas();
+                $btn.prop('disabled', false).html('<i class="fas fa-sync-alt"></i> Atualizar');
+            });
 
             await atualizarVagas();
 

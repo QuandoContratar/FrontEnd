@@ -1,8 +1,9 @@
 export class ApiClient {
     constructor(route) {
         this.route = route
-     this.baseUrl = 'http://98.94.28.203:8080' // Produção
-        // this.baseUrl = 'http://localhost:8080'
+        // AMBIENTE: Descomente a linha correta para seu ambiente
+        // this.baseUrl = 'http://98.94.28.203:8080' // Produção
+        this.baseUrl = 'http://localhost:8080' // Desenvolvimento local
     }
 
     get url() {
@@ -173,10 +174,114 @@ export class VacanciesClient extends ApiClient {
         return response.json();
     }
 
+    /**
+     * Busca vagas ativas (status = 'aberta' ou similares)
+     * Estratégia múltipla com fallbacks para garantir que vagas aprovadas apareçam:
+     * 1. GET /vacancies/activesVacancies
+     * 2. GET /vacancies/status/aberta
+     * 3. GET /vacancies/status/ABERTA (uppercase)
+     * 4. Busca todas e filtra por status
+     */
     async findActiveVacancies() {
-        const response = await fetch(`${this.url}/activesVacancies`);
-        if (!response.ok) throw new Error('Erro ao buscar vagas ativas');
-        return response.json();
+        console.log('📤 [VacanciesClient] Buscando vagas ativas...');
+        console.log('📤 [VacanciesClient] Base URL:', this.url);
+        
+        // Estratégia 1: Endpoint direto activesVacancies
+        try {
+            console.log('🔍 [VacanciesClient] Tentando /activesVacancies...');
+            const response = await fetch(`${this.url}/activesVacancies`, {
+                credentials: 'include'
+            });
+            console.log('📡 [VacanciesClient] Resposta /activesVacancies:', response.status);
+            if (response.ok) {
+                const data = await response.json();
+                console.log(`✅ [VacanciesClient] Vagas ativas via /activesVacancies: ${Array.isArray(data) ? data.length : 0}`, data);
+                if (Array.isArray(data) && data.length > 0) {
+                    return data;
+                }
+            }
+        } catch (e) {
+            console.warn('⚠️ [VacanciesClient] Erro em /activesVacancies:', e.message);
+        }
+        
+        // Estratégia 2: Busca por status 'aberta' (lowercase)
+        try {
+            console.log('🔍 [VacanciesClient] Tentando /status/aberta...');
+            const response = await fetch(`${this.url}/status/aberta`, {
+                credentials: 'include'
+            });
+            console.log('📡 [VacanciesClient] Resposta /status/aberta:', response.status);
+            if (response.ok) {
+                const data = await response.json();
+                console.log(`✅ [VacanciesClient] Vagas ativas via /status/aberta: ${Array.isArray(data) ? data.length : 0}`, data);
+                if (Array.isArray(data) && data.length > 0) {
+                    return data;
+                }
+            }
+        } catch (e) {
+            console.warn('⚠️ [VacanciesClient] Erro em /status/aberta:', e.message);
+        }
+        
+        // Estratégia 3: Busca por status 'ABERTA' (uppercase - enum do backend)
+        try {
+            console.log('🔍 [VacanciesClient] Tentando /status/ABERTA...');
+            const response = await fetch(`${this.url}/status/ABERTA`, {
+                credentials: 'include'
+            });
+            console.log('📡 [VacanciesClient] Resposta /status/ABERTA:', response.status);
+            if (response.ok) {
+                const data = await response.json();
+                console.log(`✅ [VacanciesClient] Vagas ativas via /status/ABERTA: ${Array.isArray(data) ? data.length : 0}`, data);
+                if (Array.isArray(data) && data.length > 0) {
+                    return data;
+                }
+            }
+        } catch (e) {
+            console.warn('⚠️ [VacanciesClient] Erro em /status/ABERTA:', e.message);
+        }
+        
+        // Estratégia 4: Busca todas e filtra por status (aceita vários formatos)
+        try {
+            console.log('🔍 [VacanciesClient] Tentando buscar TODAS as vagas e filtrar...');
+            const response = await fetch(this.url, {
+                credentials: 'include'
+            });
+            console.log('📡 [VacanciesClient] Resposta /vacancies:', response.status);
+            if (response.ok) {
+                const allData = await response.json();
+                console.log(`📋 [VacanciesClient] Total de vagas no sistema: ${Array.isArray(allData) ? allData.length : 0}`);
+                
+                // Log de todos os status encontrados para debug
+                const statusList = (Array.isArray(allData) ? allData : []).map(v => ({
+                    id: v.id || v.id_vacancy || v.idVacancy,
+                    position: v.positionJob || v.position_job || v.position,
+                    status: v.statusVacancy || v.status_vacancy || v.status
+                }));
+                console.log('📋 [VacanciesClient] Status de todas as vagas:', statusList);
+                
+                // Filtra vagas com status que indica "aberta/ativa/aprovada"
+                const abertas = (Array.isArray(allData) ? allData : []).filter(v => {
+                    const status = (v.statusVacancy || v.status_vacancy || v.status || '').toLowerCase();
+                    const isAberta = status === 'aberta' || 
+                                     status === 'open' || 
+                                     status === 'ativa' || 
+                                     status === 'aprovada' ||
+                                     status === 'active' ||
+                                     status === 'approved';
+                    if (isAberta) {
+                        console.log(`✅ [VacanciesClient] Vaga aceita: ID=${v.id || v.id_vacancy}, status="${status}"`);
+                    }
+                    return isAberta;
+                });
+                console.log(`✅ [VacanciesClient] Vagas ativas filtradas: ${abertas.length} de ${allData.length} total`);
+                return abertas;
+            }
+        } catch (e) {
+            console.error('❌ [VacanciesClient] Erro ao buscar todas as vagas:', e.message);
+        }
+        
+        console.warn('⚠️ [VacanciesClient] Nenhuma estratégia retornou vagas ativas');
+        return [];
     }
 
     /**
@@ -256,7 +361,9 @@ export class VacanciesClient extends ApiClient {
 
     /**
      * Aprova uma vaga (altera status para 'aberta')
-     * PATCH /vacancies/updateStatus/{id}
+     * Tenta múltiplos endpoints para garantir compatibilidade com o backend:
+     * 1. PATCH /vacancies/updateStatus/{id} (endpoint atual)
+     * 2. PATCH /vacancies/{id}/status com body {"statusVacancy": "aberta"}
      * @param {number|string} id - ID da vaga (id_vacancy)
      */
     async approve(id) {
@@ -267,23 +374,68 @@ export class VacanciesClient extends ApiClient {
         }
         
         console.log('📤 [VacanciesClient] Aprovando vaga ID:', id);
-        console.log('📤 [VacanciesClient] URL:', `${this.url}/updateStatus/${id}`);
         
-        const response = await fetch(`${this.url}/updateStatus/${id}`, {
-            method: 'PATCH',
-            headers: { 'Content-Type': 'application/json' },
-            credentials: 'include'
-        });
-        
-        if (!response.ok) {
-            const errorText = await response.text();
-            console.error('❌ [VacanciesClient] Erro ao aprovar:', response.status, errorText);
-            throw new Error(`Erro ao aprovar vaga: ${response.status} - ${errorText}`);
+        // Estratégia 1: PATCH /vacancies/updateStatus/{id}
+        try {
+            console.log('📤 [VacanciesClient] Tentando PATCH /vacancies/updateStatus/' + id);
+            const response = await fetch(`${this.url}/updateStatus/${id}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include'
+            });
+            
+            if (response.ok) {
+                const result = await response.text();
+                console.log('✅ [VacanciesClient] Vaga aprovada via /updateStatus:', result);
+                return result;
+            }
+            console.warn('⚠️ [VacanciesClient] /updateStatus retornou:', response.status);
+        } catch (e) {
+            console.warn('⚠️ [VacanciesClient] Erro em /updateStatus:', e.message);
         }
         
-        const result = await response.text();
-        console.log('✅ [VacanciesClient] Vaga aprovada:', result);
-        return result;
+        // Estratégia 2: PATCH /vacancies/{id}/status com body
+        try {
+            console.log('📤 [VacanciesClient] Tentando PATCH /vacancies/' + id + '/status com body');
+            const response = await fetch(`${this.url}/${id}/status`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify({ statusVacancy: 'aberta' })
+            });
+            
+            if (response.ok) {
+                const result = await response.text();
+                console.log('✅ [VacanciesClient] Vaga aprovada via /{id}/status:', result);
+                return result;
+            }
+            console.warn('⚠️ [VacanciesClient] /{id}/status retornou:', response.status);
+        } catch (e) {
+            console.warn('⚠️ [VacanciesClient] Erro em /{id}/status:', e.message);
+        }
+        
+        // Estratégia 3: PATCH /vacancies/{id}/status com status ABERTA (uppercase)
+        try {
+            console.log('📤 [VacanciesClient] Tentando PATCH /vacancies/' + id + '/status com status ABERTA');
+            const response = await fetch(`${this.url}/${id}/status`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify({ statusVacancy: 'ABERTA' })
+            });
+            
+            if (response.ok) {
+                const result = await response.text();
+                console.log('✅ [VacanciesClient] Vaga aprovada via /{id}/status (ABERTA):', result);
+                return result;
+            }
+            const errorText = await response.text();
+            console.error('❌ [VacanciesClient] Todas as estratégias falharam. Último erro:', response.status, errorText);
+            throw new Error(`Erro ao aprovar vaga: ${response.status} - ${errorText}`);
+        } catch (e) {
+            console.error('❌ [VacanciesClient] Erro ao aprovar vaga:', e.message);
+            throw e;
+        }
     }
 
     /**

@@ -28,8 +28,35 @@ document.addEventListener('DOMContentLoaded', async () => {
 async function initMatchPage() {
     setupEventListeners();
     await loadVacancies();
+    
+    // ==========================================
+    // LEITURA DE vacancyId DA QUERY STRING
+    // Permite redirecionamento direto da tela de upload
+    // ==========================================
+    const urlParams = new URLSearchParams(window.location.search);
+    const vacancyIdFromUrl = urlParams.get('vacancyId');
+    
+    if (vacancyIdFromUrl) {
+        console.log(`📌 [Match] vacancyId recebido da URL: ${vacancyIdFromUrl}`);
+        selectedVacancyId = vacancyIdFromUrl;
+        
+        // Encontrar a área da vaga para selecionar corretamente nos filtros
+        const targetVacancy = vacancies.find(v => String(v.id) === String(vacancyIdFromUrl));
+        if (targetVacancy) {
+            selectedArea = targetVacancy.area || targetVacancy.vacancyArea || null;
+            console.log(`📌 [Match] Área da vaga: ${selectedArea || 'não definida'}`);
+        }
+    }
+    
     renderHierarchicalFilters(); // Novo: renderiza filtros hierárquicos
-    await loadAllMatches();
+    
+    // Se veio vacancyId da URL, carregar matches específicos dessa vaga
+    if (vacancyIdFromUrl) {
+        console.log(`📌 [Match] Carregando matches da vaga ${vacancyIdFromUrl}...`);
+        await loadMatchesByVacancy(vacancyIdFromUrl);
+    } else {
+        await loadAllMatches();
+    }
 }
 
 /**
