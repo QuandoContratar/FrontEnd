@@ -1368,3 +1368,66 @@ export class MatchClient extends ApiClient {
 
     
 }
+
+export class ReportsClient extends ApiClient {
+    constructor() {
+        super('reports');
+    }
+
+    
+    async kpiQuantidadeDeVagas(area) {
+        let url = `${this.url}/kpi-quantidade-de-vagas`;
+        if (area) url += `?area=${encodeURIComponent(area)}`;
+        const response = await fetch(url);
+        if (!response.ok) throw new Error('Failed to fetch KPI quantidade de vagas');
+        return response.json();
+    }
+
+    async kpiQuantidadeDeCandidatos(area) {
+        let url = `${this.url}/kpi-quantidade-de-candidatos`;
+        if (area) url += `?area=${encodeURIComponent(area)}`;
+        const response = await fetch(url);
+        if (!response.ok) throw new Error('Failed to fetch KPI quantidade de candidatos');
+        return response.json();
+    }
+
+    async graficoDeBarrasEmpilhado(area) {
+        let url = `${this.url}/grafico-de-barras-empilhado`;
+        if (area) url += `?area=${encodeURIComponent(area)}`;
+        const response = await fetch(url);
+        if (!response.ok) throw new Error('Failed to fetch gráfico de barras empilhado');
+        return response.json();
+    }
+
+    async kpisQuantidadeDePessoasPorMatch(area) {
+        let url = `${this.url}/kpis-quantidade-de-pessoas-por-match`;
+        if (area) url += `?area=${encodeURIComponent(area)}`;
+        const response = await fetch(url);
+        if (!response.ok) throw new Error('Failed to fetch KPIs quantidade de pessoas por match');
+        return response.json();
+    }
+
+    async kpisDeTaxaDeAprovacao(area) {
+        let url = `${this.url}/kpis-de-taxa-de-aprovacao`;
+        if (area) url += `?area=${encodeURIComponent(area)}`;
+        const response = await fetch(url);
+        if (!response.ok) throw new Error('Failed to fetch KPIs de taxa de aprovação');
+        return response.json();
+    }
+
+    async graficoDeBarrasDeTaxaDeContratacaoPorArea() {
+        let url = `${this.url}/grafico-de-barras-de-taxa-de-contratacao-por-area`;
+        const response = await fetch(url);
+        if (!response.ok) throw new Error('Failed to fetch gráfico de barras de taxa de contratação por área');
+        return response.json();
+    }
+
+    async rankingMelhoresFaculdades(area) {
+        let url = `${this.url}/ranking-das-melhores-faculdades`;
+        if (area) url += `?area=${encodeURIComponent(area)}`;
+        const response = await fetch(url);
+        console.log("🚀 ~ ReportsClient ~ rankingMelhoresFaculdades ~ response:", response)
+        if (!response.ok) throw new Error('Failed to fetch ranking das melhores faculdades');
+        return response.json();
+    }
+}
