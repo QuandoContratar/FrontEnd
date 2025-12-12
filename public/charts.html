@@ -5,10 +5,10 @@
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <meta name="description" content="Dashboard - Quando Previdência">
+    <meta name="description" content="Dashboard de Recrutamento & Seleção - Quando Previdência">
     <meta name="author" content="">
 
-    <title>Dashboard - Quando Previdência</title>
+    <title>Dashboard de Recrutamento & Seleção - Quando Previdência</title>
 
     <!-- Custom fonts for this template-->
     <link href="vendor/fontawesome-free/css/all.min.css" rel="stylesheet" type="text/css">
@@ -19,6 +19,7 @@
     <!-- Custom styles for this template-->
     <link href="css/sb-admin-2.min.css" rel="stylesheet">
     <link href="./assets/css/main.css" rel="stylesheet">
+    <link href="./assets/css/pages/dashboard.css" rel="stylesheet">
 </head>
 
 <body id="page-top">
@@ -40,37 +41,37 @@
             <!-- Divider -->
             <hr class="sidebar-divider my-0">
 
-            <!-- Nav Item - Tela Inicial -->
+            <!-- Nav Item - Dashboard -->
             <li class="nav-item">
                 <a class="nav-link" href="home.html">
-                    <i class="fas fa-fw fa-home"></i>
-                    <span>Tela Inicial</span></a>
+                    <i class="fas fa-fw fa-tachometer-alt"></i>
+                    <span>Dashboard</span></a>
             </li>
 
             <!-- Divider -->
             <hr class="sidebar-divider">
 
             <!-- Heading -->
-            <div class="sidebar-heading" data-admin-only>
+            <div class="sidebar-heading">
                 Cadastros
             </div>
 
             <!-- Nav Item - Administradores -->
-            <li class="nav-item" data-admin-only>
+            <li class="nav-item">
                 <a class="nav-link" href="adm.html">
                     <i class="fas fa-fw fa-user-shield"></i>
                     <span>Administradores</span></a>
             </li>
 
             <!-- Nav Item - Gerentes -->
-            <li class="nav-item" data-admin-only>
+            <li class="nav-item">
                 <a class="nav-link" href="gerente.html">
                     <i class="fas fa-fw fa-user-tie"></i>
                     <span>Gerentes</span></a>
             </li>
 
             <!-- Nav Item - RH -->
-            <li class="nav-item" data-admin-only>
+            <li class="nav-item">
                 <a class="nav-link" href="rh.html">
                     <i class="fas fa-fw fa-users"></i>
                     <span>RH</span></a>
@@ -91,18 +92,18 @@
                     <span>Abertura de Vaga</span></a>
             </li>
 
-            <!-- Nav Item - Minhas Solicitações -->
-            <li class="nav-item">
-                <a class="nav-link" href="minhas-solicitacoes.html">
-                    <i class="fas fa-fw fa-clipboard-list"></i>
-                    <span>Minhas Solicitações</span></a>
-            </li>
-
             <!-- Nav Item - Vagas -->
             <li class="nav-item">
                 <a class="nav-link" href="vagas.html">
                     <i class="fas fa-fw fa-briefcase"></i>
                     <span>Vagas</span></a>
+            </li>
+
+            <!-- Nav Item - Candidatos -->
+            <li class="nav-item">
+                <a class="nav-link" href="candidatos.html">
+                    <i class="fas fa-fw fa-user-plus"></i>
+                    <span>Candidatos</span></a>
             </li>
 
             <!-- Nav Item - Upload Currículos -->
@@ -112,32 +113,26 @@
                     <span>Upload Currículos</span></a>
             </li>
 
-            <!-- Nav Item - Candidatos -->
-            <li class="nav-item">
-                <a class="nav-link" href="candidatos.html">
-                    <i class="fas fa-fw fa-user-friends"></i>
-                    <span>Candidatos</span></a>
-            </li>
+            <!-- Divider -->
+            <hr class="sidebar-divider">
 
-            <!-- Nav Item - Match de Candidatos -->
-            <li class="nav-item">
-                <a class="nav-link" href="match-candidatos.html">
-                    <i class="fas fa-fw fa-heart"></i>
-                    <span>Match de Candidatos</span></a>
-            </li>
+            <!-- Heading -->
+            <div class="sidebar-heading">
+                Relatórios
+            </div>
 
-            <!-- Nav Item - Kanban Recrutamento -->
-            <li class="nav-item">
-                <a class="nav-link" href="kanban-recrutamento.html">
-                    <i class="fas fa-fw fa-columns"></i>
-                    <span>Kanban Recrutamento</span></a>
-            </li>
-
-            <!-- Nav Item - Dashboard -->
-            <li class="nav-item">
+            <!-- Nav Item - Charts -->
+            <li class="nav-item active">
                 <a class="nav-link" href="charts.html">
                     <i class="fas fa-fw fa-chart-area"></i>
-                    <span>Dashboard</span></a>
+                    <span>Gráficos</span></a>
+            </li>
+
+            <!-- Nav Item - Tables -->
+            <li class="nav-item">
+                <a class="nav-link" href="tables.html">
+                    <i class="fas fa-fw fa-table"></i>
+                    <span>Tabelas</span></a>
             </li>
 
             <!-- Divider -->
@@ -194,299 +189,177 @@
                 <div class="container-fluid">
 
                     <!-- Page Heading -->
-                    <div class="d-sm-flex align-items-center justify-content-between mb-4">
-                        <h1 class="h3 mb-0 text-gray-800">Dashboard de Recrutamento</h1>
-                        <div class="d-flex align-items-center">
-                            <select class="form-control" id="areaFilter" style="width: 200px; height: 38px; padding: 8px 12px;">
-                                <option value="TI">TI</option>
-                                <option value="Vendas">Vendas</option>
-                                <option value="Marketing">Marketing</option>
-                                <option value="RH">RH</option>
-                                <option value="Financeiro">Financeiro</option>
-                            </select>
-                        </div>
-                    </div>
-                    <hr class="my-3">
+                    <h1 class="h3 mb-4 text-gray-800">Dashboard de Recrutamento & Seleção</h1>
 
-                    <!-- Content Row - Gráficos -->
-                    <div class="row">
-
-                        <!-- Candidatos por Vaga -->
-                        <div class="col-xl-8 col-lg-7">
-                            <div class="card shadow mb-4 h-100">
-                                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-                                    <h6 class="m-0 font-weight-bold text-primary">
-                                        <i class="fas fa-user-plus mr-2"></i>Candidato por Vaga
-                                    </h6>
-                                </div>
-                                <div class="card-body">
-                                    <div class="chart-bar" style="height: 300px;">
-                                        <canvas id="candidatosPorVagaChart"></canvas>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Vagas -->
-                        <div class="col-xl-4 col-lg-5">
-                            <div class="card shadow mb-4 h-100">
-                                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-                                    <h6 class="m-0 font-weight-bold text-primary">
-                                        <i class="fas fa-briefcase mr-2"></i>Vagas
-                                    </h6>
-                                </div>
-                                <div class="card-body" style="overflow-y: auto; max-height: 400px;">
-                                    <div class="table-responsive">
-                                        <table class="table table-sm" id="vagasTableDashboard" width="100%" cellspacing="0">
-                                            <thead>
-                                                <tr>
-                                                    <th class="font-weight-bold">Nome</th>
-                                                    <th class="font-weight-bold text-right">Candidatos</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody id="vagasTableBody">
-                                                <!-- Dados serão carregados dinamicamente -->
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                </div>
+                    <!-- 1️⃣ Header – Filtros gerais -->
+                    <div class="dashboard-header">
+                        <div class="row align-items-center">
+                            <div class="col-md-12">
+                                <label for="areaFilter" class="font-weight-bold text-gray-700">Filtro por Área:</label>
+                                <select id="areaFilter" class="form-control">
+                                    <option value="">Todas as Áreas</option>
+                                    <option value="TI">TI</option>
+                                    <option value="RH">RH</option>
+                                    <option value="Comercial">Comercial</option>
+                                    <option value="Marketing">Marketing</option>
+                                    <option value="Financeiro">Financeiro</option>
+                                </select>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Content Row - Distribuição de Match -->
-                    <div class="row mt-4">
-
-                        <!-- Distribuição de Match -->
-                        <!-- <div class="col-12">
-                            <div class="card shadow mb-4">
-                                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-                                    <h6 class="m-0 font-weight-bold text-primary">
-                                        <i class="fas fa-percentage mr-2"></i>Distribuição de Match
-                                    </h6>
-                                </div>
-                                <div class="card-body">
-                                    <div class="chart-pie pt-4 pb-2">
-                                        <canvas id="matchDistributionChart"></canvas>
-                                    </div>
-                                    <div class="mt-4 text-center small" id="matchDistributionLegend">
-                                            
-                                    </div>
-                                </div>
+                    <!-- 2️⃣ Indicadores principais (KPIs do topo) -->
+                    <div class="row mb-4">
+                        <div class="col-xl-2 col-md-4 col-sm-6 mb-3">
+                            <div class="kpi-card primary">
+                                <div class="kpi-label">Qtd de Vagas Abertas</div>
+                                <div class="kpi-value" id="kpiVagasAbertas">0</div>
                             </div>
                         </div>
-                    </div> -->
-
-                    <!-- Row: Top 10 Candidatos por Vaga -->
-                    <!-- <div class="row">
-                        <div class="col-lg-12 mb-4">
-                            <div class="card shadow mb-4">
-                                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-                                    <h6 class="m-0 font-weight-bold text-primary">
-                                        <i class="fas fa-trophy mr-2"></i>Top 10 Candidatos por Vaga
-                                    </h6>
-                                    <div class="dropdown">
-                                        <select class="form-control" id="selectVagaTopCandidates" style="min-width: 250px; height: 38px; padding: 8px 12px;">
-                                            <option value="">Selecione uma vaga...</option>
-                                        </select>
-                                    </div>
-                                </div>
-                                <div class="card-body">
-                                    <div id="topCandidatesChartContainer" class="chart-bar" style="height: 350px;">
-                                        <canvas id="topCandidatesChart"></canvas>
-                                    </div>
-                                    <div id="topCandidatesEmpty" class="text-center py-5 d-none">
-                                        <i class="fas fa-user-friends fa-3x text-gray-300 mb-3"></i>
-                                        <p class="text-gray-500">Selecione uma vaga para ver os candidatos</p>
-                                    </div>
-                                </div>
+                        <div class="col-xl-2 col-md-4 col-sm-6 mb-3">
+                            <div class="kpi-card success">
+                                <div class="kpi-label">Qtd de Currículos Recebidos</div>
+                                <div class="kpi-value" id="kpiCurriculosRecebidos">0</div>
                             </div>
                         </div>
-                    </div> -->
-
-                    <!-- Row: Performance dos Gestores -->
-                    <!-- 
-                    <div class="row">
-                        <div class="col-12">
-                            <div class="card shadow mb-4">
-                                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-                                    <h6 class="m-0 font-weight-bold text-primary">
-                                        <i class="fas fa-user-tie mr-2"></i>Performance dos Gestores
-                                    </h6>
-                                </div>
-                                <div class="card-body">
-                                    <div class="table-responsive">
-                                        <table class="table table-bordered" id="managerPerformanceTable" width="100%" cellspacing="0">
-                                            <thead>
-                                                <tr>
-                                                    <th>Gestor</th>
-                                                    <th class="text-center">Vagas Criadas</th>
-                                                    <th class="text-center">Vagas Preenchidas</th>
-                                                    <th class="text-center">Taxa de Sucesso</th>
-                                                    <th class="text-center">Tempo Médio (dias)</th>
-                                                    <th class="text-center">Tendência</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody id="managerPerformanceBody">
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                </div>
+                        <div class="col-xl-2 col-md-4 col-sm-6 mb-3">
+                            <div class="kpi-card info">
+                                <div class="kpi-label">Triagem</div>
+                                <div class="kpi-value" id="kpiTriagem">0</div>
+                            </div>
+                        </div>
+                        <div class="col-xl-2 col-md-4 col-sm-6 mb-3">
+                            <div class="kpi-card warning">
+                                <div class="kpi-label">Teste Técnico</div>
+                                <div class="kpi-value" id="kpiTesteTecnico">0</div>
+                            </div>
+                        </div>
+                        <div class="col-xl-2 col-md-4 col-sm-6 mb-3">
+                            <div class="kpi-card danger">
+                                <div class="kpi-label">Entrevista</div>
+                                <div class="kpi-value" id="kpiEntrevista">0</div>
+                            </div>
+                        </div>
+                        <div class="col-xl-2 col-md-4 col-sm-6 mb-3">
+                            <div class="kpi-card success">
+                                <div class="kpi-label">Fit Cultural</div>
+                                <div class="kpi-value" id="kpiFitCultural">0</div>
                             </div>
                         </div>
                     </div>
-                    -->
 
-                    <!-- ====================================== -->
-                    <!-- NOVOS GRÁFICOS - INSIGHTS AVANÇADOS -->
-                    <!-- ====================================== -->
-
-                    <!-- <div class="d-sm-flex align-items-center justify-content-between mb-4 mt-4">
-                        <h1 class="h4 mb-0 text-gray-800">
-                            <i class="fas fa-lightbulb text-warning mr-2"></i>Insights de Skills
-                        </h1>
-                    </div> -->
-
-                    <!-- <div class="row">
-                        <div class="col-xl-6 col-lg-6">
+                    <!-- 3️⃣ Aprovados × Reprovados (por mês) -->
+                    <div class="row mb-4">
+                        <div class="col-xl-12">
                             <div class="card shadow mb-4">
                                 <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-                                    <h6 class="m-0 font-weight-bold text-primary">
-                                        <i class="fas fa-code mr-2"></i>Hard Skills Mais Comuns
-                                    </h6>
-                                </div>
-                                <div class="card-body">
-                                    <div class="chart-bar">
-                                        <canvas id="hardSkillsChart"></canvas>
-                                    </div>
-                                    <div class="mt-3" id="hardSkillsCloud">
-                                    </div>
-                                </div>
-                            </div>
-                        </div> -->
-
-                        <!-- <div class="col-xl-6 col-lg-6">
-                            <div class="card shadow mb-4">
-                                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-                                    <h6 class="m-0 font-weight-bold text-success">
-                                        <i class="fas fa-comments mr-2"></i>Soft Skills Mais Comuns
-                                    </h6>
-                                </div>
-                                <div class="card-body">
-                                    <div class="chart-bar">
-                                        <canvas id="softSkillsChart"></canvas>
-                                    </div>
-                                    <div class="mt-3" id="softSkillsCloud">
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div> -->
-
-                    <!-- <div class="d-sm-flex align-items-center justify-content-between mb-4 mt-4">
-                        <h1 class="h4 mb-0 text-gray-800">
-                            <i class="fas fa-users text-info mr-2"></i>Insights de Candidatos
-                        </h1>
-                    </div> -->
-
-                    <!-- <div class="row">
-                        <div class="col-xl-8 col-lg-7">
-                            <div class="card shadow mb-4">
-                                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-                                    <h6 class="m-0 font-weight-bold text-primary">
-                                        <i class="fas fa-map-marked-alt mr-2"></i>Distribuição Geográfica dos Candidatos
-                                    </h6>
-                                </div>
-                                <div class="card-body">
-                                    <div id="brazilMapContainer" style="min-height: 400px; position: relative;">
-                                        <div id="brazilMapFallback">
-                                            <canvas id="candidatesByStateBarChart" height="300"></canvas>
-                                        </div>
-                                    </div>
-                                    <div class="mt-3 text-center small" id="stateMapLegend">
-                                        <span class="mr-2"><i class="fas fa-square" style="color: #4e73df;"></i> Maior concentração</span>
-                                        <span class="mr-2"><i class="fas fa-square" style="color: #36b9cc;"></i> Média concentração</span>
-                                        <span class="mr-2"><i class="fas fa-square" style="color: #1cc88a;"></i> Menor concentração</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div> -->
-
-                        <!-- Recomendação de Vagas para Candidato - REMOVIDO
-                        <div class="col-xl-4 col-lg-5">
-                            <div class="card shadow mb-4">
-                                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-                                    <h6 class="m-0 font-weight-bold text-info">
-                                        <i class="fas fa-star mr-2"></i>Recomendação de Vagas
-                                    </h6>
-                                </div>
-                                <div class="card-body">
-                                    <div class="form-group">
-                                        <label for="candidateRecommendationSelect">Selecione um Candidato:</label>
-                                        <select class="form-control form-control-sm" id="candidateRecommendationSelect">
-                                            <option value="">Selecione...</option>
-                                        </select>
-                                    </div>
-                                    <div class="table-responsive mt-3">
-                                        <table class="table table-sm table-bordered" id="vacancyRecommendationTable">
-                                            <thead class="thead-light">
-                                                <tr>
-                                                    <th>Vaga</th>
-                                                    <th class="text-center">Score</th>
-                                                    <th class="text-center">Match</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody id="vacancyRecommendationBody">
-                                                <tr>
-                                                    <td colspan="3" class="text-center text-muted">
-                                                        <small>Selecione um candidato para ver as recomendações</small>
-                                                    </td>
-                                                </tr>
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        -->
-
-                    <!-- <div class="d-sm-flex align-items-center justify-content-between mb-4 mt-4">
-                        <h1 class="h4 mb-0 text-gray-800">
-                            <i class="fas fa-headset text-danger mr-2"></i>Insights de RH
-                        </h1>
-                    </div> -->
-
-                    <!-- <div class="row">
-                        <div class="col-12">
-                            <div class="card shadow mb-4">
-                                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-                                    <h6 class="m-0 font-weight-bold text-danger">
-                                        <i class="fas fa-clock mr-2"></i>Tempo até Primeiro Contato do RH
-                                    </h6>
-                                    <div class="d-flex align-items-center">
-                                        <span class="mr-2 small text-muted">Média:</span>
-                                        <span class="badge badge-info" id="avgFirstContactDays">-- dias</span>
-                                    </div>
+                                    <h6 class="m-0 font-weight-bold text-primary">Aprovados × Reprovados (por mês)</h6>
                                 </div>
                                 <div class="card-body">
                                     <div class="chart-area">
-                                        <canvas id="firstContactChart"></canvas>
-                                    </div>
-                                    <div class="mt-3 text-center small">
-                                        <span class="mr-3">
-                                            <i class="fas fa-circle text-success"></i> Até 3 dias (Ótimo)
-                                        </span>
-                                        <span class="mr-3">
-                                            <i class="fas fa-circle text-warning"></i> 4-7 dias (Aceitável)
-                                        </span>
-                                        <span class="mr-3">
-                                            <i class="fas fa-circle text-danger"></i> +7 dias (Crítico)
-                                        </span>
+                                        <canvas id="aprovadosReprovadosMesChart"></canvas>
                                     </div>
                                 </div>
                             </div>
                         </div>
-                    </div> -->
+                    </div>
+
+                    <!-- 4️⃣ Taxa de Contratação por Área e 5️⃣ Match dos Candidatos por Score -->
+                    <div class="row mb-4">
+                        <!-- Taxa de Contratação por Área -->
+                        <div class="col-xl-6">
+                            <div class="card shadow mb-4">
+                                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                                    <h6 class="m-0 font-weight-bold text-primary">Taxa de Contratação por Área</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="chart-bar">
+                                        <canvas id="taxaContratacaoAreaChart"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Match dos Candidatos por Score -->
+                        <div class="col-xl-6">
+                            <div class="card shadow mb-4">
+                                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                                    <h6 class="m-0 font-weight-bold text-primary">Match dos Candidatos por Score</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <div class="match-score-box baixo">
+                                                <div class="match-score-label">Baixo</div>
+                                                <div class="match-score-value" id="matchBaixo">0</div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <div class="match-score-box medio">
+                                                <div class="match-score-label">Médio</div>
+                                                <div class="match-score-value" id="matchMedio">0</div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <div class="match-score-box alto">
+                                                <div class="match-score-label">Alto</div>
+                                                <div class="match-score-value" id="matchAlto">0</div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <div class="match-score-box destaque">
+                                                <div class="match-score-label">Destaque</div>
+                                                <div class="match-score-value" id="matchDestaque">0</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 6️⃣ Top 5 melhores faculdades e 7️⃣ Tempo até contratação -->
+                    <div class="row mb-4">
+                        <!-- Top 5 melhores faculdades -->
+                        <div class="col-xl-6">
+                            <div class="card shadow mb-4">
+                                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                                    <h6 class="m-0 font-weight-bold text-primary">Top 5 Melhores Faculdades</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="table-responsive">
+                                        <table class="table table-bordered" width="100%" cellspacing="0">
+                                            <thead>
+                                                <tr>
+                                                    <th>Posição</th>
+                                                    <th>Faculdade</th>
+                                                    <th>Candidatos</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="topFaculdadesBody">
+                                                <tr><td colspan="3" class="text-center">Carregando...</td></tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Tempo até contratação -->
+                        <div class="col-xl-6">
+                            <div class="card shadow mb-4">
+                                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                                    <h6 class="m-0 font-weight-bold text-primary">Tempo até Contratação (média de dias por mês)</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="chart-bar">
+                                        <canvas id="tempoContratacaoChart"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
 
                 </div>
                 <!-- /.container-fluid -->
@@ -552,10 +425,9 @@
 
 <!-- Utils e Auth -->
 <script src="./assets/js/components/utils.js"></script>
-<script src="./assets/js/components/permissions.js"></script>
 <script src="./assets/js/components/auth.js"></script>
 
-<!-- Agora dashboard.js roda de verdade -->
+<!-- Dashboard JS -->
 <script type="module" src="./assets/js/pages/dashboard.js"></script>
 
 <script>

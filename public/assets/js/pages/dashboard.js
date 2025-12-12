@@ -71,6 +71,20 @@ const FALLBACK_DATA = {
         { mes: 4, dias: 20 }, { mes: 5, dias: 18 }, { mes: 6, dias: 24 },
         { mes: 7, dias: 19 }, { mes: 8, dias: 21 }, { mes: 9, dias: 23 },
         { mes: 10, dias: 17 }, { mes: 11, dias: 20 }, { mes: 12, dias: 16 }
+    ],
+    taxaContratacaoPorArea: [
+        { area: 'TI', contratadas: 8, vagasCriadas: 12 },
+        { area: 'Comercial', contratadas: 3, vagasCriadas: 5 },
+        { area: 'RH', contratadas: 2, vagasCriadas: 4 },
+        { area: 'Marketing', contratadas: 1, vagasCriadas: 3 }
+    ]
+    ,
+    aprovadosReprovadosVagas: [
+        { titulo: 'Desenvolvedor Full-Stack', aprovados: 18, reprovados: 7 },
+        { titulo: 'Analista de RH', aprovados: 12, reprovados: 6 },
+        { titulo: 'Gerente de Projetos', aprovados: 8, reprovados: 4 },
+        { titulo: 'Designer UX/UI', aprovados: 10, reprovados: 5 },
+        { titulo: 'Analista de Dados', aprovados: 14, reprovados: 6 }
     ]
 };
 
@@ -85,6 +99,49 @@ function showLoading(elementId) {
     const el = document.getElementById(elementId);
     if (el) el.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
 }
+
+// ============================
+// ERROR OVERLAY (ajuda a capturar erros de runtime durante desenvolvimento)
+// ============================
+(function setupErrorOverlay() {
+    try {
+        const overlay = document.createElement('div');
+        overlay.id = 'js-error-overlay';
+        overlay.style.position = 'fixed';
+        overlay.style.left = '10px';
+        overlay.style.right = '10px';
+        overlay.style.top = '10px';
+        overlay.style.zIndex = 99999;
+        overlay.style.maxHeight = '40vh';
+        overlay.style.overflow = 'auto';
+        overlay.style.background = 'rgba(255,255,255,0.95)';
+        overlay.style.border = '1px solid rgba(200,0,0,0.6)';
+        overlay.style.padding = '10px';
+        overlay.style.display = 'none';
+        overlay.style.fontFamily = 'Poppins, Arial, sans-serif';
+        overlay.style.fontSize = '13px';
+        overlay.style.color = '#222';
+        document.addEventListener('DOMContentLoaded', () => document.body.appendChild(overlay));
+
+        function showError(msg) {
+            overlay.style.display = 'block';
+            const p = document.createElement('pre');
+            p.style.whiteSpace = 'pre-wrap';
+            p.style.margin = '6px 0';
+            p.textContent = msg;
+            overlay.appendChild(p);
+            console.error(msg);
+        }
+
+        window.addEventListener('error', function (ev) {
+            try { showError(`Error: ${ev.message} at ${ev.filename}:${ev.lineno}:${ev.colno}`); } catch (e) { console.error(e); }
+        });
+
+        window.addEventListener('unhandledrejection', function (ev) {
+            try { showError(`UnhandledRejection: ${ev.reason && ev.reason.message ? ev.reason.message : ev.reason}`); } catch (e) { console.error(e); }
+        });
+    } catch (e) { console.error('Erro ao configurar overlay de erro', e); }
+})();
 
 // ============================
 // MÉTRICAS DO TOPO
@@ -117,6 +174,51 @@ async function loadMetrics() {
         progressBar.style.width = `${conversion}%`;
         progressBar.setAttribute('aria-valuenow', conversion);
     }
+}
+
+// ============================
+// TOP MINI CARDS (Qtd vagas, Qtd currículos, Triagem, Teste técnico, Entrevista, Fit Cultural)
+// ============================
+async function loadTopMiniCards() {
+    // Tentamos obter dados do mesmo endpoint de métricas (ou outro futuro). Usamos fallback quando necessário.
+    let data;
+    try {
+        data = await dashboardClient.getMetrics();
+    } catch (e) {
+        data = null;
+    }
+
+    // Valores fallback simples
+    const fallback = {
+        qtdVagas: 24,
+        qtdCurriculos: 156,
+        triagem: 98,
+        testeTecnico: 42,
+        entrevista: 30,
+        fitCultural: 12
+    };
+
+    const values = {
+        qtdVagas: data && (data.qtdVagas || data.totalVagas) ? (data.qtdVagas || data.totalVagas) : fallback.qtdVagas,
+        qtdCurriculos: data && (data.qtdCurriculos || data.totalCurriculos) ? (data.qtdCurriculos || data.totalCurriculos) : fallback.qtdCurriculos,
+        triagem: data && data.triagem ? data.triagem : fallback.triagem,
+        testeTecnico: data && data.testeTecnico ? data.testeTecnico : fallback.testeTecnico,
+        entrevista: data && data.entrevista ? data.entrevista : fallback.entrevista,
+        fitCultural: data && data.fitCultural ? data.fitCultural : fallback.fitCultural
+    };
+
+    const setText = (id, v) => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.innerText = typeof v === 'number' ? numberFormat(v) : v;
+    };
+
+    setText('qtdVagasCard', values.qtdVagas);
+    setText('qtdCurriculosCard', values.qtdCurriculos);
+    setText('triagemCard', values.triagem);
+    setText('testeTecnicoCard', values.testeTecnico);
+    setText('entrevistaCard', values.entrevista);
+    setText('fitCulturalCard', values.fitCultural);
 }
 
 // ============================
@@ -246,12 +348,15 @@ async function loadStatusVagas() {
         groupedData[normalizedStatus] += Number(r.quantidade || r.total || r.count || 0);
     });
 
-    const labels = Object.keys(groupedData);
-    const valores = Object.values(groupedData);
+    // Garantir ordem consistente: Aberta/Aprovada, Pendente Aprovação, Rejeitada
+    const ORDER = ['Aberta/Aprovada', 'Pendente Aprovação', 'Rejeitada'];
+    const otherLabels = Object.keys(groupedData).filter(l => !ORDER.includes(l));
+    const labels = ORDER.filter(l => groupedData[l] !== undefined).concat(otherLabels);
+    const valores = labels.map(l => groupedData[l]);
 
     console.log('📊 [Dashboard] Status das vagas (normalizado):', { labels, valores });
 
-    // Cores para cada status (ordem: Aberta/Aprovada, Pendente, Rejeitada)
+    // Cores para cada status (consistentes com o rascunho)
     const statusColors = {
         'Aberta/Aprovada': COLORS.success,
         'Pendente Aprovação': COLORS.warning,
@@ -266,26 +371,75 @@ async function loadStatusVagas() {
     const bgColors = labels.map(l => statusColors[l] || COLORS.info);
     const hoverColors = labels.map(l => statusHoverColors[l] || COLORS.infoHover);
 
+    // Converter para gráfico de barras (vertical)
+    const maxValue = Math.max(...valores, 5);
+
+    // Usar barras verticais (em pé)
     statusVagasChartInstance = new Chart(canvas, {
-        type: 'doughnut',
+        type: 'bar',
         data: {
             labels: labels,
             datasets: [{
+                label: 'Vagas',
                 data: valores,
                 backgroundColor: bgColors,
                 hoverBackgroundColor: hoverColors,
-                hoverBorderColor: "rgba(234, 236, 244, 1)"
+                borderColor: 'rgba(0,0,0,0.05)',
+                borderWidth: 1
             }]
         },
         options: {
             maintainAspectRatio: false,
+            layout: { padding: { left: 10, right: 25, top: 10, bottom: 0 } },
+            scales: {
+                xAxes: [{ gridLines: { display: false, drawBorder: false }, ticks: { fontSize: 13 } }],
+                yAxes: [{
+                    ticks: { min: 0, max: Math.ceil(maxValue * 1.2), maxTicksLimit: 5, padding: 10 },
+                    gridLines: { color: "rgb(234, 236, 244)", zeroLineColor: "rgb(234, 236, 244)", drawBorder: false, borderDash: [2] }
+                }]
+            },
+            legend: { display: false },
             tooltips: {
                 backgroundColor: "rgb(255,255,255)", bodyFontColor: "#858796",
                 borderColor: '#dddfeb', borderWidth: 1, xPadding: 15, yPadding: 15, displayColors: false,
-                callbacks: { label: (t, d) => `${d.labels[t.index]}: ${d.datasets[0].data[t.index]} vagas` }
-            },
-            legend: { display: false },
-            cutoutPercentage: 80
+                callbacks: { label: (t, d) => `${d.datasets[t.datasetIndex].label}: ${t.yLabel} vagas` }
+            }
+            ,
+            // Desenhar valores e porcentagens nas barras ao final da animação
+            animation: {
+                onComplete: function() {
+                    const chartInstance = this.chart;
+                    const ctx = chartInstance.ctx;
+                    ctx.font = '600 12px Poppins, Arial';
+                    ctx.textBaseline = 'middle';
+
+                    const dataset = chartInstance.data.datasets[0];
+                    const meta = chartInstance.controller.getDatasetMeta(0);
+                    const total = dataset.data.reduce((s, v) => s + v, 0) || 1;
+                    meta.data.forEach(function(bar, index) {
+                        const value = dataset.data[index];
+                        const percentage = Math.round((value / total) * 100);
+                        const model = bar._model;
+
+                        const text = `${value} (${percentage}%)`;
+                        const textWidth = ctx.measureText(text).width;
+
+                        // Para barras verticais: model.y = topo, model.base = base
+                        const barHeight = model.base - model.y;
+                        const x = model.x;
+
+                        if (barHeight > 24) {
+                            // desenhar dentro da barra, centralizado verticalmente
+                            ctx.fillStyle = '#ffffff';
+                            ctx.fillText(text, x - textWidth / 2, model.y + barHeight / 2);
+                        } else {
+                            // desenhar acima da barra
+                            ctx.fillStyle = '#333333';
+                            ctx.fillText(text, x - textWidth / 2, model.y - 8);
+                        }
+                    });
+                }
+            }
         }
     });
 }
@@ -294,6 +448,168 @@ async function loadStatusVagas() {
 // GRÁFICO - CANDIDATOS POR VAGA
 // ============================
 let candidatosPorVagaChartInstance = null;
+
+// ============================
+// GRÁFICO - APROVADOS E REPROVADOS POR VAGA (EMPILHADO)
+// ============================
+let aprovadosReprovadosChartInstance = null;
+
+async function loadAprovadosReprovados() {
+    const canvas = document.getElementById('aprovadosReprovadosChart');
+    if (!canvas) return;
+
+    let result;
+    try {
+        console.log('📊 [Dashboard] Carregando aprovados/reprovados por vaga...');
+        result = await dashboardClient.getApprovedRejectedByVacancy();
+        console.log('✅ [Dashboard] Aprovados/Reprovados (raw):', result);
+    } catch (error) {
+        console.warn('⚠️ [Dashboard] Usando fallback para aprovados/reprovados');
+        result = FALLBACK_DATA.aprovadosReprovadosVagas;
+    }
+
+    // Mapear labels e séries
+    const labels = result.map(r => r.titulo || r.title || r.vaga || 'Vaga');
+    const aprovados = result.map(r => Number(r.aprovados || r.approved || r.hired || 0));
+    const reprovados = result.map(r => Number(r.reprovados || r.rejected || r.repro || 0));
+
+    // Destruir anterior
+    if (aprovadosReprovadosChartInstance) {
+        aprovadosReprovadosChartInstance.destroy();
+        aprovadosReprovadosChartInstance = null;
+    }
+
+    const maxValue = Math.max(...aprovados.map((v,i) => v + (reprovados[i]||0)), 5);
+
+    aprovadosReprovadosChartInstance = new Chart(canvas, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [
+                { label: 'Aprovados', data: aprovados, backgroundColor: COLORS.success, hoverBackgroundColor: COLORS.successHover },
+                { label: 'Reprovados', data: reprovados, backgroundColor: COLORS.danger, hoverBackgroundColor: '#c0392b' }
+            ]
+        },
+        options: {
+            maintainAspectRatio: false,
+            scales: {
+                xAxes: [{ stacked: true, gridLines: { display: false }, ticks: { fontSize: 11 } }],
+                yAxes: [{ stacked: true, ticks: { min: 0, max: Math.ceil(maxValue * 1.2) }, gridLines: { color: 'rgb(234,236,244)' } }]
+            },
+            legend: { display: true, position: 'top' },
+            tooltips: {
+                mode: 'index',
+                intersect: false,
+                callbacks: { label: (t, d) => `${d.datasets[t.datasetIndex].label}: ${t.yLabel}` }
+            }
+        }
+    });
+}
+
+// ============================
+// GRÁFICO - TAXA DE CONTRATAÇÃO POR ÁREA
+// ============================
+let taxaContratacaoAreaChartInstance = null;
+
+async function loadTaxaContratacaoPorArea() {
+    const canvas = document.getElementById('taxaContratacaoAreaChart');
+    if (!canvas) return;
+
+    let result;
+    try {
+        console.log('📊 [Dashboard] Carregando taxa de contratação por área...');
+        result = await dashboardClient.getHiringRateByArea();
+        console.log('✅ [Dashboard] Taxa por área (raw):', result);
+    } catch (error) {
+        console.warn('⚠️ [Dashboard] Usando fallback para taxa de contratação por área');
+        result = FALLBACK_DATA.taxaContratacaoPorArea;
+    }
+
+    // Normalizar e calcular porcentagens
+    const labels = result.map(r => r.area || r.name || 'Área');
+    const contratadas = result.map(r => Number(r.contratadas || r.hired || r.hires || 0));
+    const vagasCriadas = result.map(r => Number(r.vagasCriadas || r.vacancies || r.vagas || 0));
+    const porcentagens = contratadas.map((c, i) => {
+        const total = vagasCriadas[i] || 0;
+        return total > 0 ? Math.round((c / total) * 100) : 0;
+    });
+
+    // Destruir gráfico anterior
+    if (taxaContratacaoAreaChartInstance) {
+        taxaContratacaoAreaChartInstance.destroy();
+        taxaContratacaoAreaChartInstance = null;
+    }
+
+    const maxPercent = Math.max(...porcentagens, 10);
+
+    taxaContratacaoAreaChartInstance = new Chart(canvas, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Taxa %',
+                data: porcentagens,
+                backgroundColor: labels.map(() => COLORS.primary),
+                hoverBackgroundColor: labels.map(() => COLORS.primaryHover),
+                borderWidth: 0
+            }]
+        },
+        options: {
+            maintainAspectRatio: false,
+            scales: {
+                xAxes: [{ gridLines: { display: false }, ticks: { fontSize: 13 } }],
+                yAxes: [{
+                    ticks: { min: 0, max: Math.ceil(maxPercent * 1.2), callback: v => `${v}%` },
+                    gridLines: { color: "rgb(234, 236, 244)", zeroLineColor: "rgb(234, 236, 244)" }
+                }]
+            },
+            legend: { display: false },
+            tooltips: {
+                backgroundColor: "rgb(255,255,255)", bodyFontColor: "#858796",
+                borderColor: '#dddfeb', borderWidth: 1, xPadding: 12, yPadding: 12, displayColors: false,
+                callbacks: {
+                    label: function(tooltipItem, data) {
+                        const idx = tooltipItem.index;
+                        const area = labels[idx];
+                        const hires = contratadas[idx];
+                        const vacs = vagasCriadas[idx];
+                        const pct = porcentagens[idx];
+                        return `${area}: ${hires}/${vacs} contratadas (${pct}%)`;
+                    }
+                }
+            },
+            animation: {
+                onComplete: function() {
+                    const chart = this.chart;
+                    const ctx = chart.ctx;
+                    ctx.font = '600 12px Poppins, Arial';
+                    ctx.textBaseline = 'middle';
+
+                    const ds = chart.data.datasets[0];
+                    const meta = chart.controller.getDatasetMeta(0);
+
+                    meta.data.forEach(function(bar, index) {
+                        const model = bar._model;
+                        const value = ds.data[index];
+                        const text = `${value}% (${contratadas[index]}/${vagasCriadas[index]})`;
+                        const textWidth = ctx.measureText(text).width;
+
+                        const barHeight = model.base - model.y;
+                        const x = model.x;
+
+                        if (barHeight > 24) {
+                            ctx.fillStyle = '#ffffff';
+                            ctx.fillText(text, x - textWidth / 2, model.y + barHeight / 2);
+                        } else {
+                            ctx.fillStyle = '#333333';
+                            ctx.fillText(text, x - textWidth / 2, model.y - 8);
+                        }
+                    });
+                }
+            }
+        }
+    });
+}
 
 async function loadCandidatosVaga() {
     const canvas = document.getElementById("candidatosPorVagaChart");
@@ -1741,11 +2057,23 @@ async function initDashboard() {
     console.log('🚀 [Dashboard] Iniciando carregamento...');
 
     try {
-        // Gráficos existentes - Primeira batch
+        // Dashboard Completo - Primeira batch (KPIs e gráficos principais)
         await Promise.all([
+            loadMainKPIs(),
+            loadAprovadosReprovadosMes(),
+            loadTaxaContratacaoPorArea(),
+            loadMatchScore(),
+            loadTopFaculdades(),
+            loadTempoContratacao()
+        ]);
+
+        // Gráficos existentes (manter compatibilidade)
+        await Promise.all([
+            loadTopMiniCards(),
             loadMetrics(),
             loadVagasPorMes(),
             loadStatusVagas(),
+            loadAprovadosReprovados(),
             loadCandidatosVaga(),
             loadTipoContrato(),
             loadTempoPreenchimento()
@@ -1778,19 +2106,417 @@ async function initDashboard() {
 
 
 // Variável global para armazenar a área selecionada
-let selectedArea = 'TI';
+let selectedArea = '';
+
+// ============================
+// NOVAS FUNÇÕES - Dashboard Completo
+// ============================
+
+// 2️⃣ Carregar KPIs principais
+async function loadMainKPIs() {
+    let data;
+    try {
+        data = await dashboardClient.getMetrics();
+    } catch (error) {
+        console.warn('⚠️ [Dashboard] Usando fallback para KPIs principais');
+        data = {
+            qtdVagas: 24,
+            qtdCurriculos: 156,
+            triagem: 98,
+            testeTecnico: 42,
+            entrevista: 30,
+            fitCultural: 12
+        };
+    }
+
+    // Calcular taxas de aprovação (percentual que passou para próxima etapa)
+    const curriculos = data.qtdCurriculos || data.totalCurriculos || 156;
+    const triagem = data.triagem || 98;
+    const testeTecnico = data.testeTecnico || 42;
+    const entrevista = data.entrevista || 30;
+    const fitCultural = data.fitCultural || 12;
+
+    // Atualizar valores
+    document.getElementById('kpiVagasAbertas').textContent = numberFormat(data.qtdVagas || data.totalVagas || 24);
+    document.getElementById('kpiCurriculosRecebidos').textContent = numberFormat(curriculos);
+    document.getElementById('kpiTriagem').textContent = numberFormat(triagem);
+    document.getElementById('kpiTesteTecnico').textContent = numberFormat(testeTecnico);
+    document.getElementById('kpiEntrevista').textContent = numberFormat(entrevista);
+    document.getElementById('kpiFitCultural').textContent = numberFormat(fitCultural);
+}
+
+// 3️⃣ Gráfico Aprovados × Reprovados por mês (colunas empilhadas)
+let aprovadosReprovadosMesChartInstance = null;
+
+async function loadAprovadosReprovadosMes() {
+    const canvas = document.getElementById('aprovadosReprovadosMesChart');
+    if (!canvas) return;
+
+    let result;
+    try {
+        console.log('📊 [Dashboard] Carregando aprovados/reprovados por mês...');
+        result = await dashboardClient.getApprovedRejectedByMonth();
+        console.log('✅ [Dashboard] Aprovados/Reprovados por mês:', result);
+    } catch (error) {
+        console.warn('⚠️ [Dashboard] Usando fallback para aprovados/reprovados por mês');
+        result = [
+            { mes: 1, aprovados: 12, reprovados: 8 },
+            { mes: 2, aprovados: 15, reprovados: 10 },
+            { mes: 3, aprovados: 18, reprovados: 12 },
+            { mes: 4, aprovados: 14, reprovados: 9 },
+            { mes: 5, aprovados: 20, reprovados: 15 },
+            { mes: 6, aprovados: 16, reprovados: 11 },
+            { mes: 7, aprovados: 19, reprovados: 13 },
+            { mes: 8, aprovados: 22, reprovados: 16 },
+            { mes: 9, aprovados: 17, reprovados: 12 },
+            { mes: 10, aprovados: 21, reprovados: 14 },
+            { mes: 11, aprovados: 18, reprovados: 13 },
+            { mes: 12, aprovados: 24, reprovados: 17 }
+        ];
+    }
+
+    const valoresAprovados = Array(12).fill(0);
+    const valoresReprovados = Array(12).fill(0);
+    
+    result.forEach(item => {
+        if (item.mes >= 1 && item.mes <= 12) {
+            valoresAprovados[item.mes - 1] = item.aprovados || item.approved || 0;
+            valoresReprovados[item.mes - 1] = item.reprovados || item.rejected || 0;
+        }
+    });
+
+    const maxValue = Math.max(...valoresAprovados.map((v, i) => v + valoresReprovados[i]), 5);
+
+    if (aprovadosReprovadosMesChartInstance) {
+        aprovadosReprovadosMesChartInstance.destroy();
+        aprovadosReprovadosMesChartInstance = null;
+    }
+
+    aprovadosReprovadosMesChartInstance = new Chart(canvas, {
+        type: 'bar',
+        data: {
+            labels: MESES_LABELS,
+            datasets: [
+                {
+                    label: 'Aprovados',
+                    data: valoresAprovados,
+                    backgroundColor: COLORS.success,
+                    hoverBackgroundColor: COLORS.successHover
+                },
+                {
+                    label: 'Reprovados',
+                    data: valoresReprovados,
+                    backgroundColor: COLORS.danger,
+                    hoverBackgroundColor: '#c0392b'
+                }
+            ]
+        },
+        options: {
+            maintainAspectRatio: false,
+            scales: {
+                xAxes: [{ stacked: true, gridLines: { display: false }, ticks: { maxTicksLimit: 12 } }],
+                yAxes: [{ 
+                    stacked: true, 
+                    ticks: { min: 0, max: Math.ceil(maxValue * 1.2), maxTicksLimit: 5, padding: 10 },
+                    gridLines: { color: "rgb(234, 236, 244)", zeroLineColor: "rgb(234, 236, 244)", drawBorder: false }
+                }]
+            },
+            legend: { display: true, position: 'top' },
+            tooltips: {
+                mode: 'index',
+                intersect: false,
+                callbacks: { label: (t, d) => `${d.datasets[t.datasetIndex].label}: ${t.yLabel}` }
+            }
+        }
+    });
+}
+
+// 5️⃣ Match dos Candidatos por Score
+async function loadMatchScore() {
+    let result;
+    try {
+        console.log('📊 [Dashboard] Carregando match por score...');
+        result = await dashboardClient.getMatchDistribution();
+        console.log('✅ [Dashboard] Match por score:', result);
+    } catch (error) {
+        console.warn('⚠️ [Dashboard] Usando fallback para match por score');
+        result = [
+            { matchLevel: 'BAIXO', total: 200 },
+            { matchLevel: 'MEDIO', total: 50 },
+            { matchLevel: 'ALTO', total: 30 },
+            { matchLevel: 'DESTAQUE', total: 5 }
+        ];
+    }
+
+    const matchData = {
+        baixo: 0,
+        medio: 0,
+        alto: 0,
+        destaque: 0
+    };
+
+    result.forEach(item => {
+        const level = (item.matchLevel || item.level || '').toUpperCase();
+        const total = item.total || item.count || 0;
+        if (level.includes('BAIXO') || level.includes('LOW')) matchData.baixo = total;
+        else if (level.includes('MEDIO') || level.includes('MEDIUM')) matchData.medio = total;
+        else if (level.includes('ALTO') || level.includes('HIGH')) matchData.alto = total;
+        else if (level.includes('DESTAQUE') || level.includes('DESTAC')) matchData.destaque = total;
+    });
+
+    document.getElementById('matchBaixo').textContent = numberFormat(matchData.baixo);
+    document.getElementById('matchMedio').textContent = numberFormat(matchData.medio);
+    document.getElementById('matchAlto').textContent = numberFormat(matchData.alto);
+    document.getElementById('matchDestaque').textContent = numberFormat(matchData.destaque);
+}
+
+// 6️⃣ Top 5 melhores faculdades
+async function loadTopFaculdades() {
+    const tbody = document.getElementById('topFaculdadesBody');
+    if (!tbody) return;
+
+    let result;
+    try {
+        console.log('📊 [Dashboard] Carregando top faculdades...');
+        result = await dashboardClient.getTopFaculdades();
+        console.log('✅ [Dashboard] Top faculdades:', result);
+    } catch (error) {
+        console.warn('⚠️ [Dashboard] Usando fallback para top faculdades');
+        result = [
+            { faculdade: 'USP', total: 45 },
+            { faculdade: 'FATEC', total: 38 },
+            { faculdade: 'UFRJ', total: 32 },
+            { faculdade: 'PUC', total: 28 },
+            { faculdade: 'UNICAMP', total: 25 }
+        ];
+    }
+
+    tbody.innerHTML = '';
+    result.slice(0, 5).forEach((item, index) => {
+        const faculdade = item.faculdade || item.name || item.university || 'N/A';
+        const total = item.total || item.count || 0;
+        tbody.innerHTML += `
+            <tr>
+                <td class="text-center"><strong>${index + 1}º</strong></td>
+                <td>${faculdade}</td>
+                <td class="text-center">${numberFormat(total)}</td>
+            </tr>
+        `;
+    });
+}
+
+// 7️⃣ Tempo até contratação (por mês)
+let tempoContratacaoChartInstance = null;
+
+async function loadTempoContratacao() {
+    const canvas = document.getElementById('tempoContratacaoChart');
+    if (!canvas) return;
+
+    let result;
+    try {
+        console.log('📊 [Dashboard] Carregando tempo até contratação...');
+        result = await dashboardClient.getTempoPreenchimento();
+        console.log('✅ [Dashboard] Tempo até contratação:', result);
+    } catch (error) {
+        console.warn('⚠️ [Dashboard] Usando fallback para tempo até contratação');
+        result = FALLBACK_DATA.tempoPreenchimento;
+    }
+
+    const valores = Array(12).fill(0);
+    result.forEach(item => {
+        if (item.mes >= 1 && item.mes <= 12) {
+            valores[item.mes - 1] = item.dias || item.days || 0;
+        }
+    });
+
+    const maxValue = Math.max(...valores, 20);
+
+    if (tempoContratacaoChartInstance) {
+        tempoContratacaoChartInstance.destroy();
+        tempoContratacaoChartInstance = null;
+    }
+
+    tempoContratacaoChartInstance = new Chart(canvas, {
+        type: 'bar',
+        data: {
+            labels: MESES_LABELS,
+            datasets: [{
+                label: 'Média de dias',
+                backgroundColor: COLORS.info,
+                hoverBackgroundColor: COLORS.infoHover,
+                data: valores
+            }]
+        },
+        options: {
+            maintainAspectRatio: false,
+            scales: {
+                xAxes: [{ gridLines: { display: false }, ticks: { maxTicksLimit: 12 } }],
+                yAxes: [{
+                    ticks: { min: 0, max: Math.ceil(maxValue * 1.2), maxTicksLimit: 5, padding: 10, callback: v => `${v} dias` },
+                    gridLines: { color: "rgb(234, 236, 244)", zeroLineColor: "rgb(234, 236, 244)", drawBorder: false }
+                }]
+            },
+            legend: { display: false },
+            tooltips: {
+                backgroundColor: "rgb(255,255,255)", bodyFontColor: "#858796",
+                borderColor: '#dddfeb', borderWidth: 1, xPadding: 15, yPadding: 15, displayColors: false,
+                callbacks: { label: (t, c) => `Média: ${t.yLabel} dias` }
+            }
+        }
+    });
+}
+
+// 8️⃣ Funil completo da vaga DEV
+async function setupFunilSelect() {
+    const select = document.getElementById('selectVagaFunil');
+    if (!select) return;
+
+    try {
+        const vagas = await dashboardClient.getVacanciesList();
+        select.innerHTML = '<option value="">Selecione uma vaga...</option>';
+        
+        vagas.forEach(vaga => {
+            const id = vaga.id || vaga.vacancyId || vaga.id_vacancy;
+            const titulo = vaga.titulo ?? vaga.position_job ?? vaga.cargo ?? vaga.area ?? `Vaga #${id}`;
+            select.innerHTML += `<option value="${id}">${titulo}</option>`;
+        });
+    } catch (error) {
+        console.warn('⚠️ Erro ao carregar lista de vagas para funil:', error);
+    }
+
+    select.addEventListener('change', function() {
+        loadFunilCompleto(this.value || null);
+    });
+}
+
+async function loadFunilCompleto(vacancyId) {
+    const container = document.getElementById('funilContainer');
+    if (!container) return;
+
+    if (!vacancyId) {
+        container.innerHTML = '<div class="text-center text-muted">Selecione uma vaga para visualizar o funil</div>';
+        return;
+    }
+
+    let result;
+    try {
+        console.log('📊 [Dashboard] Carregando funil completo para vaga:', vacancyId);
+        result = await dashboardClient.getPipelineByStageByVacancy(vacancyId);
+        console.log('✅ [Dashboard] Funil completo:', result);
+    } catch (error) {
+        console.warn('⚠️ [Dashboard] Erro ao carregar funil completo:', error);
+        result = [
+            { stageName: 'curriculos_recebidos', total: 156, percentage: 100 },
+            { stageName: 'triagem', total: 98, percentage: 63 },
+            { stageName: 'teste_tecnico', total: 42, percentage: 43 },
+            { stageName: 'entrevista', total: 30, percentage: 71 },
+            { stageName: 'contratados', total: 12, percentage: 40 }
+        ];
+    }
+
+    if (!result || result.length === 0) {
+        container.innerHTML = '<div class="text-center text-muted">Nenhum dado disponível para esta vaga</div>';
+        return;
+    }
+
+    const stageLabels = {
+        'curriculos_recebidos': 'Currículos Recebidos',
+        'triagem': 'Triagem',
+        'teste_tecnico': 'Teste Técnico',
+        'entrevista': 'Entrevista',
+        'contratados': 'Contratados'
+    };
+
+    container.innerHTML = '';
+    result.forEach((item, index) => {
+        const stage = item.stageName || item.stage || 'N/A';
+        const label = stageLabels[stage] || stage.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+        const total = item.total || item.count || 0;
+        const percentage = item.percentage || (index > 0 && result[index - 1].total > 0 
+            ? Math.round((total / result[index - 1].total) * 100) : 100);
+
+        container.innerHTML += `
+            <div class="funnel-stage" style="width: ${100 - (index * 10)}%;">
+                <div class="funnel-number">${numberFormat(total)}</div>
+                <div class="funnel-label">${label}</div>
+                ${index > 0 ? `<div class="funnel-percentage">${percentage}% passaram</div>` : ''}
+            </div>
+        `;
+    });
+}
+
+
+// 🔟 Custo por contratação
+let custoContratacaoChartInstance = null;
+
+async function loadCustoContratacao() {
+    const canvas = document.getElementById('custoContratacaoChart');
+    if (!canvas) return;
+
+    let result;
+    try {
+        console.log('📊 [Dashboard] Carregando custo por contratação...');
+        result = await dashboardClient.getCustoContratacao();
+        console.log('✅ [Dashboard] Custo por contratação:', result);
+    } catch (error) {
+        console.warn('⚠️ [Dashboard] Usando fallback para custo por contratação');
+        result = [
+            { area: 'TI', custo: 8500 },
+            { area: 'RH', custo: 6200 },
+            { area: 'Comercial', custo: 4800 },
+            { area: 'Marketing', custo: 5500 },
+            { area: 'Financeiro', custo: 7200 }
+        ];
+    }
+
+    const labels = result.map(r => r.area || r.name || 'Área');
+    const valores = result.map(r => r.custo || r.cost || 0);
+    const maxValue = Math.max(...valores, 1000);
+
+    if (custoContratacaoChartInstance) {
+        custoContratacaoChartInstance.destroy();
+        custoContratacaoChartInstance = null;
+    }
+
+    custoContratacaoChartInstance = new Chart(canvas, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Custo (R$)',
+                backgroundColor: COLORS.primary,
+                hoverBackgroundColor: COLORS.primaryHover,
+                data: valores
+            }]
+        },
+        options: {
+            maintainAspectRatio: false,
+            scales: {
+                xAxes: [{ gridLines: { display: false }, ticks: { fontSize: 13 } }],
+                yAxes: [{
+                    ticks: { min: 0, max: Math.ceil(maxValue * 1.2), maxTicksLimit: 5, padding: 10, 
+                        callback: v => `R$ ${numberFormat(v)}` },
+                    gridLines: { color: "rgb(234, 236, 244)", zeroLineColor: "rgb(234, 236, 244)", drawBorder: false }
+                }]
+            },
+            legend: { display: false },
+            tooltips: {
+                backgroundColor: "rgb(255,255,255)", bodyFontColor: "#858796",
+                borderColor: '#dddfeb', borderWidth: 1, xPadding: 15, yPadding: 15, displayColors: false,
+                callbacks: { label: (t, c) => `Custo: R$ ${numberFormat(t.yLabel)}` }
+            }
+        }
+    });
+}
 
 // Filtro de área
 function setupAreaFilter() {
-    const filter = document.getElementById('areaFilter');
-    if (filter) {
-        // Setar valor padrão
-        filter.value = selectedArea;
-        
-        filter.addEventListener('change', function() {
+    const areaFilter = document.getElementById('areaFilter');
+    
+    if (areaFilter) {
+        areaFilter.addEventListener('change', function() {
             selectedArea = this.value;
             console.log('🏢 Área selecionada:', selectedArea);
-            // Recarregar todos os gráficos com a nova área
             reloadDashboardByArea();
         });
     }
@@ -1800,9 +2526,16 @@ function setupAreaFilter() {
 async function reloadDashboardByArea() {
     console.log('🔄 Recarregando dashboard para a área:', selectedArea);
     
-    // Recarregar todos os gráficos
-    await loadCandidatosVaga();
-    // Pode adicionar mais funções de recarga aqui conforme necessário
+    // Recarregar todos os gráficos principais
+    await Promise.all([
+        loadMainKPIs(),
+        loadAprovadosReprovadosMes(),
+        loadTaxaContratacaoPorArea(),
+        loadMatchScore(),
+        loadTopFaculdades(),
+        loadTempoContratacao(),
+        loadCandidatosVaga()
+    ]);
 }
 
 // Função para verificar permissão e inicializar dashboard

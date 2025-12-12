@@ -351,6 +351,36 @@ export class DashboardClient extends ApiClient {
         return response.json();
     }
 
+    /**
+     * Busca quantidade de aprovados e reprovados por vaga
+     * Endpoint sugerido: GET /dashboard/approved-rejected-by-vacancy
+     * Retorno: [{ titulo: 'Vaga X', aprovados: 10, reprovados: 3 }, ...]
+     */
+    async getApprovedRejectedByVacancy() {
+        const response = await fetch(`${this.url}/approved-rejected-by-vacancy`, {
+            method: 'GET',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include'
+        });
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        return response.json();
+    }
+
+    /**
+     * Busca taxa de contratação por área
+     * Endpoint sugerido: GET /dashboard/hiring-rate-by-area
+     * Retorno esperado: [{ area: 'TI', contratadas: 5, vagasCriadas: 10, taxa: 50 }, ...]
+     */
+    async getHiringRateByArea() {
+        const response = await fetch(`${this.url}/hiring-rate-by-area`, {
+            method: 'GET',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include'
+        });
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        return response.json();
+    }
+
     // ========================================
     // ENDPOINTS DE RECRUTAMENTO - Dashboard Integrado
     // ========================================
@@ -420,6 +450,52 @@ export class DashboardClient extends ApiClient {
      */
     async getVagaOcupacao(vagaId) {
         const response = await fetch(`${this.url}/recruitment/vaga/${vagaId}/ocupacao`, {
+            method: 'GET',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include'
+        });
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        return response.json();
+    }
+
+    // ========================================
+    // NOVOS ENDPOINTS - Dashboard Completo
+    // ========================================
+
+    /**
+     * Busca aprovados e reprovados por mês
+     * Endpoint: GET /dashboard/approved-rejected-by-month
+     */
+    async getApprovedRejectedByMonth() {
+        const response = await fetch(`${this.url}/approved-rejected-by-month`, {
+            method: 'GET',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include'
+        });
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        return response.json();
+    }
+
+    /**
+     * Busca top 5 faculdades
+     * Endpoint: GET /dashboard/top-faculdades
+     */
+    async getTopFaculdades() {
+        const response = await fetch(`${this.url}/top-faculdades`, {
+            method: 'GET',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include'
+        });
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        return response.json();
+    }
+
+    /**
+     * Busca custo por contratação
+     * Endpoint: GET /dashboard/custo-contratacao
+     */
+    async getCustoContratacao() {
+        const response = await fetch(`${this.url}/custo-contratacao`, {
             method: 'GET',
             headers: { 'Content-Type': 'application/json' },
             credentials: 'include'

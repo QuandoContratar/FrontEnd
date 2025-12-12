@@ -1,0 +1,200 @@
+/* ========================================
+   DASHBOARD DE RECRUTAMENTO & SELEÇÃO
+   Estilos específicos para o dashboard
+   ======================================== */
+
+/* Estilos para os KPIs principais */
+.kpi-card {
+    border-left: 4px solid #4e73df;
+    background: #fff;
+    padding: 1.25rem;
+    border-radius: 0.35rem;
+    box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+    transition: transform 0.2s;
+}
+
+.kpi-card:hover {
+    transform: translateY(-2px);
+}
+
+.kpi-card.success {
+    border-left-color: #1cc88a;
+}
+
+.kpi-card.info {
+    border-left-color: #36b9cc;
+}
+
+.kpi-card.warning {
+    border-left-color: #f6c23e;
+}
+
+.kpi-card.danger {
+    border-left-color: #e74a3b;
+}
+
+.kpi-card.primary {
+    border-left-color: #4e73df;
+}
+
+.kpi-value {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #5a5c69;
+}
+
+.kpi-label {
+    font-size: 0.875rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: #858796;
+}
+
+.kpi-percentage {
+    font-size: 0.875rem;
+    color: #1cc88a;
+    font-weight: 600;
+    margin-top: 0.25rem;
+}
+
+/* Estilos para Match Score */
+.match-score-box {
+    background: #fff;
+    border-radius: 0.5rem;
+    padding: 1.5rem;
+    text-align: center;
+    box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+    border: 2px solid transparent;
+    transition: all 0.3s;
+}
+
+.match-score-box:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 0.5rem 2rem 0 rgba(58, 59, 69, 0.25);
+}
+
+.match-score-box.baixo {
+    border-color: #e74a3b;
+}
+
+.match-score-box.medio {
+    border-color: #f6c23e;
+}
+
+.match-score-box.alto {
+    border-color: #36b9cc;
+}
+
+.match-score-box.destaque {
+    border-color: #1cc88a;
+}
+
+.match-score-value {
+    font-size: 2.5rem;
+    font-weight: 800;
+    margin: 0.5rem 0;
+}
+
+.match-score-label {
+    font-size: 1rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    color: #858796;
+}
+
+/* Estilos para Funil */
+.funnel-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.funnel-stage {
+    width: 100%;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 1rem;
+    border-radius: 0.5rem;
+    text-align: center;
+    position: relative;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.funnel-stage::after {
+    content: '';
+    position: absolute;
+    bottom: -10px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 0;
+    height: 0;
+    border-left: 15px solid transparent;
+    border-right: 15px solid transparent;
+    border-top: 10px solid #764ba2;
+}
+
+.funnel-stage:last-child::after {
+    display: none;
+}
+
+.funnel-number {
+    font-size: 1.5rem;
+    font-weight: 700;
+}
+
+.funnel-label {
+    font-size: 0.875rem;
+    opacity: 0.9;
+}
+
+.funnel-percentage {
+    font-size: 0.75rem;
+    opacity: 0.8;
+    margin-top: 0.25rem;
+}
+
+/* Estilos para Taxa de Aprovação (lado direito) */
+.approval-card {
+    background: #fff;
+    border-radius: 0.5rem;
+    padding: 1rem;
+    margin-bottom: 0.75rem;
+    box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+    border-left: 4px solid #4e73df;
+}
+
+.approval-card.success {
+    border-left-color: #1cc88a;
+}
+
+.approval-card.info {
+    border-left-color: #36b9cc;
+}
+
+.approval-card.warning {
+    border-left-color: #f6c23e;
+}
+
+.approval-stage {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #5a5c69;
+    margin-bottom: 0.25rem;
+}
+
+.approval-rate {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #1cc88a;
+}
+
+/* Header de filtros */
+.dashboard-header {
+    background: #fff;
+    padding: 1.5rem;
+    border-radius: 0.5rem;
+    box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+    margin-bottom: 2rem;
+}
+

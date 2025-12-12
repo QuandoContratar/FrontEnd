@@ -25,10 +25,11 @@
       return UtilsRef.normalizeLevelAccess(user.levelAccess || user.level_access || user.level_access);
     }
     // Fallback: verificação direta
-    const levelAccess = String(user.levelAccess || user.level_access || '').toUpperCase();
+    const levelAccess = String(user.levelAccess || user.level_access || user.role || user.title || '').toUpperCase();
     if (levelAccess === 'ADMIN' || levelAccess === '1') return 'ADMIN';
-    if (levelAccess === 'HR' || levelAccess === '2') return 'HR';
-    if (levelAccess === 'MANAGER' || levelAccess === '3') return 'MANAGER';
+    if (levelAccess === 'HR' || levelAccess === '2' || levelAccess === 'RH') return 'HR';
+    // Accept Portuguese role labels too
+    if (levelAccess === 'MANAGER' || levelAccess === '3' || levelAccess === 'GESTOR' || levelAccess === 'GERENTE' || levelAccess === 'GESTORES') return 'MANAGER';
     return null;
   };
 
@@ -69,6 +70,28 @@
         const el = a.closest('li') || a;
         if (el) el.style.display = 'none';
         else a.style.display = 'none';
+      });
+      // Managers also must not see vagas, upload de currículos or match de candidatos
+      const managerHidden = ['vagas.html', 'upload-curriculos.html', 'match-candidatos.html'];
+      managerHidden.forEach(href => {
+        document.querySelectorAll('.sidebar a.nav-link[href$="' + href + '"]').forEach(a => {
+          const li = a.closest('.nav-item') || a.parentElement;
+          if (li) li.style.display = 'none';
+          else a.style.display = 'none';
+        });
+        // hide any cards/buttons that use inline onclicks or anchors to these pages
+        document.querySelectorAll('a[href$="' + href + '"]').forEach(a => {
+          const el = a.closest('li') || a;
+          if (el) el.style.display = 'none';
+          else a.style.display = 'none';
+        });
+        // also catch onclicks that reference the page
+        document.querySelectorAll('[onclick]').forEach(el => {
+          try {
+            const onclick = el.getAttribute('onclick') || '';
+            if (onclick.includes(href)) el.style.display = 'none';
+          } catch(e){}
+        });
       });
     } catch (e) {
       console.error('Permissions.applySidebarRules error', e);
@@ -170,10 +193,27 @@
           btn.setAttribute('title', 'Permissão de visualização (Gestor)');
         }
       });
-      // visually mark draggable areas as read-only
+      // visually mark draggable areas as read-only but keep links clickable
       document.querySelectorAll('.column-content').forEach(c => {
-        c.style.pointerEvents = 'none';
-        c.style.opacity = '0.85';
+        // keep pointer events so details links work; only style to indicate read-only
+        c.style.opacity = '0.95';
+      });
+      // additionally, disable interactive controls except details
+      document.querySelectorAll('.column-content button, .column-content a').forEach(el => {
+        try {
+          const action = el.dataset && el.dataset.action;
+          if (action && action !== 'details') {
+            if (el.tagName.toLowerCase() === 'button') {
+              el.disabled = true;
+              el.classList.add('disabled');
+            } else {
+              // anchor: prevent click but keep it focusable for accessibility
+              el.addEventListener('click', function(e){ if (this.dataset.action !== 'details') e.preventDefault(); });
+              el.classList.add('disabled-link');
+              el.setAttribute('aria-disabled', 'true');
+            }
+          }
+        } catch (e) { }
       });
     } catch (e) { console.error('Permissions.applyKanbanRules error', e); }
   };

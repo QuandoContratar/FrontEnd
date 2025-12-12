@@ -133,7 +133,7 @@ class CandidatosPage {
                     <div class="candidate-info">
                         <h6>${candidate.name}, ${candidate.age} Anos, ${candidate.location}</h6>
                         <p><strong>Vaga:</strong> ${candidate.position}</p>
-                        ${candidate.area && String(candidate.area).toUpperCase() !== 'N/A' ? `<p><strong>Área:</strong> ${candidate.area}</p>` : ''}
+                        ${candidate.area && String(candidate.area).toUpperCase() !== 'N/A' ? `<p><strong>Competências:</strong> ${candidate.area}</p>` : ''}
                     </div>
                 </div>
                 <div class="col-auto">

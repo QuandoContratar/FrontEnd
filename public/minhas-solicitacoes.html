@@ -133,11 +133,11 @@
                     <span>Kanban Recrutamento</span></a>
             </li>
 
-            <!-- Nav Item - Dashboard -->
+            <!-- Nav Item - Gráficos -->
             <li class="nav-item">
                 <a class="nav-link" href="charts.html">
                     <i class="fas fa-fw fa-chart-area"></i>
-                    <span>Dashboard</span></a>
+                    <span>Gráficos</span></a>
             </li>
 
             <!-- Divider -->
@@ -216,12 +216,78 @@
                         </div>
                     </div>
 
-        <!-- Vacancy List - Conteúdo dinâmico via JS -->
+        <!-- Vacancy List -->
         <div class="vacancy-list">
-            <!-- Cards serão carregados dinamicamente pelo JavaScript -->
-            <div class="loading-state text-center py-5">
-                <i class="fas fa-spinner fa-spin fa-2x text-primary mb-3"></i>
-                <p class="text-muted">Carregando solicitações...</p>
+            <div class="vacancy-item">
+                <div class="vacancy-icon">
+                    <i class="fas fa-briefcase"></i>
+                </div>
+                <div class="vacancy-info">
+                    <div class="vacancy-details">
+                        <p><strong>Gestor:</strong> Lucio Limeira</p>
+                        <p><strong>Vaga:</strong> Desenvolvedor Jr Python</p>
+                        <p><strong>Área:</strong> Dados</p>
+                    </div>
+                </div>
+                <div class="vacancy-actions">
+                    <button class="btn-action btn-detail" title="Exibir detalhe/enviar para aprovação">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                    <button class="btn-action btn-edit" title="Editar">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                    <button class="btn-action btn-delete" title="Excluir" onclick="showDeleteModal()">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="vacancy-item">
+                <div class="vacancy-icon">
+                    <i class="fas fa-briefcase"></i>
+                </div>
+                <div class="vacancy-info">
+                    <div class="vacancy-details">
+                        <p><strong>Gestor:</strong> Lucio Limeira</p>
+                        <p><strong>Vaga:</strong> Analista de Dados</p>
+                        <p><strong>Área:</strong> Dados</p>
+                    </div>
+                </div>
+                <div class="vacancy-actions">
+                    <button class="btn-action btn-detail" title="Exibir detalhe/enviar para aprovação">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                    <button class="btn-action btn-edit" title="Editar">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                    <button class="btn-action btn-delete" title="Excluir" onclick="showDeleteModal()">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="vacancy-item">
+                <div class="vacancy-icon">
+                    <i class="fas fa-briefcase"></i>
+                </div>
+                <div class="vacancy-info">
+                    <div class="vacancy-details">
+                        <p><strong>Gestor:</strong> Lucio Limeira</p>
+                        <p><strong>Vaga:</strong> Gerente de Projetos</p>
+                        <p><strong>Área:</strong> Gestão</p>
+                    </div>
+                </div>
+                <div class="vacancy-actions">
+                    <button class="btn-action btn-detail" title="Exibir detalhe/enviar para aprovação">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                    <button class="btn-action btn-edit" title="Editar">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                    <button class="btn-action btn-delete" title="Excluir" onclick="showDeleteModal()">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
             </div>
         </div>
 
