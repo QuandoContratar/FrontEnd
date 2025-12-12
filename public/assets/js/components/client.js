@@ -4,8 +4,9 @@
    ======================================== */
 
 // Base URL da API
-// const BASE_URL = 'http://localhost:8080';
-const BASE_URL = 'http://98.94.28.203:8080'; // Produção
+// AMBIENTE: Descomente a linha correta para seu ambiente
+const BASE_URL = 'http://localhost:8080'; // Desenvolvimento local
+// const BASE_URL = 'http://98.94.28.203:8080'; // Produção
 
 /**
  * Cliente base para API

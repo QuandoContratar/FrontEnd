@@ -711,6 +711,16 @@
                 if ($(e.target).is('button') || $(e.target).is('input') || $(e.target).closest('.file-actions').length) {
                     return;
                 }
+                
+                // ==========================================
+                // VALIDAÇÃO: Bloqueia clique se não houver vaga
+                // ==========================================
+                if (!selectedVacancyId) {
+                    console.warn('⚠️ [upload-curriculos] Clique bloqueado: Nenhuma vaga selecionada');
+                    alert('⚠️ Selecione uma vaga primeiro!\n\nVá para a página de "Vagas" e clique em "Enviar Currículo" na vaga desejada.');
+                    return;
+                }
+                
                 $('#fileInput')[0].click();
             });
 
@@ -735,11 +745,31 @@
             $('#uploadArea').on('drop', function (e) {
                 e.preventDefault();
                 $(this).removeClass('dragover');
+                
+                // ==========================================
+                // VALIDAÇÃO: Bloqueia drop se não houver vaga
+                // ==========================================
+                if (!selectedVacancyId) {
+                    console.warn('⚠️ [upload-curriculos] Drop bloqueado: Nenhuma vaga selecionada');
+                    alert('⚠️ Selecione uma vaga primeiro!\n\nVá para a página de "Vagas" e clique em "Enviar Currículo" na vaga desejada.');
+                    return;
+                }
+                
                 handleFiles(e.originalEvent.dataTransfer.files);
             });
 
             // Handle file uploads
             function handleFiles(files) {
+                // ==========================================
+                // VALIDAÇÃO CRÍTICA: Bloqueia upload se não houver vaga
+                // ==========================================
+                if (!selectedVacancyId) {
+                    console.error('❌ [upload-curriculos] BLOQUEADO: Tentativa de adicionar arquivos sem vaga selecionada!');
+                    alert('⚠️ Erro: Nenhuma vaga selecionada!\n\nAntes de enviar currículos, você deve:\n1. Ir para a página de "Vagas"\n2. Clicar em "Enviar Currículo" na vaga desejada\n\nRedirecionando para a página de vagas...');
+                    window.location.href = 'vagas.html';
+                    return;
+                }
+                
                 Array.from(files).forEach(file => {
                     if (isValidFile(file)) {
                         // Evita arquivos duplicados pelo nome
@@ -866,6 +896,19 @@
                         console.log(`✅ [upload-curriculos] Upload concluído! ${successCount} arquivo(s) enviado(s) para vaga ${selectedVacancyId}`);
                         $('#successModal').modal('show');
                         
+                        // ==========================================
+                        // REDIRECIONAMENTO AUTOMÁTICO PARA MATCH
+                        // Após 2.5 segundos, redireciona para a tela de Match de Candidatos
+                        // ==========================================
+                        const vacancyIdForRedirect = selectedVacancyId; // Salva antes de limpar
+                        console.log(`🔄 [upload-curriculos] Redirecionando para Match de Candidatos em 2.5s...`);
+                        console.log(`🔄 [upload-curriculos] Vaga para match: ${vacancyIdForRedirect}`);
+                        
+                        setTimeout(() => {
+                            console.log(`🚀 [upload-curriculos] Redirecionando agora para match-candidatos.html?vacancyId=${vacancyIdForRedirect}`);
+                            window.location.href = `match-candidatos.html?vacancyId=${vacancyIdForRedirect}`;
+                        }, 2500);
+                        
                         // Limpa a vaga selecionada após upload bem-sucedido
                         localStorage.removeItem('selectedVacancyId');
                         localStorage.removeItem('selectedVacancyTitle');
@@ -955,8 +998,8 @@
         // ==========================================
         // ESTRATÉGIA 1: Enviar para backend com vacancyId
         // ==========================================
-        // const backendUrl = 'http://3.92.226.132:8080'; // Produção
-        const backendUrl = 'http://localhost:8080';
+        const backendUrl = 'http://54.234.149.223:8080'; // Produção
+        // const backendUrl = 'http://localhost:8080';
         
         const formData = new FormData();
         formData.append('file', file);
@@ -992,7 +1035,7 @@
             
             // Adiciona prefixo com vacancyId no nome do arquivo para rastreabilidade
             const timestamp = Date.now();
-            const fileNameWithVacancy = `vacancy_${vacancyId}_${timestamp}_${file.name}`;
+            const fileNameWithVacancy = `${vacancyId}-${file.name}`;
             
             console.log(`📤 [uploadSingleFile] Fallback S3: ${fileNameWithVacancy}`);
             console.warn(`⚠️ [uploadSingleFile] ATENÇÃO: Upload S3 não faz matching automático!`);
