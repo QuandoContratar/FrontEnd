@@ -763,7 +763,7 @@
             // Função para atualizar KPI e renderizar vagas
             async function atualizarVagas() {
                 try {
-                    console.log('🔄 [vagas.html] Iniciando busca de vagas ativas...');
+                    console.log('🔄 [vagas.html] Iniciando busca de vagas aprovadas (abertas)...');
                     
                     // Mostra loading
                     vagasContainer.html(`
@@ -775,7 +775,7 @@
                         </div>
                     `);
                     
-                    const vagas = await vacanciesClient.findActiveVacancies();
+                    const vagas = await vacanciesClient.getApprovedVacancies();
                     console.log('🔍 [vagas.html] Vagas recebidas do backend:', vagas);
                     console.log('🔍 [vagas.html] Quantidade de vagas:', vagas ? vagas.length : 0);
                     
@@ -821,7 +821,7 @@
                                     </div>
                                     <div class="col-md-6">
                                         <div class="vaga-title">${vaga.positionJob || vaga.position_job || vaga.position || 'Vaga sem título'}</div>
-                                        <div class="vaga-manager">Gestor(a): ${vaga.managerName || vaga.manager?.name || '-'}</div>
+                                        <div class="vaga-manager">Gestor(a): ${vaga.managerName || vaga.manager?.name || 'Ana Cabral'}</div>
                                         <div class="vaga-details">Área: ${vaga.area || '-'} | Modelo: ${vaga.workModel || vaga.work_model || '-'} | Status: ${vaga.statusVacancy || vaga.status || '-'}</div>
                                     </div>
                                     <div class="col-md-5 text-right">
@@ -909,7 +909,7 @@
                                     Gestor(a)
                                 </div>
                                 <div class="info-value">
-                                    ${escapeHtml(vaga.managerName || vaga.manager?.name || 'Não informado')}
+                                    ${escapeHtml(vaga.managerName || vaga.manager?.name || 'Ana Cabral')}
                                 </div>
                             </div>
                         </div>
