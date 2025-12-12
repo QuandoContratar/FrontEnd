@@ -346,17 +346,19 @@ function saveVagaLocal(formData) {
         // Pega usuário logado
         const userLoggedStr = localStorage.getItem('userLogged');
         let currentUser;
-        try {
+        
+        try {       
             currentUser = userLoggedStr ? JSON.parse(userLoggedStr) : null;
+            console.log("teste", currentUser)
         } catch (e) {
             console.error('Erro ao fazer parse do userLogged:', e);
             currentUser = null;
         }
         
         // Fallback se não encontrar
-        if (!currentUser || !currentUser.id_user) {
+        if (!currentUser || !currentUser.id) {
             console.warn('userLogged não encontrado ou inválido, usando fallback');
-            currentUser = { id_user: 1, name: 'Usuário Padrão' };
+            currentUser = { id: 1, name: 'Usuário Padrão' };
         }
         
         // Prepara dados da vaga
@@ -388,9 +390,11 @@ function saveVagaLocal(formData) {
         }
         
         // Garante que gestor_id seja um número válido
-        let gestorId = currentUser.id_user;
+        let gestorId = currentUser.id;
+        console.log("teste2", currentUser)
         if (gestorId) {
             gestorId = Number(gestorId);
+            console.log("teste3", gestorId)
             if (isNaN(gestorId)) {
                 reject(new Error('ID do usuário inválido'));
                 return;
@@ -417,7 +421,7 @@ function saveVagaLocal(formData) {
             justificativa: justificativa.trim(), // Justificativa como string
             gestor_id: gestorId,
             gestor: {
-                id_user: gestorId
+                id: gestorId
             },
             status: 'ENTRADA',
             createdAt: new Date().toISOString(),

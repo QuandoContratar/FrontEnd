@@ -55,13 +55,13 @@ async function initPage() {
     }
     
     // Fallback se não encontrar
-    if (!currentUser || !currentUser.id_user) {
+    if (!currentUser || !currentUser.id) {
         console.warn('⚠️ [minhas-solicitacoes] userLogged não encontrado ou inválido, usando fallback');
-        currentUser = { id_user: 1, name: 'Lucio Limeira' };
+        currentUser = { id: 1, name: 'Lucio Limeira' };
     }
     
     console.log('👤 [minhas-solicitacoes] currentUser recuperado:', currentUser);
-    console.log('👤 [minhas-solicitacoes] currentUser.id_user:', currentUser.id_user, 'tipo:', typeof currentUser.id_user);
+    console.log('👤 [minhas-solicitacoes] currentUser.id_user:', currentUser.id, 'tipo:', typeof currentUser.id);
     
     // Atualiza nome do usuário na topbar
     updateUserInfo();
