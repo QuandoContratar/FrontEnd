@@ -1825,7 +1825,7 @@ pre code {
   border: 0;
 }
 
-.form-control {
+/* .form-control {
   display: block;
   width: 100%;
   height: calc(1.5em + 0.75rem + 2px);
@@ -1839,7 +1839,7 @@ pre code {
   border: 1px solid #d1d3e2;
   border-radius: 0.35rem;
   transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
-}
+} */
 
 @media (prefers-reduced-motion: reduce) {
   .form-control {
@@ -1955,13 +1955,13 @@ select.form-control:focus::-ms-value {
   padding-left: 0;
 }
 
-.form-control-sm {
+/* .form-control-sm {
   height: calc(1.5em + 0.5rem + 2px);
   padding: 0.25rem 0.5rem;
   font-size: 0.875rem;
   line-height: 1.5;
   border-radius: 0.2rem;
-}
+} */
 
 .form-control-lg {
   height: calc(1.5em + 1rem + 2px);

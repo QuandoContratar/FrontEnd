@@ -198,9 +198,9 @@
                             <p class="mb-0 text-gray-600">Organize o processo de recrutamento</p>
                         </div>
                         <div class="d-flex align-items-center gap-3">
-                            <button id="btnLoadTestData" class="btn btn-sm btn-info" title="Carregar dados de teste">
+                            <!-- <button id="btnLoadTestData" class="btn btn-sm btn-info" title="Carregar dados de teste">
                                 <i class="fas fa-database"></i> Carregar Testes
-                            </button>
+                            </button> -->
                             <div class="search-bar">
                                 <i class="fas fa-search"></i>
                                 <input type="text" placeholder="Buscar candidatos...">
@@ -247,7 +247,7 @@
                     </div>
 
                     <!-- Kanban Board -->
-                    <div class="kanban-board">
+                    <div class="kanban-board" id="colunas">
                         <!-- Coluna 1: Triagem -->
                         <div class="kanban-column" id="col-aguardando-triagem" data-stage="aguardando_triagem">
                             <div class="column-header">
@@ -343,7 +343,7 @@
                         </div>
 
                         <!-- Coluna: Rejeitados -->
-                        <div class="kanban-column column-rejected" data-stage="rejeitado">
+                        <div class="kanban-column column-rejected" data-stage="rejeitados">
                             <div class="column-header">
                                 <h3><i class="fas fa-ban text-danger"></i> Rejeitados</h3>
                                 <span class="count count-rejected">0</span>

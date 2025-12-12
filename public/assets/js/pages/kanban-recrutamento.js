@@ -24,7 +24,6 @@ let selectedVacancyId = null;
 const STAGES = {
     aguardando_triagem: { key: 'aguardando_triagem', title: 'Aguardando Triagem', order: 0 },
     triagem: { key: 'triagem', title: 'Triagem', order: 1 },
-    triagem_inicial: { key: 'triagem_inicial', title: 'Triagem Inicial', order: 1 },
     entrevista_rh: { key: 'entrevista_rh', title: 'Entrevista RH', order: 2 },
     avaliacao_fit_cultural: { key: 'avaliacao_fit_cultural', title: 'Fit Cultural', order: 3 },
     teste_tecnico: { key: 'teste_tecnico', title: 'Teste Técnico', order: 4 },
@@ -32,7 +31,7 @@ const STAGES = {
     entrevista_final: { key: 'entrevista_final', title: 'Entrevista Final', order: 6 },
     proposta_fechamento: { key: 'proposta_fechamento', title: 'Proposta', order: 7 },
     contratacao: { key: 'contratacao', title: 'Contratação', order: 8 },
-    rejeitado: { key: 'rejeitado', title: 'Rejeitados', order: 10 }
+    rejeitados: { key: 'rejeitados', title: 'Rejeitados', order: 10 }
 };
 
 // Mapeamento de nomes de stage do backend para os nomes esperados pelo frontend
@@ -90,9 +89,10 @@ const STAGE_MAPPING = {
     'hired': 'contratacao',
     'hiring': 'contratacao',
     // Rejeitado
-    'rejeitado': 'rejeitado',
-    'rejected': 'rejeitado',
-    'reprovado': 'rejeitado'
+    'rejeitado': 'rejeitados',
+    'rejected': 'rejeitados',
+    'reprovado': 'rejeitados',
+    'rejeitados': 'rejeitados'
 };
 
 // Flag para forçar dados de teste (útil para desenvolvimento)
@@ -114,7 +114,7 @@ function checkUserPermission() {
                 isManager = userLevel === 'MANAGER';
                 
                 if (isManager) {
-                    console.log('👁️ [Kanban] Modo visualização ativado para gestor');
+                    // console.log('👁️ [Kanban] Modo visualização ativado para gestor');
                 }
                 return true; // Utils disponível e verificação concluída
             } else {
@@ -152,14 +152,14 @@ document.addEventListener('DOMContentLoaded', async () => {
  * Inicializa o Kanban
  */
 async function initKanban() {
-    console.log('🚀 [Kanban] Inicializando...');
+    // console.log('🚀 [Kanban] Inicializando...');
     
     // Verificar se veio da tela de Match (indica que um novo card foi criado)
     const urlParams = new URLSearchParams(window.location.search);
     const fromMatch = urlParams.get('focusStage') !== null;
     
     if (fromMatch) {
-        console.log('🎯 [Kanban] Vindo da tela de Match - forçando carregamento da API');
+        // console.log('🎯 [Kanban] Vindo da tela de Match - forçando carregamento da API');
     }
     
     setupColumnDataAttributes();
@@ -207,9 +207,9 @@ function setupHierarchicalFilters() {
  */
 async function loadVacanciesForFilters() {
     try {
-        console.log('📤 [Kanban] Carregando vagas para filtros...');
+        // console.log('📤 [Kanban] Carregando vagas para filtros...');
         allVacancies = await vacanciesClient.getActiveVacancies();
-        console.log('✅ [Kanban] Vagas carregadas:', allVacancies.length);
+        // console.log('✅ [Kanban] Vagas carregadas:', allVacancies.length);
         
         // Extrai áreas únicas
         const areas = [...new Set(allVacancies.map(v => v.area).filter(Boolean))];
@@ -259,7 +259,7 @@ async function handleAreaFilterChange(e) {
         
         // Mostrar todos os processos
         filteredProcesses = [...processes];
-        renderKanban(filteredProcesses);
+        await loadProcesses();
         updateFilterStatus('Exibindo todos os candidatos');
         saveFilters();
         return;
@@ -289,7 +289,7 @@ async function handleAreaFilterChange(e) {
     // Filtra processos pela área (mostra todas as vagas da área)
     const vagaIdsArea = vagasArea.map(v => v.id || v.id_vacancy);
     filteredProcesses = processes.filter(p => vagaIdsArea.includes(p.vacancyId));
-    renderKanban(filteredProcesses);
+    await loadProcesses();
     updateFilterStatus(`Área: ${selectedArea} (${filteredProcesses.length} candidatos)`);
     saveFilters();
 }
@@ -319,14 +319,14 @@ async function handleVagaFilterChange(e) {
         updateFilterStatus(`Vaga: ${vagaNome} (${filteredProcesses.length} candidatos)`);
     }
     
-    renderKanban(filteredProcesses);
+    await loadProcesses();
     saveFilters();
 }
 
 /**
  * Limpa todos os filtros
  */
-function clearFilters() {
+async function clearFilters() {
     const filterArea = document.getElementById('filterArea');
     const filterVaga = document.getElementById('filterVaga');
     
@@ -339,7 +339,7 @@ function clearFilters() {
     selectedArea = '';
     selectedVacancyId = null;
     filteredProcesses = [...processes];
-    renderKanban(filteredProcesses);
+    await loadProcesses();
     updateFilterStatus('Exibindo todos os candidatos');
     
     // Limpa filtros salvos
@@ -369,7 +369,7 @@ function saveFilters() {
 /**
  * Restaura filtros salvos
  */
-function restoreFilters() {
+async function restoreFilters() {
     try {
         const saved = localStorage.getItem('kanban_filters');
         if (saved) {
@@ -443,7 +443,7 @@ async function confirmRejectCandidate() {
         // Atualiza o processo localmente
         const process = processes.find(p => (p.processId || p.id) == processId);
         if (process) {
-            process.currentStage = 'rejeitado';
+            process.currentStage = 'rejeitados';
             process.rejectionReason = reason;
             process.progress = 0;
             
@@ -455,9 +455,9 @@ async function confirmRejectCandidate() {
         }
         
         // Re-renderiza o kanban
-        renderKanban(filteredProcesses);
+        await loadProcesses();
         
-        // Fecha o modal
+      // Fecha o modal
         $('#rejectModal').modal('hide');
         
         const candidateName = process?.candidateName || 'Candidato';
@@ -481,7 +481,7 @@ function handleFocusStageFromURL() {
     const focusStage = urlParams.get('focusStage');
     
     if (focusStage) {
-        console.log('🎯 [Kanban] Foco solicitado na coluna:', focusStage);
+        // console.log('🎯 [Kanban] Foco solicitado na coluna:', focusStage);
         
         // Pequeno delay para garantir que a página está renderizada
         setTimeout(() => {
@@ -639,7 +639,7 @@ function setupDragAndDrop() {
  * Carrega processos seletivos do backend
  */
 async function loadProcesses() {
-    console.log('📥 [loadProcesses] Iniciando carregamento de processos...');
+    // console.log('📥 [loadProcesses] Iniciando carregamento de processos...');
     
     // Verifica se veio da tela de Match (não deve usar mock)
     const urlParams = new URLSearchParams(window.location.search);
@@ -647,7 +647,7 @@ async function loadProcesses() {
     
     // Se a flag estiver ativa E não veio do Match, força o carregamento dos dados mock
     if (FORCE_MOCK_DATA && !fromMatch) {
-        console.log('🔧 Modo de teste ativado - carregando dados mock');
+        // console.log('🔧 Modo de teste ativado - carregando dados mock');
         loadMockData();
         return;
     }
@@ -660,10 +660,10 @@ async function loadProcesses() {
         let apiError = false;
         
         try {
-            console.log('📤 [loadProcesses] Chamando API: selectionClient.findAllKanban()');
+            // console.log('📤 [loadProcesses] Chamando API: selectionClient.findAllKanban()');
             allProcesses = await selectionClient.findAllKanban();
-            console.log('✅ [loadProcesses] Processos carregados da API:', allProcesses?.length || 0);
-            console.log('📋 [loadProcesses] Dados brutos da API:', JSON.stringify(allProcesses, null, 2));
+            // console.log('✅ [loadProcesses] Processos carregados da API:', allProcesses?.length || 0);
+            // console.log('📋 [loadProcesses] Dados brutos da API:', JSON.stringify(allProcesses, null, 2));
         } catch (error) {
             console.warn('⚠️ Erro ao buscar todos os processos, tentando por etapa:', error);
             apiError = true;
@@ -672,14 +672,14 @@ async function loadProcesses() {
             const stageKeys = Object.keys(STAGES);
             for (const stage of stageKeys) {
                 try {
-                    console.log(`📤 [loadProcesses] Tentando buscar estágio: ${stage}`);
+                    // console.log(`📤 [loadProcesses] Tentando buscar estágio: ${stage}`);
                     const stageProcesses = await selectionClient.listByStage(stage);
                     if (Array.isArray(stageProcesses)) {
-                        console.log(`✅ [loadProcesses] Estágio ${stage}: ${stageProcesses.length} processos`);
+                        // console.log(`✅ [loadProcesses] Estágio ${stage}: ${stageProcesses.length} processos`);
                         allProcesses.push(...stageProcesses);
                     }
                 } catch (e) {
-                    console.log(`ℹ️ [loadProcesses] Nenhum processo em ${stage}`);
+                    // console.log(`ℹ️ [loadProcesses] Nenhum processo em ${stage}`);
                 }
             }
         }
@@ -690,11 +690,11 @@ async function loadProcesses() {
             allProcesses = [];
         }
         
-        console.log(`📊 [loadProcesses] Total de processos encontrados: ${allProcesses.length}`);
+        // console.log(`📊 [loadProcesses] Total de processos encontrados: ${allProcesses.length}`);
         
         // Se não há processos e NÃO veio do Match, carrega dados mock para demonstração
         if (allProcesses.length === 0 && !fromMatch) {
-            console.log('📦 Nenhum processo encontrado. Carregando dados de teste...');
+            // console.log('📦 Nenhum processo encontrado. Carregando dados de teste...');
             loadMockData();
             return;
         }
@@ -710,25 +710,25 @@ async function loadProcesses() {
         }
         
         // Mapeia dados do KanbanCardDTO para o formato esperado pelo frontend
-        console.log('🔄 [loadProcesses] Mapeando processos...');
+        // console.log('🔄 [loadProcesses] Mapeando processos...');
         processes = allProcesses.map(card => mapKanbanCardToProcess(card));
         filteredProcesses = [...processes];
         
-        console.log('📊 [loadProcesses] Processos mapeados:', processes.length);
-        console.log('📊 [loadProcesses] Stages encontrados:', [...new Set(processes.map(p => p.currentStage))]);
+        // console.log('📊 [loadProcesses] Processos mapeados:', processes.length);
+        // console.log('📊 [loadProcesses] Stages encontrados:', [...new Set(processes.map(p => p.currentStage))]);
         
         // Log específico para aguardando_triagem
         const aguardandoTriagem = processes.filter(p => p.currentStage === 'aguardando_triagem');
-        console.log(`🎯 [loadProcesses] Processos em "aguardando_triagem": ${aguardandoTriagem.length}`);
+        // console.log(`🎯 [loadProcesses] Processos em "aguardando_triagem": ${aguardandoTriagem.length}`);
         if (aguardandoTriagem.length > 0) {
-            console.log('🎯 [loadProcesses] Cards em aguardando_triagem:', aguardandoTriagem.map(p => p.candidateName));
+            // console.log('🎯 [loadProcesses] Cards em aguardando_triagem:', aguardandoTriagem.map(p => p.candidateName));
         }
         
         renderKanban(filteredProcesses);
         
     } catch (error) {
         console.error('❌ [loadProcesses] Erro ao carregar processos:', error);
-        console.log('📦 Carregando dados de teste devido ao erro...');
+        // console.log('📦 Carregando dados de teste devido ao erro...');
         
         // Carrega dados mock para demonstração
         loadMockData();
@@ -742,7 +742,7 @@ async function loadProcesses() {
  * @param {Object} card - KanbanCardDTO do backend
  */
 function mapKanbanCardToProcess(card) {
-    console.log('🔄 [mapKanbanCardToProcess] Card recebido do backend:', JSON.stringify(card, null, 2));
+    // console.log('🔄 [mapKanbanCardToProcess] Card recebido do backend:', JSON.stringify(card, null, 2));
     
     // O backend pode retornar currentStage diretamente ou stage.name
     let rawStage = card.currentStage || 
@@ -762,7 +762,7 @@ function mapKanbanCardToProcess(card) {
     // Mapeia para o nome esperado pelo frontend se necessário
     const mappedStage = STAGE_MAPPING[stage] || stage;
     
-    console.log(`🔄 Mapeando card: stage original="${rawStage}", normalizado="${stage}", mapeado="${mappedStage}"`);
+    //console.log(`🔄 Mapeando card: stage original="${rawStage}", normalizado="${stage}", mapeado="${mappedStage}"`);
     
     // Verifica se o stage mapeado existe no STAGES
     if (!STAGES[mappedStage]) {
@@ -783,15 +783,15 @@ function mapKanbanCardToProcess(card) {
         progress: card.progress || calculateProgress(mappedStage)
     };
     
-    console.log(`✅ Card mapeado:`, mapped);
+    // console.log(`✅ Card mapeado:`, mapped);
     return mapped;
 }
 
 /**
  * Carrega dados mock para demonstração
  */
-function loadMockData() {
-    console.log('📦 Iniciando carregamento de dados mock...');
+async function loadMockData() {
+    // console.log('📦 Iniciando carregamento de dados mock...');
     
     // Mock data baseado no SelectionKanbanCardDTO do backend
     // Dados de teste distribuídos em todas as etapas do processo
@@ -1060,86 +1060,135 @@ function loadMockData() {
         }
     ];
     
-    console.log(`✅ ${processes.length} processos mock criados`);
+    // console.log(`✅ ${processes.length} processos mock criados`);
     filteredProcesses = [...processes];
-    console.log('🔄 Renderizando kanban com dados mock...');
-    renderKanban(filteredProcesses);
-    console.log('✅ Kanban renderizado!');
+    // console.log('🔄 Renderizando kanban com dados mock...');
+    await loadProcesses();
+    // console.log('✅ Kanban renderizado!');
     showNotification(`✅ ${processes.length} processos de teste carregados!`, 'success');
 }
+
+// function createColuns(stageKey) {
+//     const stage = STAGES[stageKey];
+
+//     let coluna = document.createElement('div');
+    
+//     coluna.className = 'kanban-column';
+//     coluna.dataset.stage = stage.key;
+//     coluna.setAttribute('draggable', `true`);
+
+//     let cabecalho = document.createElement('div');
+//     cabecalho.className = 'column-header';
+    
+//     let titulo = document.createElement('h3');
+//     titulo.textContent = stage.title;
+
+//     let contador = document.createElement('span');
+//     contador.className = 'count';
+//     contador.textContent = '0';
+
+//     cabecalho.appendChild(titulo);
+//     cabecalho.appendChild(contador);
+    
+//     let conteudo = document.createElement('div');
+//     conteudo.className = 'column-content';
+
+//     coluna.appendChild(cabecalho);
+//     coluna.appendChild(conteudo);
+    
+//     if (stageKey == 'rejeitado'){
+        
+//         coluna.className += ' column-rejected';
+
+//         contador.className += ' count-rejected';
+
+//         let i = document.createElement('i');
+//         i.className = 'fas fa-ban text-danger';
+
+//         titulo.appendChild(i);
+    
+//     }
+
+//     return coluna;
+// }
+
+// function destroyAndRecreateColunas() {
+    
+//     const oldEl = document.getElementById("colunas");
+
+//     if (!oldEl) return;
+
+//     const parent = oldEl.parentNode;
+
+//     oldEl.remove();
+
+//     const newEl = document.createElement("div");
+//     newEl.className = "kanban-board";
+//     newEl.id = "colunas";
+
+//     parent.appendChild(newEl);
+
+//     return newEl;
+
+// }
 
 /**
  * Renderiza o Kanban completo
  */
 function renderKanban(processesToRender = []) {
-    console.log('🎨 renderKanban chamado com', processesToRender?.length || 0, 'processos');
-    
+
+    // const Div_Colunas_Geral = destroyAndRecreateColunas();
+
+    const Div_Colunas_Geral = document.getElementById('colunas');
+
+    // const columns = Object.keys(STAGES).map(stageKey => createColuns(stageKey));
+
     const columns = document.querySelectorAll('.kanban-column');
-    const stageKeys = Object.keys(STAGES);
-    
+
+    console.log('🎨 renderKanban chamado com', processesToRender?.length || 0, 'processos');
+
     if (!processesToRender || processesToRender.length === 0) {
         processesToRender = filteredProcesses || [];
-        console.log('⚠️ Nenhum processo fornecido, usando filteredProcesses:', processesToRender.length);
     }
 
-    if (!columns || columns.length === 0) {
-        console.error('❌ Nenhuma coluna encontrada no DOM!');
-        return;
-    }
-
-    console.log(`📊 Renderizando ${columns.length} colunas...`);
-
-    columns.forEach((column, index) => {
-        const stageKey = column.dataset.stage || stageKeys[index];
-        if (!column.dataset.stage) column.dataset.stage = stageKey;
-        
+    columns.forEach(column => {
+        const stageKey = column.dataset.stage;
         const content = column.querySelector('.column-content');
+
         if (!content) {
-            console.warn(`⚠️ Coluna ${stageKey} não tem .column-content`);
+            console.warn(`⚠️ Coluna ${stageKey} sem .column-content`);
             return;
         }
-        
+
         content.innerHTML = '';
-        
+
         // Filtra processos desta etapa
         const stageProcesses = processesToRender.filter(p => {
             if (!p) return false;
-            
-            // Usa currentStage que já foi mapeado na função mapKanbanCardToProcess
-            const processStage = p.currentStage || 
-                                p.stage?.name || 
-                                p.stageName || 
-                                p.stage;
-            
-            // Compara normalizando (lowercase e trim)
-            const processStageNormalized = String(processStage || '').toLowerCase().trim();
-            const stageKeyNormalized = String(stageKey || '').toLowerCase().trim();
-            
-            const matches = processStageNormalized === stageKeyNormalized;
-            if (matches) {
-                console.log(`✅ Processo ${p.id || p.processId} (${p.candidateName || 'sem nome'}) na etapa ${stageKey} (stage: ${processStage})`);
-            }
-            return matches;
+
+            const processStage =
+                p.currentStage ||
+                p.stage?.name ||
+                p.stageName ||
+                p.stage;
+
+            return String(processStage || '').toLowerCase().trim() ===
+                   String(stageKey || '').toLowerCase().trim();
         });
 
-        console.log(`📋 Etapa ${stageKey}: ${stageProcesses.length} processos`);
+        // Ordenação opcional
+        stageProcesses.sort((a, b) => (b.progress || 0) - (a.progress || 0));
 
-        // Ordena por progresso (maior primeiro)
-        stageProcesses.sort((a, b) => {
-            return (b.progress || 0) - (a.progress || 0);
-        });
-        
-        // Renderiza cards
+        // Renderização dos cards
         stageProcesses.forEach(process => {
             const card = createProcessCard(process, stageKey);
             content.appendChild(card);
         });
-        
-        // Atualiza contador
+
         updateColumnCount(column, stageProcesses.length);
     });
-    
-    console.log('✅ Renderização concluída!');
+
+    Div_Colunas_Geral.append(...columns);
 }
 
 /**
@@ -1158,11 +1207,12 @@ function createProcessCard(process, stage) {
     
     const isLastStage = stage === 'contratacao';
     const isProposta = stage === 'proposta_fechamento';
-    const isRejected = stage === 'rejeitado';
-    
+    const isRejected = stage === 'rejeitados';
+
     // Adiciona classe de rejeitado se aplicável
     if (isRejected) {
         card.classList.add('card-rejected');
+        
     }
     
     // Extrai dados do processo (suporta diferentes estruturas de dados)
@@ -1308,6 +1358,7 @@ async function handleCardActions(e) {
     if (!btn) return;
     
     const action = btn.dataset.action;
+    // console.log(`🖱️ Botão clicado: ação="${action}", ID="${btn.dataset.id}"`);
     const id = btn.dataset.id;
     const candidateName = btn.dataset.name || 'Candidato';
     
@@ -1337,7 +1388,7 @@ async function handleCardActions(e) {
                 openRejectModal(id, candidateName);
                 break;
             case 'details':
-                console.log('🔍 Clicou em Ver Candidato, ID:', id);
+                // console.log('🔍 Clicou em Ver Candidato, ID:', id);
                 viewCandidateDetails(id);
                 break;
         }
@@ -1367,13 +1418,20 @@ async function advanceProcess(id) {
                 updatedCard = await selectionClient.updateStage(id, nextStage);
                 console.log('✅ Card avançado no backend:', updatedCard);
                 
-                // Se o backend retornou o card atualizado, usa ele
+                //Se o backend retornou o card atualizado, usa ele
                 if (updatedCard) {
                     const mapped = mapKanbanCardToProcess(updatedCard);
+                    console.log('🔄 Processo mapeado após avanço:', mapped);
                     const index = processes.findIndex(p => (p.processId || p.id) == id);
+                    
+                    console.log(index)
                     if (index >= 0) {
+                        console.log(processes[index])
                         processes[index] = mapped;
+                        console.log(processes[index])
                     }
+                }else{
+                    console.log('⚠️ Backend não retornou card atualizado, atualizando localmente como fallback');
                 }
             } catch (e) {
                 console.error('Erro ao atualizar no backend:', e);
@@ -1382,13 +1440,9 @@ async function advanceProcess(id) {
                 process.progress = calculateProgress(nextStage);
             }
             
-            // Atualiza filteredProcesses também
-            const filteredIndex = filteredProcesses.findIndex(p => (p.processId || p.id) == id);
-            if (filteredIndex >= 0) {
-                filteredProcesses[filteredIndex] = process;
-            }
+            // Atualiza filteredProcesses també
             
-            renderKanban(filteredProcesses);
+            await loadProcesses();
             const candidateName = process.candidateName || 
                                  (process.candidate && typeof process.candidate === 'string' ? process.candidate : process.candidate?.name) || 
                                  'Candidato';
@@ -1427,7 +1481,7 @@ async function moveProcessToStage(id, newStage) {
         let updatedCard;
         try {
             updatedCard = await selectionClient.updateStage(id, newStage);
-            console.log('✅ Card atualizado no backend:', updatedCard);
+            // console.log('✅ Card atualizado no backend:', updatedCard);
             
             // Se o backend retornou o card atualizado, usa ele
             if (updatedCard) {
@@ -1461,7 +1515,7 @@ async function moveProcessToStage(id, newStage) {
             }
         }
         
-        renderKanban(filteredProcesses);
+        await loadProcesses();
         const candidateName = process.candidateName || 
                              (process.candidate && typeof process.candidate === 'string' ? process.candidate : process.candidate?.name) || 
                              'Candidato';
@@ -1487,20 +1541,24 @@ async function approveProcess(id) {
         try {
             await selectionClient.updateStage(id, 'contratacao');
         } catch (e) {
-            console.log('Erro ao atualizar no backend');
+            console.error('Erro ao atualizar no backend:', e);
         }
         
         // Atualiza localmente
-        process.currentStage = 'contratacao';
-        process.progress = 100;
+        // process.currentStage = 'contratacao';
+        // process.progress = 100;
         
         // Atualiza filteredProcesses também
-        const filteredIndex = filteredProcesses.findIndex(p => (p.processId || p.id) == id);
-        if (filteredIndex >= 0) {
-            filteredProcesses[filteredIndex] = process;
-        }
+        // const filteredIndex = filteredProcesses.findIndex(p => (p.processId || p.id) == id);
+        // if (filteredIndex >= 0) {
+        //     filteredProcesses[filteredIndex] = process;
+        // }
+
+        // const processId = process.processId || process.id;
+        filteredProcesses = processes.filter(p => (p.processId || p.id) != id);
+        filteredProcessesFinal = filteredProcesses.filter(p => (p.processId || p.id) != id);
         
-        renderKanban(filteredProcesses);
+        await loadProcesses();
         const candidateName = process.candidateName || 
                              (process.candidate && typeof process.candidate === 'string' ? process.candidate : process.candidate?.name) || 
                              'Candidato';
@@ -1524,11 +1582,11 @@ async function rejectProcess(id) {
         if (!process) return;
         
         // Remove da lista local (no backend seria um update de status)
-        const processId = process.processId || process.id;
+        // const processId = process.processId || process.id;
         processes = processes.filter(p => (p.processId || p.id) != id);
         filteredProcesses = filteredProcesses.filter(p => (p.processId || p.id) != id);
         
-        renderKanban(filteredProcesses);
+        await loadProcesses();
         const candidateName = process.candidateName || 
                              (process.candidate && typeof process.candidate === 'string' ? process.candidate : process.candidate?.name) || 
                              'Candidato';
@@ -1550,7 +1608,7 @@ function viewCandidateDetails(id) {
         return;
     }
     
-    console.log('🔍 Visualizando detalhes do candidato ID:', id);
+    // console.log('🔍 Visualizando detalhes do candidato ID:', id);
     
     // Salva no localStorage com a chave correta que a página de detalhes espera
     localStorage.setItem('selectedCandidateId', String(id));
@@ -1568,7 +1626,7 @@ async function handleSearch(e) {
     
     if (!searchTerm) {
         filteredProcesses = [...processes];
-        renderKanban(filteredProcesses);
+        await loadProcesses();
         return;
     }
     
@@ -1577,7 +1635,7 @@ async function handleSearch(e) {
         const searchResults = await selectionClient.searchCards(searchTerm);
         // Mapeia os resultados para o formato esperado
         filteredProcesses = searchResults.map(card => mapKanbanCardToProcess(card));
-        renderKanban(filteredProcesses);
+        await loadProcesses();
     } catch (error) {
         console.error('Erro ao buscar no backend, usando busca local:', error);
         // Fallback para busca local
@@ -1606,7 +1664,7 @@ async function handleSearch(e) {
                    vacancyTitle.includes(searchTermLower) || 
                    managerName.includes(searchTermLower);
         });
-        renderKanban(filteredProcesses);
+        await loadProcesses();
     }
 }
 
