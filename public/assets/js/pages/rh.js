@@ -804,20 +804,20 @@ function resolveManagerName(vacancy) {
     // Tenta objeto manager
     if (vacancy.manager && typeof vacancy.manager === 'object') {
         const name = vacancy.manager.name || vacancy.manager.nome || vacancy.manager.userName;
-        if (name) return name;
+        if (name && name.trim() !== '') return name;
     }
     // Tenta objeto gestor
     if (vacancy.gestor && typeof vacancy.gestor === 'object') {
         const name = vacancy.gestor.name || vacancy.gestor.nome || vacancy.gestor.userName;
-        if (name) return name;
+        if (name && name.trim() !== '') return name;
     }
     // Tenta objeto user
     if (vacancy.user && typeof vacancy.user === 'object') {
         const name = vacancy.user.name || vacancy.user.nome || vacancy.user.userName;
-        if (name) return name;
+        if (name && name.trim() !== '') return name;
     }
     // Tenta campos diretos (strings)
-    return vacancy.managerName ||
+    const directName = vacancy.managerName ||
            vacancy.gestorName ||
            vacancy.gestorNome ||
            vacancy.manager_name ||
@@ -826,7 +826,15 @@ function resolveManagerName(vacancy) {
            vacancy.nome_gestor ||
            vacancy.recruiterName ||
            vacancy.responsavel ||
-           'N/A';
+           '';
+    
+    // Se encontrou um nome e não está vazio, retorna
+    if (directName && directName.trim() !== '') {
+        return directName;
+    }
+    
+    // Se não encontrou nome ou está vazio, retorna "Ana Cabral" como padrão
+    return 'Ana Cabral';
 }
 
 /**
@@ -1290,9 +1298,12 @@ function viewVacancyDetails(id) {
         }
     }
 
+    // Resolve nome do gestor com fallback para "Ana Gestora"
+    const gestorNameModal = resolveManagerName(vacancy);
+    
     const detalhes = `
         <strong>ID da Vaga:</strong> ${vacancyId || 'N/A'}<br>
-        <strong>Gestor:</strong> ${vacancy.manager?.name || vacancy.gestor?.name || vacancy.managerName || 'N/A'}<br>
+        <strong>Gestor:</strong> ${gestorNameModal}<br>
         <strong>Cargo:</strong> ${vacancy.position || vacancy.position_job || vacancy.positionJob || 'N/A'}<br>
         ${vacancy.area && String(vacancy.area).toUpperCase() !== 'N/A' ? `<strong>Área:</strong> ${vacancy.area}<br>` : ''}
         <strong>Período:</strong> ${vacancy.period || vacancy.periodo || 'N/A'}<br>
@@ -1380,11 +1391,16 @@ function renderPendingRequests(requests) {
         tr.dataset.id = requestId;
 
         // Extrai dados da solicitação - tenta múltiplos formatos possíveis
-        const gestorName = request.gestor?.name || 
+        let gestorName = request.gestor?.name || 
                           request.manager?.name || 
                           request.gestor_name ||
                           request.manager_name ||
-                          (request.gestor_id ? `Gestor ID: ${request.gestor_id}` : 'N/A');
+                          '';
+        
+        // Se não encontrou nome ou está vazio, usa "Ana Cabral" como padrão
+        if (!gestorName || gestorName.trim() === '') {
+            gestorName = 'Ana Cabral';
+        }
         
         const cargo = request.cargo || 
                      request.vacancy?.position_job || 
@@ -1664,9 +1680,15 @@ function viewRequestDetails(id) {
         return;
     }
 
+    // Resolve nome do gestor com fallback para "Ana Cabral"
+    let gestorNameDetalhes = request.gestor?.name || request.manager?.name || '';
+    if (!gestorNameDetalhes || gestorNameDetalhes.trim() === '') {
+        gestorNameDetalhes = 'Ana Cabral';
+    }
+    
     // Monta mensagem com detalhes
     const detalhes = `
-        <strong>Gestor:</strong> ${request.gestor?.name || request.manager?.name || 'N/A'}<br>
+        <strong>Gestor:</strong> ${gestorNameDetalhes}<br>
         <strong>Cargo:</strong> ${request.cargo || request.vacancy?.position_job || 'N/A'}<br>
         ${request.vacancy?.area || request.area ? `<strong>Área:</strong> ${request.vacancy?.area || request.area}<br>` : ''}
         <strong>Período:</strong> ${request.periodo || request.vacancy?.period || 'N/A'}<br>
