@@ -57,7 +57,7 @@ async function initPage() {
     // Fallback se não encontrar
     if (!currentUser || !currentUser.id_user) {
         console.warn('⚠️ [minhas-solicitacoes] userLogged não encontrado ou inválido, usando fallback');
-        currentUser = { id_user: 1, name: 'Lucio Limeira' };
+        currentUser = { id_user: 1, name: 'Ana Cabral' };
     }
     
     console.log('👤 [minhas-solicitacoes] currentUser recuperado:', currentUser);
