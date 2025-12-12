@@ -1042,7 +1042,7 @@ export class MatchClient extends ApiClient {
      * @private
      */
     _filterPendingMatches(matches) {
-        const processedStatuses = ['aceito', 'aprovado', 'accepted', 'approved', 'rejeitado', 'rejected', 'recusado'];
+        const processedStatuses = ['aceito', 'aprovado', 'accepted', 'approved', 'rejeitados', 'rejected', 'recusado'];
         
         return matches.filter(m => {
             // Verifica se tem SelectionProcess
