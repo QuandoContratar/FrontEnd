@@ -597,34 +597,51 @@ function setupEventListeners() {
  */
 function setupDragAndDrop() {
     const columns = document.querySelectorAll('.kanban-column');
-    
+
+    const SCROLL_ZONE = 200;
+    const SCROLL_SPEED = 50;
+
     columns.forEach(column => {
         const content = column.querySelector('.column-content');
         if (!content) return;
-        
-        // Se for gestor, não permite drag and drop
+
         if (isManager) {
-            content.style.cursor = 'not-allowed';
-            content.style.opacity = '0.7';
-            // do not register drag/drop listeners
+            column.style.cursor = 'not-allowed';
+            column.style.opacity = '0.7';
             return;
         }
-        
-        content.addEventListener('dragover', (e) => {
+
+        // --- LISTENERS MOVEM PARA COLUMN ---
+        column.addEventListener('dragover', (e) => {
             e.preventDefault();
             column.classList.add('drag-over');
-        });
 
-        content.addEventListener('dragleave', (e) => {
-            if (!column.contains(e.relatedTarget)) {
-                column.classList.remove('drag-over');
+            const mouseX = e.clientX;
+            const mouseY = e.clientY;
+
+            if (mouseY <= SCROLL_ZONE) {
+                window.scrollBy(0, -SCROLL_SPEED);
+            }
+            else if (mouseY >= window.innerHeight - SCROLL_ZONE) {
+                window.scrollBy(0, SCROLL_SPEED);
+            }
+
+            if (mouseX <= SCROLL_ZONE) {
+                window.scrollBy(-SCROLL_SPEED, 0);
+            }
+            else if (mouseX >= window.innerWidth - SCROLL_ZONE) {
+                window.scrollBy(SCROLL_SPEED, 0);
             }
         });
 
-        content.addEventListener('drop', async (e) => {
+        column.addEventListener('dragleave', () => {
+            column.classList.remove('drag-over');
+        });
+
+        column.addEventListener('drop', async (e) => {
             e.preventDefault();
             column.classList.remove('drag-over');
-            
+
             if (draggedElement && draggedProcessId) {
                 const newStage = column.dataset.stage;
                 if (newStage) {
@@ -634,6 +651,7 @@ function setupDragAndDrop() {
         });
     });
 }
+
 
 /**
  * Carrega processos seletivos do backend
@@ -1067,70 +1085,6 @@ async function loadMockData() {
     // console.log('✅ Kanban renderizado!');
     showNotification(`✅ ${processes.length} processos de teste carregados!`, 'success');
 }
-
-// function createColuns(stageKey) {
-//     const stage = STAGES[stageKey];
-
-//     let coluna = document.createElement('div');
-    
-//     coluna.className = 'kanban-column';
-//     coluna.dataset.stage = stage.key;
-//     coluna.setAttribute('draggable', `true`);
-
-//     let cabecalho = document.createElement('div');
-//     cabecalho.className = 'column-header';
-    
-//     let titulo = document.createElement('h3');
-//     titulo.textContent = stage.title;
-
-//     let contador = document.createElement('span');
-//     contador.className = 'count';
-//     contador.textContent = '0';
-
-//     cabecalho.appendChild(titulo);
-//     cabecalho.appendChild(contador);
-    
-//     let conteudo = document.createElement('div');
-//     conteudo.className = 'column-content';
-
-//     coluna.appendChild(cabecalho);
-//     coluna.appendChild(conteudo);
-    
-//     if (stageKey == 'rejeitado'){
-        
-//         coluna.className += ' column-rejected';
-
-//         contador.className += ' count-rejected';
-
-//         let i = document.createElement('i');
-//         i.className = 'fas fa-ban text-danger';
-
-//         titulo.appendChild(i);
-    
-//     }
-
-//     return coluna;
-// }
-
-// function destroyAndRecreateColunas() {
-    
-//     const oldEl = document.getElementById("colunas");
-
-//     if (!oldEl) return;
-
-//     const parent = oldEl.parentNode;
-
-//     oldEl.remove();
-
-//     const newEl = document.createElement("div");
-//     newEl.className = "kanban-board";
-//     newEl.id = "colunas";
-
-//     parent.appendChild(newEl);
-
-//     return newEl;
-
-// }
 
 /**
  * Renderiza o Kanban completo
